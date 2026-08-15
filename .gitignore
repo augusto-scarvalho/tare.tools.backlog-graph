@@ -31,3 +31,8 @@ htmlcov/
 # Local run outputs
 output/
 *.log
+*.tmp
+
+# Relay/audit/planning artifacts are operational evidence, not source.
+.relay/
+
