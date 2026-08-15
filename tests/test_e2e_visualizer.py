@@ -157,6 +157,24 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertIsNone(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"))
             self.assertIsNone(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"))
 
+            # 15. Test Full Reset Button Behavior
+            # Mutate state: filter cluster, fill search, zoom in, select node
+            page.select_option("#clusterFilter", "api")
+            page.fill("#searchInput", "Core")
+            page.click(".hud-btn:has-text('+')")
+            self.assertNotEqual(page.locator("#zoomDisplay").text_content(), "100%")
+            
+            # Click Reset button
+            page.click("#resetBtn")
+            
+            # Assert all inputs and canvas viewports are fully reset
+            self.assertEqual(page.locator("#searchInput").input_value(), "")
+            self.assertEqual(page.locator("#statusFilter").input_value(), "ALL")
+            self.assertEqual(page.locator("#clusterFilter").input_value(), "ALL")
+            self.assertEqual(page.locator("#zoomDisplay").text_content(), "100%")
+            self.assertEqual(page.locator("#inspId").text_content(), "Select a task")
+            self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
+
             browser.close()
 
 if __name__ == "__main__":

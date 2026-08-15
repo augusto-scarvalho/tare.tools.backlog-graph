@@ -1049,7 +1049,41 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       simulatedDoneSet.clear();
       showCriticalPath = false;
       document.getElementById('criticalPathBtn').className = 'action-btn';
-      deselectNode();
+      
+      // Reset DAG Viewport Pan & Zoom
+      zoomLevel = 1.0;
+      panX = 40;
+      panY = 40;
+      
+      // Reset all dragged node positions to pristine clean auto-layout
+      for (const k of Object.keys(nodePositions)) {
+        delete nodePositions[k];
+      }
+      computeAutoLayout(nodes);
+      updateViewportTransform();
+
+      // Deselect active node and reset inspector drawer
+      selectedNodeId = null;
+      document.getElementById('inspId').textContent = 'Select a task';
+      document.getElementById('inspTitle').textContent = 'Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context. Press [Esc] to deselect.';
+      document.getElementById('inspState').textContent = '-';
+      document.getElementById('simToggle').checked = false;
+      document.getElementById('inspSummary').textContent = '-';
+      document.getElementById('inspCriteria').textContent = '-';
+      document.getElementById('inspPrereqs').innerHTML = 'None';
+      document.getElementById('inspDownstream').innerHTML = 'None';
+
+      render();
+      if (currentView === 'dag') {
+        renderDag();
+      }
+
+      // Micro-animation visual feedback on reset button
+      const btn = document.getElementById('resetBtn');
+      if (btn) {
+        btn.classList.add('active');
+        setTimeout(() => btn.classList.remove('active'), 250);
+      }
     }
 
     function copyImplementationPacket() {
