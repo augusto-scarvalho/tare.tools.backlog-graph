@@ -41,7 +41,7 @@ class VisualizerE2ETests(unittest.TestCase):
             # 2. Check title and brand
             self.assertIn("Graph Backlog", page.title())
             brand_pill = page.locator(".brand-pill").text_content()
-            self.assertIn("SIGNAL", brand_pill)
+            self.assertIn("Backlog", brand_pill)
             
             # 3. Check initial stats in status bar
             stat_total = page.locator("#statTotal").text_content()
@@ -190,6 +190,21 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertEqual(page.locator("#zoomDisplay").text_content(), "100%")
             self.assertEqual(page.locator("#inspId").text_content(), "Select a task")
             self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
+
+            # 16. Test In-UI Project Selector Switching
+            # Switch to OmniAgent AI RAG CRM (27 tasks)
+            page.select_option("#projectSelector", "rag")
+            self.assertEqual(page.locator("#statTotal").text_content(), "27")
+            self.assertIn("OmniAgent", page.locator("#projectTitleDisplay").text_content())
+            
+            # Switch to CloudPulse SaaS (33 tasks)
+            page.select_option("#projectSelector", "saas")
+            self.assertEqual(page.locator("#statTotal").text_content(), "33")
+            self.assertIn("CloudPulse", page.locator("#projectTitleDisplay").text_content())
+
+            # Switch back to Sample (3 tasks)
+            page.select_option("#projectSelector", "sample")
+            self.assertEqual(page.locator("#statTotal").text_content(), "3")
 
             browser.close()
 

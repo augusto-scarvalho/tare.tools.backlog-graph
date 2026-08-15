@@ -663,7 +663,19 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   <header>
     <div class="brand">
       <div class="brand-logo">tare.tools</div>
-      <div class="brand-pill">SIGNAL Graph Backlog</div>
+      <div class="brand-pill" id="projectTitleDisplay">SIGNAL Graph Backlog</div>
+    </div>
+
+    <!-- Project Selector Dropdown & File Loader -->
+    <div class="controls">
+      <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:280px;">
+        <option value="__ACTIVE__">📁 Active Project</option>
+        <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
+        <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
+        <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
+        <option value="__UPLOAD__">📂 Open Local JSON File...</option>
+      </select>
+      <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
     </div>
     
     <div class="view-tabs">
@@ -673,7 +685,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 200px;">
+      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 170px;">
       <select id="statusFilter">
         <option value="ALL">All Statuses</option>
         <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
@@ -775,11 +787,18 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   </footer>
 
   <script>
-    const RAW_GRAPH = __GRAPH_JSON_PLACEHOLDER__;
-    const nodes = RAW_GRAPH.nodes || [];
-    const edges = RAW_GRAPH.edges || [];
-    const byId = {};
-    nodes.forEach(n => byId[n.id] = n);
+    const BUILTIN_PROJECTS = {
+      active: __GRAPH_JSON_PLACEHOLDER__,
+      saas: __SAAS_JSON_PLACEHOLDER__,
+      rag: __RAG_JSON_PLACEHOLDER__,
+      sample: __SAMPLE_JSON_PLACEHOLDER__
+    };
+
+    let RAW_GRAPH = BUILTIN_PROJECTS.active;
+    let nodes = RAW_GRAPH.nodes || [];
+    let edges = RAW_GRAPH.edges || [];
+    let byId = {};
+    let clusters = [];
 
     let selectedNodeId = null;
     let simulatedDoneSet = new Set();
@@ -806,15 +825,69 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     let initialNodeY = 0;
     let hasMovedSignificantly = false;
 
-    // Populate cluster filter
-    const clusters = [...new Set(nodes.map(n => n.cluster || 'general'))].sort();
-    const clusterSelect = document.getElementById('clusterFilter');
-    clusters.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      clusterSelect.appendChild(opt);
-    });
+    function loadGraph(graphData) {
+      RAW_GRAPH = graphData || {};
+      nodes = RAW_GRAPH.nodes || [];
+      edges = RAW_GRAPH.edges || [];
+      byId = {};
+      nodes.forEach(n => byId[n.id] = n);
+
+      const title = (RAW_GRAPH.meta && RAW_GRAPH.meta.title) || 'SIGNAL Graph Backlog';
+      const titleEl = document.getElementById('projectTitleDisplay');
+      if (titleEl) titleEl.textContent = title;
+
+      // Populate cluster filter
+      clusters = [...new Set(nodes.map(n => n.cluster || 'general'))].sort();
+      const clusterSelect = document.getElementById('clusterFilter');
+      clusterSelect.innerHTML = '<option value="ALL">All Clusters</option>';
+      clusters.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        clusterSelect.appendChild(opt);
+      });
+
+      resetFilters();
+    }
+
+    function switchProject(val) {
+      if (val === '__UPLOAD__') {
+        const upEl = document.getElementById('fileUploadInput');
+        if (upEl) upEl.click();
+        return;
+      }
+      if (val === '__ACTIVE__' || val === 'active') {
+        loadGraph(BUILTIN_PROJECTS.active);
+      } else if (BUILTIN_PROJECTS[val]) {
+        loadGraph(BUILTIN_PROJECTS[val]);
+      }
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed.nodes) {
+            alert('Invalid graph JSON: missing "nodes" array.');
+            return;
+          }
+          const selector = document.getElementById('projectSelector');
+          const opt = document.createElement('option');
+          opt.value = '__CUSTOM_LOADED__';
+          opt.textContent = `📄 File: ${file.name}`;
+          opt.selected = true;
+          selector.appendChild(opt);
+
+          loadGraph(parsed);
+        } catch (err) {
+          alert('Error parsing JSON file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
 
     function getStatus(n) {
       if (simulatedDoneSet.has(n.id)) return 'DONE';
@@ -1537,7 +1610,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     document.getElementById('statusFilter').addEventListener('change', render);
     document.getElementById('clusterFilter').addEventListener('change', render);
 
-    render();
+    // Initialize default active graph
+    loadGraph(BUILTIN_PROJECTS.active);
   </script>
 </body>
 </html>"""
@@ -1545,7 +1619,31 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 def generate_html_viewer(graph: WorkGraph, output_path: str | Path | None = None) -> str:
     """Generate standalone self-contained SIGNAL HTML visualizer for the graph."""
     graph_json = json.dumps(stable_dict(graph.to_dict()), ensure_ascii=False)
-    html_content = SIGNAL_HTML_TEMPLATE.replace("__GRAPH_JSON_PLACEHOLDER__", graph_json)
+    
+    fixtures_dir = Path(__file__).resolve().parent.parent.parent / "fixtures"
+    
+    saas_json = "{}"
+    saas_path = fixtures_dir / "saas-backlog.json"
+    if saas_path.exists():
+        saas_json = saas_path.read_text(encoding="utf-8").strip()
+        
+    rag_json = "{}"
+    rag_path = fixtures_dir / "crm-rag-chatbot-backlog.json"
+    if rag_path.exists():
+        rag_json = rag_path.read_text(encoding="utf-8").strip()
+        
+    sample_json = "{}"
+    sample_path = fixtures_dir / "sample-backlog.json"
+    if sample_path.exists():
+        sample_json = sample_path.read_text(encoding="utf-8").strip()
+
+    html_content = (
+        SIGNAL_HTML_TEMPLATE
+        .replace("__GRAPH_JSON_PLACEHOLDER__", graph_json)
+        .replace("__SAAS_JSON_PLACEHOLDER__", saas_json)
+        .replace("__RAG_JSON_PLACEHOLDER__", rag_json)
+        .replace("__SAMPLE_JSON_PLACEHOLDER__", sample_json)
+    )
     if output_path:
         atomic_write(output_path, html_content, overwrite=True)
     return html_content
