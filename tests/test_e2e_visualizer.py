@@ -78,12 +78,10 @@ class VisualizerE2ETests(unittest.TestCase):
             page.select_option("#statusFilter", "ALL")
             
             # 9. Test Interactive What-If Simulation
-            # TASK-03 is currently blocked by TASK-02.
-            # Select TASK-02 and click simulation checkbox
             page.locator(".task-card:has-text('TASK-02')").click()
             page.check("#simToggle")
             
-            # Now with TASK-02 simulated as DONE, TASK-03 should become READY in real time!
+            # Now with TASK-02 simulated as DONE, TASK-03 should become READY in real time
             page.locator(".task-card:has-text('TASK-03')").click()
             sim_insp_state = page.locator("#inspState").text_content()
             self.assertIn("READY", sim_insp_state)
@@ -92,8 +90,51 @@ class VisualizerE2ETests(unittest.TestCase):
             page.click("#tabDagBtn")
             dag_svg = page.locator("#dagSvg")
             self.assertTrue(dag_svg.is_visible())
-            svg_nodes = page.locator("#dagSvg g rect").count()
+            svg_nodes = page.locator("#dagNodesLayer g").count()
             self.assertEqual(svg_nodes, 3)
+            
+            # 11. Test Filters in DAG Canvas view
+            # Select cluster "api" (has TASK-02)
+            page.select_option("#clusterFilter", "api")
+            self.assertEqual(page.locator("#dagNodesLayer g").count(), 1)
+            self.assertTrue(page.locator("#dagNode_TASK-02").is_visible())
+            self.assertFalse(page.locator("#dagNode_TASK-01").is_visible())
+            self.assertFalse(page.locator("#dagNode_TASK-03").is_visible())
+            
+            # Reset cluster filter
+            page.select_option("#clusterFilter", "ALL")
+            self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
+            
+            # Select status "FRONTIER"
+            page.select_option("#statusFilter", "FRONTIER")
+            # In simulation, TASK-03 became frontier when TASK-02 was simulated DONE
+            self.assertEqual(page.locator("#dagNodesLayer g").count(), 1)
+            self.assertTrue(page.locator("#dagNode_TASK-03").is_visible())
+            
+            # Reset filters
+            page.click("#resetBtn")
+            self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
+            
+            # 12. Test Drag and Drop of a Node in DAG Canvas
+            node_box = page.locator("#dagNode_TASK-01").bounding_box()
+            self.assertIsNotNone(node_box)
+            
+            initial_transform = page.locator("#dagNode_TASK-01").get_attribute("transform")
+            initial_edge_d = page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d")
+            
+            # Drag node by 100px to the right and 50px down
+            page.mouse.move(node_box["x"] + 20, node_box["y"] + 20)
+            page.mouse.down()
+            page.mouse.move(node_box["x"] + 120, node_box["y"] + 70, steps=5)
+            page.mouse.up()
+            
+            new_transform = page.locator("#dagNode_TASK-01").get_attribute("transform")
+            new_edge_d = page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d")
+            
+            # Assert node position updated
+            self.assertNotEqual(initial_transform, new_transform)
+            # Assert connected edge curve updated dynamically
+            self.assertNotEqual(initial_edge_d, new_edge_d)
             
             browser.close()
 
