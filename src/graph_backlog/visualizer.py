@@ -14,40 +14,80 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>tare.tools — Graph Backlog (SIGNAL Design System)</title>
+  <title>tare.tools — Graph Backlog (SIGNAL Mission Control)</title>
   <style>
+    /* ==========================================================================
+       SIGNAL Design Tokens — Canonical UI Law (warm-black + lime-phosphor)
+       ========================================================================== */
     :root {
-      --bg-base: #080c14;
-      --bg-surface: #0f172a;
-      --bg-elevated: #1e293b;
-      --bg-card: #141f33;
-      --border-subtle: #1e293b;
-      --border-medium: #334155;
-      --border-bright: #475569;
+      color-scheme: dark;
       
-      --text-primary: #f8fafc;
-      --text-secondary: #cbd5e1;
-      --text-muted: #64748b;
-      --text-dim: #475569;
+      --bg-base: #0A0B08;
+      --bg-void: #0A0B08;
+      --atmo-glow: #12160C;
+      --surface-1: #0F1109;
+      --surface-2: #14170E;
+      --surface-3: #1B1F14;
+      --surface-hover: #1B1F14;
       
-      --signal-emerald: #10b981;
-      --signal-emerald-glow: rgba(16, 185, 129, 0.25);
-      --signal-cyan: #06b6d4;
-      --signal-cyan-glow: rgba(6, 182, 212, 0.25);
-      --signal-amber: #f59e0b;
-      --signal-rose: #f43f5e;
-      --signal-rose-glow: rgba(244, 63, 94, 0.25);
-      --signal-indigo: #6366f1;
-      --signal-slate: #94a3b8;
+      --border-subtle: #1E2216;
+      --border: #2B3020;
+      --border-strong: #3A4029;
       
-      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --text-primary: #EDEEE1;
+      --text-secondary: #A6AA90;
+      --text-muted: #8B9173;
+      --text-disabled: #4A4E39;
+      
+      --accent: #CBF23F; /* Lime-fósforo dominante */
+      --accent-bg: rgba(203, 242, 63, 0.12);
+      --accent-border: rgba(203, 242, 63, 0.40);
+      
+      --stream: #45E0C4; /* Teal live / osciloscópio */
+      --stream-bg: rgba(69, 224, 196, 0.12);
+      --stream-border: rgba(69, 224, 196, 0.34);
+      
+      --success: #7CCB6A;
+      --success-bg: rgba(124, 203, 106, 0.12);
+      --success-border: rgba(124, 203, 106, 0.32);
+      
+      --warning: #E8A93B;
+      --warning-bg: rgba(232, 169, 59, 0.12);
+      --warning-border: rgba(232, 169, 59, 0.32);
+      
+      --danger: #F2685C;
+      --danger-bg: rgba(242, 104, 92, 0.12);
+      --danger-border: rgba(242, 104, 92, 0.34);
+      
+      --font-ui: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --font-prose: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      
+      --text-xs: 11px;
+      --text-sm: 12px;
+      --text-md: 13px;
+      --text-lg: 15px;
+      --text-xl: 18px;
+      --line-ui: 1.45;
+      
+      --h-topbar: 52px;
+      --h-subnav: 38px;
+      --h-row: 34px;
+      --radius-sm: 8px;
+      --radius-xs: 6px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: var(--font-sans);
-      background: var(--bg-base);
+      font-family: var(--font-ui);
+      background-color: var(--bg-base);
+      background-image: radial-gradient(circle at 50% 0%, var(--atmo-glow) 0%, var(--bg-base) 70%);
       color: var(--text-primary);
       display: flex;
       flex-direction: column;
@@ -56,14 +96,21 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       -webkit-font-smoothing: antialiased;
     }
     
+    /* Atmosphere scanlines of measurement instrument */
+    .atmo {
+      background-image: linear-gradient(0deg, transparent 23px, rgba(203, 242, 63, 0.02) 24px);
+      background-size: 100% 24px;
+    }
+    
     header {
-      background: var(--bg-surface);
+      height: var(--h-topbar);
+      background: var(--surface-1);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 24px;
+      padding: 0 var(--space-4);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: var(--space-3);
       flex-wrap: wrap;
       z-index: 10;
     }
@@ -71,27 +118,36 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-3);
     }
     .brand-logo {
       font-family: var(--font-mono);
-      font-size: 15px;
+      font-size: var(--text-lg);
       font-weight: 700;
       letter-spacing: -0.5px;
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-2);
+    }
+    .brand-logo::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
     }
     .brand-pill {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: var(--text-xs);
       font-weight: 600;
-      background: var(--signal-cyan-glow);
-      color: var(--signal-cyan);
-      border: 1px solid rgba(6, 182, 212, 0.4);
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
       padding: 2px 8px;
-      border-radius: 9999px;
+      border-radius: var(--radius-xs);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -100,17 +156,18 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       display: flex;
       background: var(--bg-base);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 3px;
+      border-radius: var(--radius-xs);
+      padding: 2px;
       gap: 2px;
     }
     .tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: var(--radius-xs);
+      font-size: var(--text-sm);
+      font-family: var(--font-ui);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
@@ -119,48 +176,50 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text-primary);
     }
     .tab-btn.active {
-      background: var(--bg-card);
-      color: var(--signal-cyan);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      background: var(--surface-2);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-border);
     }
     
     .controls {
       display: flex;
-      gap: 8px;
+      gap: var(--space-2);
       align-items: center;
       flex-wrap: wrap;
     }
     input, select, .action-btn {
-      background: var(--bg-base);
+      background: var(--surface-1);
       color: var(--text-secondary);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 7px 12px;
-      font-size: 12px;
-      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 6px 10px;
+      font-size: var(--text-xs);
+      font-family: var(--font-ui);
       transition: border-color 0.15s, background 0.15s;
     }
     input:focus, select:focus {
       outline: none;
-      border-color: var(--signal-cyan);
+      border-color: var(--accent);
       color: var(--text-primary);
+      box-shadow: 0 0 0 1px var(--accent-border);
     }
     .action-btn {
       cursor: pointer;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
     .action-btn:hover {
-      background: var(--bg-elevated);
-      border-color: var(--border-medium);
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
       color: var(--text-primary);
     }
     .action-btn.active {
-      background: var(--signal-cyan-glow);
-      border-color: var(--signal-cyan);
-      color: var(--signal-cyan);
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 6px var(--accent-bg);
     }
     
     .main-workspace {
@@ -170,157 +229,160 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       position: relative;
     }
     
-    /* Grid View */
+    /* Grid / Cluster View */
     .view-content {
       flex: 1;
       height: 100%;
       overflow-y: auto;
-      padding: 24px;
+      padding: var(--space-4);
       display: none;
     }
     .view-content.active {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--space-4);
     }
     
     .clusters-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 20px;
+      gap: var(--space-4);
       align-items: start;
     }
     
     .cluster-column {
-      background: var(--bg-surface);
+      background: var(--surface-1);
       border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: var(--radius-sm);
+      padding: var(--space-3);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: var(--space-3);
     }
     .cluster-title-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 8px;
+      padding-bottom: var(--space-2);
       border-bottom: 1px solid var(--border-subtle);
     }
     .cluster-name {
-      font-size: 13px;
+      font-size: var(--text-xs);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--signal-cyan);
-      font-family: var(--font-mono);
+      color: var(--accent);
     }
     .cluster-badge {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      background: var(--bg-base);
+      font-size: var(--text-xs);
+      background: var(--surface-2);
       color: var(--text-muted);
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 1px 6px;
+      border-radius: var(--radius-xs);
       border: 1px solid var(--border-subtle);
     }
     
+    /* SIGNAL Task Cards (Status-rail 3px left border) */
     .task-card {
-      background: var(--bg-card);
+      background: var(--surface-2);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 12px 14px;
+      border-radius: var(--radius-xs);
+      padding: var(--space-3);
       cursor: pointer;
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       position: relative;
     }
     .task-card:hover {
-      border-color: var(--signal-cyan);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
     }
     .task-card.selected {
-      border-color: var(--signal-cyan);
-      box-shadow: 0 0 0 1px var(--signal-cyan), 0 4px 14px rgba(6, 182, 212, 0.2);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 12px var(--accent-bg);
+      background: var(--surface-3);
     }
     
-    /* SIGNAL Status Indicators */
+    /* SIGNAL Status Rail (color + symbol + text) */
     .task-card.status-ready {
-      border-left: 4px solid var(--signal-emerald);
+      border-left: 3px solid var(--accent);
     }
     .task-card.status-blocked {
-      border-left: 4px solid var(--signal-rose);
+      border-left: 3px solid var(--danger);
     }
     .task-card.status-done {
-      border-left: 4px solid var(--signal-slate);
-      opacity: 0.7;
+      border-left: 3px solid var(--text-muted);
+      opacity: 0.72;
     }
     .task-card.status-partial {
-      border-left: 4px solid var(--signal-amber);
+      border-left: 3px solid var(--warning);
     }
     .task-card.simulated-done {
-      border-left: 4px solid var(--signal-cyan) !important;
-      background: rgba(6, 182, 212, 0.1) !important;
+      border-left: 3px solid var(--stream) !important;
+      background: var(--stream-bg) !important;
+      box-shadow: 0 0 8px var(--stream-bg);
     }
     
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-2);
     }
     .card-id {
-      font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: var(--text-sm);
       font-weight: 700;
       color: var(--text-primary);
     }
     .card-badges {
       display: flex;
-      gap: 4px;
+      gap: var(--space-1);
     }
     .signal-pill {
-      font-family: var(--font-mono);
       font-size: 10px;
-      font-weight: 600;
-      padding: 1px 6px;
+      font-weight: 700;
+      padding: 1px 5px;
       border-radius: 4px;
       border: 1px solid var(--border-subtle);
-      background: var(--bg-base);
+      background: var(--surface-1);
+      display: flex;
+      align-items: center;
+      gap: 3px;
     }
     .pill-ready {
-      background: var(--signal-emerald-glow);
-      color: var(--signal-emerald);
-      border-color: rgba(16, 185, 129, 0.4);
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-color: var(--accent-border);
     }
     .pill-blocked {
-      background: var(--signal-rose-glow);
-      color: var(--signal-rose);
-      border-color: rgba(244, 63, 94, 0.4);
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: var(--danger-border);
     }
     .pill-done {
-      background: rgba(148, 163, 184, 0.1);
-      color: var(--signal-slate);
-      border-color: rgba(148, 163, 184, 0.3);
+      background: rgba(139, 145, 115, 0.12);
+      color: var(--text-muted);
+      border-color: rgba(139, 145, 115, 0.32);
     }
     
     .card-title {
-      font-size: 13px;
+      font-size: var(--text-sm);
       font-weight: 500;
       color: var(--text-secondary);
-      line-height: 1.35;
+      line-height: var(--line-ui);
     }
     
-    /* DAG Canvas View */
+    /* Interactive DAG Canvas View */
     .dag-canvas-container {
       flex: 1;
       height: 100%;
       position: relative;
-      background: radial-gradient(circle, #1e293b 1px, transparent 1px);
-      background-size: 28px 28px;
+      background-color: var(--bg-base);
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 24px 24px;
       overflow: hidden;
     }
     #dagSvg {
@@ -332,59 +394,57 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       cursor: grabbing;
     }
     
-    /* Inspector Drawer */
+    /* SIGNAL Inspector Drawer */
     .inspector-drawer {
       width: 440px;
-      background: var(--bg-surface);
-      border-left: 1px solid var(--border-subtle);
+      background: var(--surface-1);
+      border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow-y: auto;
-      padding: 24px;
-      gap: 20px;
+      padding: var(--space-4);
+      gap: var(--space-3);
       z-index: 5;
     }
     .inspector-header {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 16px;
+      gap: var(--space-1);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: var(--space-3);
     }
     .inspector-id {
-      font-family: var(--font-mono);
-      font-size: 16px;
+      font-size: var(--text-lg);
       font-weight: 700;
-      color: var(--signal-cyan);
+      color: var(--accent);
     }
     .inspector-title {
-      font-size: 15px;
+      font-size: var(--text-md);
       font-weight: 600;
       color: var(--text-primary);
-      line-height: 1.4;
+      line-height: var(--line-ui);
     }
     
     .section-block {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-1);
     }
     .section-label {
-      font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: var(--text-xs);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
     }
     .section-box {
-      background: var(--bg-card);
+      background: var(--surface-2);
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 12px;
-      font-size: 13px;
-      line-height: 1.45;
+      border-radius: var(--radius-xs);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      line-height: var(--line-ui);
       color: var(--text-secondary);
     }
     
@@ -392,29 +452,28 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: var(--bg-card);
+      padding: 6px var(--space-2);
+      border-radius: var(--radius-xs);
+      background: var(--surface-2);
       border: 1px solid var(--border-subtle);
-      font-size: 12px;
+      font-size: var(--text-xs);
       cursor: pointer;
       transition: all 0.1s ease;
-      font-family: var(--font-mono);
     }
     .dep-item:hover {
-      border-color: var(--signal-cyan);
-      background: var(--bg-elevated);
+      border-color: var(--accent);
+      background: var(--surface-hover);
     }
     
-    /* Footer Status Bar */
+    /* Footer Telemetry Status Bar */
     footer {
-      background: var(--bg-surface);
+      height: 32px;
+      background: var(--surface-1);
       border-top: 1px solid var(--border-subtle);
-      padding: 8px 24px;
+      padding: 0 var(--space-4);
       display: flex;
-      gap: 20px;
-      font-size: 11px;
-      font-family: var(--font-mono);
+      gap: var(--space-4);
+      font-size: var(--text-xs);
       color: var(--text-muted);
       align-items: center;
       z-index: 10;
@@ -424,11 +483,11 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text-primary);
     }
     .stat-metric.metric-ready span {
-      color: var(--signal-emerald);
+      color: var(--accent);
     }
   </style>
 </head>
-<body>
+<body class="atmo">
   <header>
     <div class="brand">
       <div class="brand-logo">tare.tools</div>
@@ -471,7 +530,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Inspector Drawer -->
+    <!-- SIGNAL Inspector Drawer -->
     <div class="inspector-drawer" id="inspectorDrawer">
       <div class="inspector-header">
         <div class="inspector-id" id="inspId">Select a task</div>
@@ -485,7 +544,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       <div class="section-block">
         <div class="section-label">Simulation (What-If)</div>
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; color:var(--text-secondary);">
           <input type="checkbox" id="simToggle" onchange="toggleSimulateCurrent()">
           Simulate this task as DONE (evaluate unlocked frontier)
         </label>
@@ -503,12 +562,12 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       <div class="section-block">
         <div class="section-label">Upstream Blockers (Prerequisites)</div>
-        <div id="inspPrereqs" style="display:flex; flex-direction:column; gap:6px;">None</div>
+        <div id="inspPrereqs" style="display:flex; flex-direction:column; gap:4px;">None</div>
       </div>
 
       <div class="section-block">
         <div class="section-label">Downstream Impact (Unlocks)</div>
-        <div id="inspDownstream" style="display:flex; flex-direction:column; gap:6px;">None</div>
+        <div id="inspDownstream" style="display:flex; flex-direction:column; gap:4px;">None</div>
       </div>
 
       <button class="action-btn" id="copyPacketBtn" onclick="copyImplementationPacket()" style="justify-content:center; margin-top:8px;">
@@ -522,7 +581,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="stat-metric metric-ready">⚡ Actionable Frontier: <span id="statReady">0</span></div>
     <div class="stat-metric">Done: <span id="statDone">0</span></div>
     <div class="stat-metric">Edges: <span id="statEdges">0</span></div>
-    <div class="stat-metric" style="margin-left:auto;">Engine: <span>tare.tools DAG v0.2</span></div>
+    <div class="stat-metric" style="margin-left:auto;">Engine: <span>tare.tools SIGNAL DAG v0.2</span></div>
   </footer>
 
   <script>
@@ -685,7 +744,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       const ready = isNodeReady(n);
       document.getElementById('inspState').innerHTML = `
         <strong>Status:</strong> ${st}<br>
-        <strong>Feasibility:</strong> ${ready ? '<span style="color:var(--signal-emerald);font-weight:700;">⚡ READY (Actionable Frontier)</span>' : '<span style="color:var(--signal-rose);font-weight:700;">BLOCKED</span>'}<br>
+        <strong>Feasibility:</strong> ${ready ? '<span style="color:var(--accent);font-weight:700;">⚡ READY (Actionable Frontier)</span>' : '<span style="color:var(--danger);font-weight:700;">BLOCKED</span>'}<br>
         <strong>Cluster:</strong> ${n.cluster || 'general'} | <strong>Priority:</strong> ${n.priority || 'P1'} | <strong>Horizon:</strong> ${n.horizon || 'H1'}
       `;
 
@@ -706,7 +765,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
             const pSt = pNode ? getStatus(pNode) : 'UNKNOWN';
             return `<div class="dep-item" onclick="selectNode('${e.from}')"><span>${e.from} [${pSt}]</span><span>${e.type}</span></div>`;
           }).join('')
-        : '<div style="font-size:12px;color:var(--text-muted);">No upstream blockers.</div>';
+        : '<div style="font-size:11px;color:var(--text-muted);">No upstream blockers.</div>';
 
       // Downstream
       const downstream = edges.filter(e => e.from === id);
@@ -717,7 +776,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
             const dSt = dNode ? getStatus(dNode) : 'UNKNOWN';
             return `<div class="dep-item" onclick="selectNode('${e.to}')"><span>${e.to} [${dSt}]</span><span>${e.type}</span></div>`;
           }).join('')
-        : '<div style="font-size:12px;color:var(--text-muted);">No downstream dependents.</div>';
+        : '<div style="font-size:11px;color:var(--text-muted);">No downstream dependents.</div>';
 
       render();
     }
@@ -797,9 +856,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       const nodeCoords = {};
       const colWidth = 240;
-      const rowHeight = 90;
-      const offsetX = 60;
-      const offsetY = 60;
+      const rowHeight = 85;
+      const offsetX = 50;
+      const offsetY = 50;
 
       Object.keys(byLevel).forEach(lvlStr => {
         const lvl = parseInt(lvlStr);
@@ -812,7 +871,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         });
       });
 
-      // Render Edges
+      // Render Edges (oscilloscope style curves)
       edges.forEach(e => {
         const src = nodeCoords[e.from];
         const dst = nodeCoords[e.to];
@@ -822,8 +881,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           const d = `M ${src.x + 160} ${src.y + 24} C ${midX} ${src.y + 24}, ${midX} ${dst.y + 24}, ${dst.x} ${dst.y + 24}`;
           path.setAttribute('d', d);
           path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', '#334155');
-          path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke', '#2B3020');
+          path.setAttribute('stroke-width', '1.5');
           svg.appendChild(path);
         }
       });
@@ -840,38 +899,39 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
         const st = getStatus(n);
         const ready = isNodeReady(n);
-        let strokeColor = '#334155';
-        if (st === 'DONE') strokeColor = '#64748b';
-        else if (ready) strokeColor = '#10b981';
-        else strokeColor = '#f43f5e';
+        let strokeColor = '#2B3020';
+        if (st === 'DONE') strokeColor = '#8B9173';
+        else if (ready) strokeColor = '#CBF23F';
+        else strokeColor = '#F2685C';
 
-        if (n.id === selectedNodeId) strokeColor = '#06b6d4';
+        if (n.id === selectedNodeId) strokeColor = '#CBF23F';
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '160');
         rect.setAttribute('height', '48');
         rect.setAttribute('rx', '6');
-        rect.setAttribute('fill', '#141f33');
+        rect.setAttribute('fill', '#14170E');
         rect.setAttribute('stroke', strokeColor);
-        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : '1.5');
+        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2' : '1');
         g.appendChild(rect);
 
         const idText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         idText.setAttribute('x', '10');
         idText.setAttribute('y', '18');
-        idText.setAttribute('fill', '#f8fafc');
+        idText.setAttribute('fill', '#EDEEE1');
         idText.setAttribute('font-size', '11');
         idText.setAttribute('font-weight', 'bold');
-        idText.setAttribute('font-family', 'ui-monospace, monospace');
+        idText.setAttribute('font-family', '"IBM Plex Mono", ui-monospace, monospace');
         idText.textContent = n.id;
         g.appendChild(idText);
 
         const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         titleText.setAttribute('x', '10');
         titleText.setAttribute('y', '36');
-        titleText.setAttribute('fill', '#94a3b8');
+        titleText.setAttribute('fill', '#A6AA90');
         titleText.setAttribute('font-size', '10');
-        const trunc = (n.title || '').length > 20 ? (n.title || '').slice(0, 18) + '...' : (n.title || '');
+        titleText.setAttribute('font-family', '"IBM Plex Mono", ui-monospace, monospace');
+        const trunc = (n.title || '').length > 18 ? (n.title || '').slice(0, 16) + '...' : (n.title || '');
         titleText.textContent = trunc;
         g.appendChild(titleText);
 
