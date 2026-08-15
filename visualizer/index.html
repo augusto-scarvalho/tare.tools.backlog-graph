@@ -1251,11 +1251,26 @@
 
         const st = getStatus(n);
         const ready = isNodeReady(n);
+        
+        let statusColor = '#F2685C'; // Blocked (Danger)
+        if (st === 'DONE') statusColor = '#8B9173'; // Done (Muted)
+        else if (st === 'PARTIAL') statusColor = '#E8A93B'; // Partial (Warning)
+        else if (ready) statusColor = '#CBF23F'; // Ready (Lime Accent)
+        
+        if (simulatedDoneSet.has(n.id)) {
+          statusColor = '#45E0C4'; // Simulated (Teal Stream)
+        }
+
         let strokeColor = '#2B3020';
-        if (st === 'DONE') strokeColor = '#8B9173';
-        else if (ready) strokeColor = '#CBF23F';
-        if (n.id === selectedNodeId) strokeColor = '#CBF23F';
-        else if (upstream.nodes.has(n.id)) strokeColor = '#CBF23F';
+        let strokeWidth = '1';
+
+        if (n.id === selectedNodeId) {
+          strokeColor = '#CBF23F';
+          strokeWidth = '2.5';
+        } else if (upstream.nodes.has(n.id)) {
+          strokeColor = '#CBF23F';
+          strokeWidth = '2';
+        }
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '160');
@@ -1263,7 +1278,7 @@
         rect.setAttribute('rx', '6');
         rect.setAttribute('fill', n.id === selectedNodeId ? '#1B1F14' : '#14170E');
         rect.setAttribute('stroke', strokeColor);
-        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : (upstream.nodes.has(n.id) ? '2' : '1'));
+        rect.setAttribute('stroke-width', strokeWidth);
         
         if (n.id === selectedNodeId) {
           rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(203, 242, 63, 0.45))');
@@ -1273,16 +1288,22 @@
 
         g.appendChild(rect);
 
+        // SIGNAL 3px Status Rail on the left edge of the node
+        const statusRail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        statusRail.setAttribute('d', 'M 0 6 A 6 6 0 0 1 6 0 L 6 48 A 6 6 0 0 1 0 42 Z');
+        statusRail.setAttribute('fill', statusColor);
+        g.appendChild(statusRail);
+
         // Status indicator pip
         const pip = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        pip.setAttribute('cx', '12');
+        pip.setAttribute('cx', '16');
         pip.setAttribute('cy', '16');
         pip.setAttribute('r', '3.5');
-        pip.setAttribute('fill', strokeColor);
+        pip.setAttribute('fill', statusColor);
         g.appendChild(pip);
 
         const idText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        idText.setAttribute('x', '22');
+        idText.setAttribute('x', '26');
         idText.setAttribute('y', '19');
         idText.setAttribute('fill', '#EDEEE1');
         idText.setAttribute('font-size', '11');
@@ -1292,7 +1313,7 @@
         g.appendChild(idText);
 
         const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        titleText.setAttribute('x', '10');
+        titleText.setAttribute('x', '12');
         titleText.setAttribute('y', '37');
         titleText.setAttribute('fill', '#A6AA90');
         titleText.setAttribute('font-size', '10');

@@ -115,6 +115,14 @@ class VisualizerE2ETests(unittest.TestCase):
             page.click("#resetBtn")
             self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
             
+            # Check DAG status colors (status rail and pips)
+            # TASK-01 is DONE (#8B9173)
+            self.assertEqual(page.locator("#dagNode_TASK-01 circle").get_attribute("fill"), "#8B9173")
+            # TASK-02 is READY (#CBF23F)
+            self.assertEqual(page.locator("#dagNode_TASK-02 circle").get_attribute("fill"), "#CBF23F")
+            # TASK-03 is BLOCKED (#F2685C)
+            self.assertEqual(page.locator("#dagNode_TASK-03 circle").get_attribute("fill"), "#F2685C")
+            
             # 12. Test Drag and Drop of a Node in DAG Canvas
             node_box = page.locator("#dagNode_TASK-01").bounding_box()
             self.assertIsNotNone(node_box)
