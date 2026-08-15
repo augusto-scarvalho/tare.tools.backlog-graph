@@ -277,6 +277,18 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertEqual(light_bg, "#f8fafc")
             self.assertEqual(page.evaluate("() => document.documentElement.style.colorScheme"), "light")
             
+            # Switch to Solarized Light
+            page.select_option("#themeSelector", "solarized_light")
+            solarized_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")
+            self.assertEqual(solarized_bg, "#fdf6e3")
+            self.assertEqual(page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_THEME')"), "solarized_light")
+
+            # Switch to GitHub Light
+            page.select_option("#themeSelector", "github_light")
+            github_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")
+            self.assertEqual(github_bg, "#ffffff")
+            self.assertEqual(page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_THEME')"), "github_light")
+
             # Switch back to Signal Canonical Default
             page.select_option("#themeSelector", "signal")
             signal_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")

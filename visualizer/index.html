@@ -870,13 +870,22 @@
       </div>
 
       <select id="themeSelector" onchange="applyTheme(this.value)" style="font-weight:600; font-size:11px;" title="Interface & Canvas Theme">
-        <option value="signal">⚡ Signal (Default)</option>
-        <option value="dracula">🧛 Dracula</option>
-        <option value="tokyo_night">🌃 Tokyo Night</option>
-        <option value="nord">❄️ Nord Frost</option>
-        <option value="light">☀️ Solar Paper (Claro)</option>
-        <option value="monokai">🔥 Monokai Pro</option>
-        <option value="catppuccin">☕ Catppuccin Mocha</option>
+        <optgroup label="🌙 Dark Themes">
+          <option value="signal">⚡ Signal (Default)</option>
+          <option value="dracula">🧛 Dracula</option>
+          <option value="tokyo_night">🌃 Tokyo Night</option>
+          <option value="nord">❄️ Nord Frost</option>
+          <option value="monokai">🔥 Monokai Pro</option>
+          <option value="catppuccin">☕ Catppuccin Mocha</option>
+        </optgroup>
+        <optgroup label="☀️ Light Themes">
+          <option value="light">☀️ Solar Paper (Claro)</option>
+          <option value="solarized_light">📜 Solarized Light</option>
+          <option value="github_light">🐙 GitHub Light</option>
+          <option value="nord_light">🏔️ Nord Snow Storm</option>
+          <option value="catppuccin_latte">🥛 Catppuccin Latte</option>
+          <option value="gruvbox_light">📻 Gruvbox Light</option>
+        </optgroup>
       </select>
     </div>
 
@@ -8798,6 +8807,216 @@
           accent: '#a6e3a1',
           textPrimary: '#cdd6f4',
           textSecondary: '#cba6f7'
+        }
+      },
+      solarized_light: {
+        name: '📜 Solarized Light',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#fdf6e3',
+          '--bg-void': '#eee8d5',
+          '--atmo-glow': '#e0d9c5',
+          '--surface-1': '#ffffff',
+          '--surface-2': '#eee8d5',
+          '--surface-3': '#e0d9c5',
+          '--surface-hover': '#d6ceb8',
+          '--border-subtle': '#e0d9c5',
+          '--border': '#cbcdbe',
+          '--border-strong': '#657b83',
+          '--text-primary': '#073642',
+          '--text-secondary': '#586e75',
+          '--text-muted': '#93a1a1',
+          '--text-disabled': '#b58900',
+          '--accent': '#268bd2',
+          '--accent-bg': 'rgba(38, 139, 210, 0.12)',
+          '--accent-border': 'rgba(38, 139, 210, 0.40)',
+          '--stream': '#2aa198',
+          '--stream-bg': 'rgba(42, 161, 152, 0.12)',
+          '--stream-border': 'rgba(42, 161, 152, 0.40)',
+          '--success': '#859900',
+          '--warning': '#b58900',
+          '--danger': '#dc322f'
+        },
+        colors: {
+          ready: '#859900',
+          blocked: '#dc322f',
+          done: '#93a1a1',
+          partial: '#b58900',
+          simulated: '#2aa198',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#eee8d5',
+          nodeStroke: '#cbcdbe',
+          accent: '#268bd2',
+          textPrimary: '#073642',
+          textSecondary: '#586e75'
+        }
+      },
+      github_light: {
+        name: '🐙 GitHub Light',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#ffffff',
+          '--bg-void': '#f6f8fa',
+          '--atmo-glow': '#eaeef2',
+          '--surface-1': '#f6f8fa',
+          '--surface-2': '#eaeff4',
+          '--surface-3': '#e1e4e8',
+          '--surface-hover': '#e1e4e8',
+          '--border-subtle': '#eaecef',
+          '--border': '#d0d7de',
+          '--border-strong': '#8c959f',
+          '--text-primary': '#1f2328',
+          '--text-secondary': '#59636e',
+          '--text-muted': '#8c959f',
+          '--text-disabled': '#d0d7de',
+          '--accent': '#0969da',
+          '--accent-bg': 'rgba(9, 105, 218, 0.10)',
+          '--accent-border': 'rgba(9, 105, 218, 0.35)',
+          '--stream': '#0550ae',
+          '--stream-bg': 'rgba(5, 80, 174, 0.10)',
+          '--stream-border': 'rgba(5, 80, 174, 0.35)',
+          '--success': '#1a7f37',
+          '--warning': '#9a6700',
+          '--danger': '#cf222e'
+        },
+        colors: {
+          ready: '#1a7f37',
+          blocked: '#cf222e',
+          done: '#8c959f',
+          partial: '#9a6700',
+          simulated: '#0550ae',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#eaeff4',
+          nodeStroke: '#d0d7de',
+          accent: '#0969da',
+          textPrimary: '#1f2328',
+          textSecondary: '#59636e'
+        }
+      },
+      nord_light: {
+        name: '🏔️ Nord Snow Storm',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#eceff4',
+          '--bg-void': '#e5e9f0',
+          '--atmo-glow': '#d8dee9',
+          '--surface-1': '#ffffff',
+          '--surface-2': '#e5e9f0',
+          '--surface-3': '#d8dee9',
+          '--surface-hover': '#cbd3e0',
+          '--border-subtle': '#d8dee9',
+          '--border': '#c2cad8',
+          '--border-strong': '#4c566a',
+          '--text-primary': '#2e3440',
+          '--text-secondary': '#4c566a',
+          '--text-muted': '#7b88a1',
+          '--text-disabled': '#c2cad8',
+          '--accent': '#5e81ac',
+          '--accent-bg': 'rgba(94, 129, 172, 0.12)',
+          '--accent-border': 'rgba(94, 129, 172, 0.40)',
+          '--stream': '#88c0d0',
+          '--stream-bg': 'rgba(136, 192, 208, 0.15)',
+          '--stream-border': 'rgba(136, 192, 208, 0.45)',
+          '--success': '#a3be8c',
+          '--warning': '#ebcb8b',
+          '--danger': '#bf616a'
+        },
+        colors: {
+          ready: '#a3be8c',
+          blocked: '#bf616a',
+          done: '#7b88a1',
+          partial: '#ebcb8b',
+          simulated: '#88c0d0',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#e5e9f0',
+          nodeStroke: '#c2cad8',
+          accent: '#5e81ac',
+          textPrimary: '#2e3440',
+          textSecondary: '#4c566a'
+        }
+      },
+      catppuccin_latte: {
+        name: '🥛 Catppuccin Latte',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#eff1f5',
+          '--bg-void': '#e6e9ef',
+          '--atmo-glow': '#dce0e8',
+          '--surface-1': '#ffffff',
+          '--surface-2': '#e6e9ef',
+          '--surface-3': '#dce0e8',
+          '--surface-hover': '#ccd0da',
+          '--border-subtle': '#dce0e8',
+          '--border': '#bcc0cc',
+          '--border-strong': '#6c6f85',
+          '--text-primary': '#4c4f69',
+          '--text-secondary': '#6c6f85',
+          '--text-muted': '#8c8fa1',
+          '--text-disabled': '#bcc0cc',
+          '--accent': '#1e66f5',
+          '--accent-bg': 'rgba(30, 102, 245, 0.12)',
+          '--accent-border': 'rgba(30, 102, 245, 0.40)',
+          '--stream': '#04a5e5',
+          '--stream-bg': 'rgba(4, 165, 229, 0.12)',
+          '--stream-border': 'rgba(4, 165, 229, 0.40)',
+          '--success': '#40a02b',
+          '--warning': '#df8e1d',
+          '--danger': '#d20f39'
+        },
+        colors: {
+          ready: '#40a02b',
+          blocked: '#d20f39',
+          done: '#8c8fa1',
+          partial: '#df8e1d',
+          simulated: '#04a5e5',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#e6e9ef',
+          nodeStroke: '#bcc0cc',
+          accent: '#1e66f5',
+          textPrimary: '#4c4f69',
+          textSecondary: '#6c6f85'
+        }
+      },
+      gruvbox_light: {
+        name: '📻 Gruvbox Light',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#fbf1c7',
+          '--bg-void': '#ebdbb2',
+          '--atmo-glow': '#d5c4a1',
+          '--surface-1': '#ffffff',
+          '--surface-2': '#ebdbb2',
+          '--surface-3': '#d5c4a1',
+          '--surface-hover': '#bdae93',
+          '--border-subtle': '#d5c4a1',
+          '--border': '#bdae93',
+          '--border-strong': '#504945',
+          '--text-primary': '#282828',
+          '--text-secondary': '#504945',
+          '--text-muted': '#7c6f64',
+          '--text-disabled': '#bdae93',
+          '--accent': '#af3a03',
+          '--accent-bg': 'rgba(175, 58, 3, 0.12)',
+          '--accent-border': 'rgba(175, 58, 3, 0.40)',
+          '--stream': '#076678',
+          '--stream-bg': 'rgba(7, 102, 120, 0.12)',
+          '--stream-border': 'rgba(7, 102, 120, 0.40)',
+          '--success': '#79740e',
+          '--warning': '#b57614',
+          '--danger': '#9d0006'
+        },
+        colors: {
+          ready: '#79740e',
+          blocked: '#9d0006',
+          done: '#7c6f64',
+          partial: '#b57614',
+          simulated: '#076678',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#ebdbb2',
+          nodeStroke: '#bdae93',
+          accent: '#af3a03',
+          textPrimary: '#282828',
+          textSecondary: '#504945'
         }
       }
     };
