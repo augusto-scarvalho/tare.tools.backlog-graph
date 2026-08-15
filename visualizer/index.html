@@ -631,7 +631,7 @@
       display: flex;
     }
     .ops-modal {
-      width: 820px;
+      width: 760px;
       max-width: 92vw;
       max-height: 86vh;
       background: var(--surface-1);
@@ -876,15 +876,13 @@
   <div class="modal-backdrop" id="opsModalBackdrop" onclick="handleBackdropClick(event)">
     <div class="ops-modal">
       <div class="modal-header">
-        <div class="modal-title">⚡ SIGNAL Graph Algorithms & Operations Station</div>
+        <div class="modal-title">⚡ Graph Operations & Diagnostic Station</div>
         <button class="modal-close-btn" onclick="closeOpsModal()">✕</button>
       </div>
       <div class="modal-nav">
-        <button class="modal-nav-btn active" id="modalTabDoctor" onclick="switchOpsTab('doctor')">🔍 Graph Doctor</button>
-        <button class="modal-nav-btn" id="modalTabRanked" onclick="switchOpsTab('ranked')">🏆 Ranked Next Frontier</button>
-        <button class="modal-nav-btn" id="modalTabPath" onclick="switchOpsTab('path')">🧭 Shortest Path</button>
-        <button class="modal-nav-btn" id="modalTabTopology" onclick="switchOpsTab('topology')">📊 Topology & Hubs</button>
-        <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')">💾 Export Station</button>
+        <button class="modal-nav-btn active" id="modalTabDoctor" onclick="switchOpsTab('doctor')">🔍 Doctor & Metrics</button>
+        <button class="modal-nav-btn" id="modalTabRanked" onclick="switchOpsTab('ranked')">⚡ Action Queue & Path</button>
+        <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')">💾 Export Artifacts</button>
       </div>
       <div class="modal-body" id="opsModalContent"></div>
     </div>
@@ -6355,6 +6353,9 @@
     let showCriticalPath = false;
     let currentView = 'grid';
 
+    // Custom Path Highlight state (e.g. from shortest path finder)
+    let activeCustomPath = null;
+
     // Node Positions map (preserves drag-and-drop locations)
     const nodePositions = {};
 
@@ -6543,9 +6544,13 @@
         pillLabel = 'SIMULATED';
       }
 
-      // Chain highlight & dimming (Recursive upstream only)
+      // Chain highlight & dimming (Recursive upstream only or active custom path)
       let chainClass = '';
-      if (selectedNodeId) {
+      if (activeCustomPath) {
+        if (n.id === selectedNodeId) chainClass = 'selected';
+        else if (activeCustomPath.nodes.has(n.id)) chainClass = 'chain-upstream';
+        else chainClass = 'dimmed';
+      } else if (selectedNodeId) {
         if (n.id === selectedNodeId) {
           chainClass = 'selected';
         } else if (upstream.nodes.has(n.id)) {
@@ -6719,6 +6724,7 @@
 
     function deselectNode() {
       selectedNodeId = null;
+      activeCustomPath = null;
       document.getElementById('inspId').textContent = 'Select a task';
       document.getElementById('inspTitle').textContent = 'Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context. Press [Esc] to deselect.';
       document.getElementById('inspState').textContent = '-';
@@ -6753,6 +6759,7 @@
       document.getElementById('clusterFilter').value = 'ALL';
       simulatedDoneSet.clear();
       showCriticalPath = false;
+      activeCustomPath = null;
       document.getElementById('criticalPathBtn').className = 'action-btn';
       
       // Reset DAG Viewport Pan & Zoom
@@ -6904,6 +6911,20 @@
       });
     }
 
+    function focusNodeOnDag(nodeId) {
+      closeOpsModal();
+      switchView('dag');
+      selectNode(nodeId);
+      
+      // Pan to center the selected node in DAG canvas
+      const pos = nodePositions[nodeId];
+      if (pos) {
+        panX = 350 - pos.x * zoomLevel;
+        panY = 220 - pos.y * zoomLevel;
+        updateViewportTransform();
+      }
+    }
+
     function renderDag() {
       const visible = getFilteredNodes();
       const vSet = new Set(visible.map(n => n.id));
@@ -6930,7 +6951,7 @@
         computeAutoLayout(visible);
       }
 
-      // Compute recursive chains for electrical pulse highlight (upstream only)
+      // Compute recursive chains for electrical pulse highlight (upstream only or custom path)
       const upstream = getRecursiveUpstream(selectedNodeId);
 
       // Render Edges
@@ -6947,7 +6968,13 @@
           path.setAttribute('fill', 'none');
           
           const edgeKey = `${e.from}->${e.to}`;
-          if (selectedNodeId) {
+          if (activeCustomPath) {
+            if (activeCustomPath.edges.has(edgeKey)) {
+              path.setAttribute('class', 'edge-pulse-upstream');
+            } else {
+              path.setAttribute('class', 'edge-dimmed');
+            }
+          } else if (selectedNodeId) {
             if (upstream.edges.has(edgeKey)) {
               path.setAttribute('class', 'edge-pulse-upstream');
             } else {
@@ -6972,8 +6999,16 @@
         g.setAttribute('data-id', n.id);
         g.style.cursor = 'grab';
 
-        // Dimming & selection classes (Recursive upstream only)
-        if (selectedNodeId) {
+        // Dimming & selection classes (Recursive upstream or custom path)
+        if (activeCustomPath) {
+          if (n.id === selectedNodeId) {
+            g.setAttribute('class', 'dag-node-selected');
+          } else if (activeCustomPath.nodes.has(n.id)) {
+            g.setAttribute('class', 'dag-node-chain');
+          } else {
+            g.setAttribute('class', 'dag-node-dimmed');
+          }
+        } else if (selectedNodeId) {
           if (n.id === selectedNodeId) {
             g.setAttribute('class', 'dag-node-selected');
           } else if (upstream.nodes.has(n.id)) {
@@ -7012,10 +7047,12 @@
         let strokeColor = '#2B3020';
         let strokeWidth = '1';
 
+        const isChain = activeCustomPath ? activeCustomPath.nodes.has(n.id) : upstream.nodes.has(n.id);
+
         if (n.id === selectedNodeId) {
           strokeColor = '#CBF23F';
           strokeWidth = '2.5';
-        } else if (upstream.nodes.has(n.id)) {
+        } else if (isChain) {
           strokeColor = '#CBF23F';
           strokeWidth = '2';
         }
@@ -7030,7 +7067,7 @@
         
         if (n.id === selectedNodeId) {
           rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(203, 242, 63, 0.45))');
-        } else if (upstream.nodes.has(n.id)) {
+        } else if (isChain) {
           rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(203, 242, 63, 0.3))');
         }
 
@@ -7145,7 +7182,7 @@
     }
 
     function switchOpsTab(tab) {
-      ['doctor', 'ranked', 'path', 'topology', 'export'].forEach(t => {
+      ['doctor', 'ranked', 'export'].forEach(t => {
         const btn = document.getElementById('modalTab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) btn.className = `modal-nav-btn ${t === tab ? 'active' : ''}`;
       });
@@ -7156,11 +7193,7 @@
       if (tab === 'doctor') {
         renderDoctorTab(body);
       } else if (tab === 'ranked') {
-        renderRankedTab(body);
-      } else if (tab === 'path') {
-        renderPathTab(body);
-      } else if (tab === 'topology') {
-        renderTopologyTab(body);
+        renderActionQueueAndPathTab(body);
       } else if (tab === 'export') {
         renderExportTab(body);
       }
@@ -7173,6 +7206,16 @@
       const doneNodes = nodes.filter(n => getStatus(n) === 'DONE');
       const blockedNodes = nodes.filter(n => getStatus(n) !== 'DONE' && !isNodeReady(n));
 
+      const inDeg = {};
+      const outDeg = {};
+      nodes.forEach(n => { inDeg[n.id] = 0; outDeg[n.id] = 0; });
+      edges.forEach(e => {
+        if (outDeg[e.from] !== undefined) outDeg[e.from]++;
+        if (inDeg[e.to] !== undefined) inDeg[e.to]++;
+      });
+
+      const maxPossibleEdges = nodes.length > 1 ? nodes.length * (nodes.length - 1) : 1;
+      const density = (edges.length / maxPossibleEdges).toFixed(4);
       const isHealthy = sccs.length === 0 && dangling.length === 0;
 
       container.innerHTML = `
@@ -7181,22 +7224,22 @@
             ${isHealthy ? '✅ GRAPH TOPOLOGY HEALTHY (Deterministic Pass)' : '❌ INTEGRITY ERRORS DETECTED'}
           </div>
           <div style="font-size:12px; color:var(--text-secondary);">
-            Tarjan SCC Cycles: <strong>${sccs.length}</strong> | Dangling Edges: <strong>${dangling.length}</strong> | Verified Nodes: <strong>${nodes.length}</strong>
+            Tarjan Cycles: <strong>${sccs.length}</strong> | Dangling Edges: <strong>${dangling.length}</strong> | Verified Nodes: <strong>${nodes.length}</strong> | Density: <strong>${density}</strong>
           </div>
         </div>
 
         <div class="report-card">
           <div class="section-label">Topological Partition Summary</div>
           <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:4px;">
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
               <div style="font-size:10px; color:var(--text-muted);">⚡ ACTIONABLE FRONTIER</div>
               <div style="font-size:18px; font-weight:700; color:var(--accent);">${readyNodes.length}</div>
             </div>
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
               <div style="font-size:10px; color:var(--text-muted);">🟢 COMPLETED / SHIPPED</div>
               <div style="font-size:18px; font-weight:700; color:var(--text-muted);">${doneNodes.length}</div>
             </div>
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
               <div style="font-size:10px; color:var(--text-muted);">🚫 BLOCKED BACKLOG</div>
               <div style="font-size:18px; font-weight:700; color:var(--danger);">${blockedNodes.length}</div>
             </div>
@@ -7219,7 +7262,7 @@
       `;
     }
 
-    function renderRankedTab(container) {
+    function renderActionQueueAndPathTab(container) {
       const readyNodes = nodes.filter(isNodeReady);
       
       const priorityWeights = { P0: 50, P1: 35, P2: 20, P3: 10 };
@@ -7235,50 +7278,51 @@
         return { node: n, score: total, parts: { pw, cw, hw, uw } };
       }).sort((a, b) => b.score - a.score);
 
-      container.innerHTML = `
-        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
-          Multi-criteria ranking engine sorting candidate frontier tasks by Priority + Criticality + Horizon + Downstream Unlock Score:
-        </div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          ${scored.length === 0 ? '<div style="color:var(--text-muted);">No actionable tasks on the frontier.</div>' : ''}
-          ${scored.map((item, idx) => `
-            <div class="report-card pass" style="cursor:pointer;" onclick="selectNode('${item.node.id}'); closeOpsModal();">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:700; color:var(--accent);">#${idx + 1} — ${item.node.id}: ${item.node.title}</span>
-                <span class="signal-pill pill-ready" style="font-size:11px;">Score: ${item.score}</span>
-              </div>
-              <div style="display:flex; gap:6px; font-size:10px; color:var(--text-muted); margin-top:2px;">
-                <span>Priority: ${item.node.priority || 'P1'} (+${item.parts.pw})</span> •
-                <span>Criticality: ${item.node.criticality || 'MEDIUM'} (+${item.parts.cw})</span> •
-                <span>Horizon: ${item.node.horizon || 'H1'} (+${item.parts.hw})</span> •
-                <span>Unlock: ${item.node.unlock_score || 0} (+${item.parts.uw})</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    function renderPathTab(container) {
-      const nodeOptions = nodes.map(n => `<option value="${n.id}">${n.id} — ${(n.title || '').slice(0, 30)}</option>`).join('');
+      const nodeOptions = nodes.map(n => `<option value="${n.id}">${n.id} — ${(n.title || '').slice(0, 24)}</option>`).join('');
 
       container.innerHTML = `
         <div class="report-card">
-          <div class="section-label">Shortest Dependency Path Analyzer (BFS)</div>
-          <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+          <div class="section-label">⚡ Top Ranked Actionable Tasks (Click to Focus on DAG)</div>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+            ${scored.length === 0 ? '<div style="color:var(--text-muted); font-size:12px;">No actionable tasks on the frontier.</div>' : ''}
+            ${scored.slice(0, 5).map((item, idx) => `
+              <div class="report-card pass" style="cursor:pointer; padding:8px 12px;" onclick="focusNodeOnDag('${item.node.id}')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:700; color:var(--accent);">#${idx + 1} — ${item.node.id}: ${item.node.title}</span>
+                  <span class="signal-pill pill-ready" style="font-size:11px;">Score: ${item.score} ➔ Focus</span>
+                </div>
+                <div style="display:flex; gap:6px; font-size:10px; color:var(--text-muted); margin-top:2px;">
+                  <span>Priority: ${item.node.priority || 'P1'}</span> •
+                  <span>Horizon: ${item.node.horizon || 'H1'}</span> •
+                  <span>Unlocks: ${item.node.unlock_score || 0} tasks</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="section-label">🧭 Shortest Dependency Path Finder (BFS)</div>
+          <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
             <select id="pathStartSelect" style="flex:1;">${nodeOptions}</select>
             <span style="color:var(--accent); font-weight:700;">➔</span>
             <select id="pathEndSelect" style="flex:1;">${nodeOptions}</select>
-            <button class="action-btn" onclick="executeFindPath()" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border);">
+            <button class="action-btn" id="findPathBtn" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border);">
               Find Path
             </button>
           </div>
+          <div id="pathResultBox" style="margin-top:6px;"></div>
         </div>
-        <div id="pathResultBox" style="margin-top:8px;"></div>
       `;
 
       if (nodes.length >= 2) {
-        document.getElementById('pathEndSelect').selectedIndex = Math.min(nodes.length - 1, 5);
+        const endSelect = document.getElementById('pathEndSelect');
+        if (endSelect) endSelect.selectedIndex = Math.min(nodes.length - 1, 2);
+      }
+
+      const findBtn = document.getElementById('findPathBtn');
+      if (findBtn) {
+        findBtn.onclick = () => executeFindPath();
       }
     }
 
@@ -7288,7 +7332,7 @@
       const box = document.getElementById('pathResultBox');
 
       if (start === end) {
-        box.innerHTML = `<div class="report-card warn">Start and target nodes are the same (${start}). Path length: 0.</div>`;
+        box.innerHTML = `<div class="report-card warn" style="font-size:12px;">Start and target nodes are the same (${start}). Path length: 0.</div>`;
         return;
       }
 
@@ -7321,74 +7365,33 @@
 
       if (foundPath) {
         box.innerHTML = `
-          <div class="report-card pass">
-            <div style="font-weight:700; color:var(--accent);">✅ Shortest Path Found (${foundPath.length - 1} hops):</div>
+          <div class="report-card pass" style="padding:10px;">
+            <div style="font-weight:700; color:var(--accent);">✅ Path Found (${foundPath.length - 1} hops):</div>
             <div style="font-size:12px; font-family:var(--font-mono); margin: 6px 0; color:var(--text-primary);">
               ${foundPath.join(' ➔ ')}
             </div>
-            <button class="action-btn" onclick="highlightPathOnDag(${JSON.stringify(foundPath)}); closeOpsModal(); switchView('dag');" style="margin-top:6px; width:fit-content;">
-              ⚡ Highlight Path on DAG Canvas
+            <button class="action-btn" id="traceOnDagBtn" style="width:fit-content; background:var(--accent); color:#0A0B08; font-weight:700;">
+              ⚡ Trace & Highlight on DAG Canvas
             </button>
           </div>
         `;
+
+        const traceBtn = document.getElementById('traceOnDagBtn');
+        if (traceBtn) {
+          traceBtn.onclick = () => {
+            activeCustomPath = {
+              nodes: new Set(foundPath),
+              edges: new Set()
+            };
+            for (let i = 0; i < foundPath.length - 1; i++) {
+              activeCustomPath.edges.add(`${foundPath[i]}->${foundPath[i+1]}`);
+            }
+            focusNodeOnDag(foundPath[foundPath.length - 1]);
+          };
+        }
       } else {
-        box.innerHTML = `<div class="report-card warn">No directed dependency path exists from <strong>${start}</strong> to <strong>${end}</strong>.</div>`;
+        box.innerHTML = `<div class="report-card warn" style="font-size:12px;">No directed dependency path exists from <strong>${start}</strong> to <strong>${end}</strong>.</div>`;
       }
-    }
-
-    function highlightPathOnDag(pathNodes) {
-      selectNode(pathNodes[pathNodes.length - 1]);
-    }
-
-    function renderTopologyTab(container) {
-      const inDeg = {};
-      const outDeg = {};
-      nodes.forEach(n => { inDeg[n.id] = 0; outDeg[n.id] = 0; });
-      edges.forEach(e => {
-        if (outDeg[e.from] !== undefined) outDeg[e.from]++;
-        if (inDeg[e.to] !== undefined) inDeg[e.to]++;
-      });
-
-      const maxIn = nodes.slice().sort((a, b) => (inDeg[b.id] || 0) - (inDeg[a.id] || 0)).slice(0, 3);
-      const maxOut = nodes.slice().sort((a, b) => (outDeg[b.id] || 0) - (outDeg[a.id] || 0)).slice(0, 3);
-
-      const maxPossibleEdges = nodes.length > 1 ? nodes.length * (nodes.length - 1) : 1;
-      const density = (edges.length / maxPossibleEdges).toFixed(4);
-
-      container.innerHTML = `
-        <div class="report-card">
-          <div class="section-label">Graph Topology & Complexity Metrics</div>
-          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:6px;">
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-              <div style="font-size:10px; color:var(--text-muted);">TOTAL VERTICES</div>
-              <div style="font-size:18px; font-weight:700; color:var(--text-primary);">${nodes.length}</div>
-            </div>
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-              <div style="font-size:10px; color:var(--text-muted);">DIRECTED EDGES</div>
-              <div style="font-size:18px; font-weight:700; color:var(--accent);">${edges.length}</div>
-            </div>
-            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-              <div style="font-size:10px; color:var(--text-muted);">GRAPH DENSITY</div>
-              <div style="font-size:18px; font-weight:700; color:var(--text-secondary);">${density}</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div class="report-card">
-            <div class="section-label">Highest Fan-In (Blocker Hubs)</div>
-            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
-              ${maxIn.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px;"><span>${n.id}</span><strong>${inDeg[n.id]} prereqs</strong></div>`).join('')}
-            </div>
-          </div>
-          <div class="report-card">
-            <div class="section-label">Highest Fan-Out (Key Enablers)</div>
-            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
-              ${maxOut.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px;"><span>${n.id}</span><strong>${outDeg[n.id]} unlocks</strong></div>`).join('')}
-            </div>
-          </div>
-        </div>
-      `;
     }
 
     function renderExportTab(container) {
@@ -7425,7 +7428,7 @@
       } else if (format === 'mermaid') {
         content = 'flowchart TD\n';
         nodes.forEach(n => {
-          content += `    ${n.id}["${n.id}: ${n.title.replace(/"/g, "'")}"]\n`;
+          content += `    ${n.id}["${n.id}: ${(n.title || '').replace(/"/g, "'")}"]\n`;
         });
         edges.forEach(e => {
           content += `    ${e.from} --> ${e.to}\n`;

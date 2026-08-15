@@ -206,29 +206,41 @@ class VisualizerE2ETests(unittest.TestCase):
             page.select_option("#projectSelector", "sample")
             self.assertEqual(page.locator("#statTotal").text_content(), "3")
 
-            # 17. Test ⚡ Graph Ops Station Modal
+            # 17. Test ⚡ Graph Ops Station Modal & DAG Navigation
             page.click("#opsModalBtn")
             self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
             
             # Tab 1: Doctor Audit
             self.assertIn("GRAPH TOPOLOGY HEALTHY", page.locator("#opsModalContent").text_content())
             
-            # Tab 2: Ranked Next Frontier
+            # Tab 2: Action Queue & Path Finder
             page.click("#modalTabRanked")
             self.assertIn("TASK-02", page.locator("#opsModalContent").text_content())
             
-            # Tab 3: Shortest Path Finder
-            page.click("#modalTabPath")
+            # Click Ranked task: must close modal and focus/select on DAG
+            page.click(".report-card.pass:has-text('TASK-02')")
+            self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
+            self.assertTrue(page.locator("#dagView").is_visible())
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-02")
+            
+            # Re-open and test Shortest Path tracing to DAG
+            page.click("#opsModalBtn")
+            page.click("#modalTabRanked")
             page.select_option("#pathStartSelect", "TASK-01")
             page.select_option("#pathEndSelect", "TASK-03")
-            page.click("button:has-text('Find Path')")
+            page.click("#findPathBtn")
             self.assertIn("TASK-01 ➔ TASK-02 ➔ TASK-03", page.locator("#pathResultBox").text_content())
             
-            # Tab 4: Topology & Hubs
-            page.click("#modalTabTopology")
-            self.assertIn("TOTAL VERTICES", page.locator("#opsModalContent").text_content())
+            # Click Trace on DAG: must close modal, switch to DAG, and activate path
+            page.click("#traceOnDagBtn")
+            self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
+            self.assertTrue(page.locator("#dagView").is_visible())
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-03")
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
             
-            # Tab 5: Export Station
+            # Tab 3: Export Station
+            page.click("#opsModalBtn")
             page.click("#modalTabExport")
             self.assertTrue(page.locator("button:has-text('Download JSON')").is_visible())
             
