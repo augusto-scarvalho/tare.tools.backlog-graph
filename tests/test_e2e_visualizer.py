@@ -155,11 +155,11 @@ class VisualizerE2ETests(unittest.TestCase):
             page.click("#criticalPathBtn")
             self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
             
-            node_box = page.locator("#dagNode_TASK-01").bounding_box()
+            node_box = page.locator("#dagNode_TASK-03").bounding_box()
             self.assertIsNotNone(node_box)
             
-            initial_transform = page.locator("#dagNode_TASK-01").get_attribute("transform")
-            initial_edge_d = page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d")
+            initial_transform = page.locator("#dagNode_TASK-03").get_attribute("transform")
+            initial_edge_d = page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("d")
             
             # Drag node by 100px to the right and 50px down
             page.mouse.move(node_box["x"] + 20, node_box["y"] + 20)
@@ -168,8 +168,8 @@ class VisualizerE2ETests(unittest.TestCase):
             page.mouse.up()
             
             # Verify node transform moved and connected edge curve updated
-            self.assertNotEqual(page.locator("#dagNode_TASK-01").get_attribute("transform"), initial_transform)
-            self.assertNotEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d"), initial_edge_d)
+            self.assertNotEqual(page.locator("#dagNode_TASK-03").get_attribute("transform"), initial_transform)
+            self.assertNotEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("d"), initial_edge_d)
             
             # CRITICAL ASSERTION: The critical path pulse highlight STILL persists after drag!
             self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
