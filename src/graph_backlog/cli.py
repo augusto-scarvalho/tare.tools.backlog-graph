@@ -178,6 +178,30 @@ def build_parser() -> argparse.ArgumentParser:
     mt.add_argument("--max-mutants", type=int, default=25, help="Max mutants to test")
     mt.add_argument("--test-module", action="append", help="Test modules to run against mutants")
 
+    # 3rd Party Adapters & Ingestion
+    igh = sp.add_parser("import-github", help="Import graph from GitHub Issues JSON file or piped stdin")
+    igh.add_argument("file", nargs="?", help="Path to GitHub Issues JSON (reads stdin if omitted)")
+    igh.add_argument("--prefix", default="GH-", help="ID prefix for GitHub tasks (default: GH-)")
+    igh.add_argument("--default-cluster", default="general", help="Default cluster group")
+    igh.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
+
+    ilin = sp.add_parser("import-linear", help="Import graph from Linear CSV/JSON export file or piped stdin")
+    ilin.add_argument("file", nargs="?", help="Path to Linear CSV or JSON (reads stdin if omitted)")
+    ilin.add_argument("--type", choices=["csv", "json"], default="csv", help="Input format (default: csv)")
+    ilin.add_argument("--default-cluster", default="general", help="Default cluster group")
+    ilin.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
+
+    iglab = sp.add_parser("import-gitlab", help="Import graph from GitLab Issues JSON file or piped stdin")
+    iglab.add_argument("file", nargs="?", help="Path to GitLab Issues JSON (reads stdin if omitted)")
+    iglab.add_argument("--prefix", default="GL-", help="ID prefix for GitLab tasks (default: GL-)")
+    iglab.add_argument("--default-cluster", default="general", help="Default cluster group")
+    iglab.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
+
+    imd = sp.add_parser("import-md", help="Import graph from Markdown tasklist file or piped stdin")
+    imd.add_argument("file", nargs="?", help="Path to Markdown tasklist (reads stdin if omitted)")
+    imd.add_argument("--default-cluster", default="general", help="Default cluster group")
+    imd.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
+
     srv = sp.add_parser("visualize")
     srv.add_argument("--port", type=int, default=8080)
     srv.add_argument("--no-browser", action="store_true")
@@ -266,6 +290,58 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(normalize_format_argv(sys.argv[1:] if argv is None else argv))
     try:
+        if args.cmd in ("import-github", "import-linear", "import-gitlab", "import-md"):
+            if getattr(args, "file", None) and args.file != "-":
+                with open(args.file, "r", encoding="utf-8") as f:
+                    content = f.read()
+            else:
+                content = sys.stdin.read()
+
+            if args.cmd == "import-github":
+                from .adapters import GitHubIssuesAdapter
+                parsed_json = json.loads(content)
+                graph_dict = GitHubIssuesAdapter.from_issues(
+                    parsed_json,
+                    id_prefix=args.prefix,
+                    default_cluster=args.default_cluster
+                )
+            elif args.cmd == "import-linear":
+                from .adapters import LinearAdapter
+                if args.type == "json" or content.strip().startswith(("[", "{")):
+                    parsed_json = json.loads(content)
+                    graph_dict = LinearAdapter.from_json(parsed_json, default_cluster=args.default_cluster)
+                else:
+                    graph_dict = LinearAdapter.from_csv(content, default_cluster=args.default_cluster)
+            elif args.cmd == "import-gitlab":
+                from .adapters import GitLabAdapter
+                parsed_json = json.loads(content)
+                graph_dict = GitLabAdapter.from_issues(
+                    parsed_json,
+                    id_prefix=args.prefix,
+                    default_cluster=args.default_cluster
+                )
+            elif args.cmd == "import-md":
+                from .adapters import MarkdownAdapter
+                graph_dict = MarkdownAdapter.from_markdown(
+                    content,
+                    default_cluster=args.default_cluster
+                )
+
+            if getattr(args, "out", None):
+                atomic_write(args.out, json.dumps(stable_dict(graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+                obj = {
+                    "status": "PASS",
+                    "action": args.cmd,
+                    "exported": args.out,
+                    "nodes": len(graph_dict.get("nodes", [])),
+                    "edges": len(graph_dict.get("edges", []))
+                }
+            else:
+                obj = graph_dict
+
+            dump_formatted(obj, args.format)
+            return PASS
+
         raw = load_json(args.graph)
         pol = load_json(args.policy) if args.policy else load_default_policy()
         tax = load_json(args.taxonomy) if args.taxonomy else load_default_taxonomy()

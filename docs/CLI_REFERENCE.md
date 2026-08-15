@@ -144,3 +144,48 @@ Starts a local web server with the interactive graph backlog UI.
 ```bash
 python graph_ops.py visualize --port 8080
 ```
+
+---
+
+### 17. `import-github`
+Imports issues from GitHub CLI (`gh issue list`) JSON export or piped stdin, automatically resolving dependencies from issue descriptions and tasklists.
+```bash
+# Via file:
+python graph_ops.py import-github issues.json --out work-graph.json
+
+# Via piped stdin from GitHub CLI:
+gh issue list --limit 100 --json number,title,body,labels,state | python graph_ops.py import-github --out work-graph.json
+```
+
+---
+
+### 18. `import-linear`
+Imports issues from Linear CSV or JSON export payloads, mapping status, priorities, projects, and blocking links into DAG nodes and UNLOCKS edges.
+```bash
+# From Linear CSV export:
+python graph_ops.py import-linear linear-export.csv --out work-graph.json
+
+# From Linear API / JSON payload:
+python graph_ops.py import-linear linear-export.json --type json --out work-graph.json
+```
+
+---
+
+### 19. `import-gitlab`
+Imports issues from GitLab Issues JSON (from `glab issue list` or GitLab REST API), mapping scoped labels (`cluster::*`, `priority::*`) and quick action `/depends_on` / `/blocks` dependencies.
+```bash
+# Via file:
+python graph_ops.py import-gitlab gitlab-issues.json --out work-graph.json
+
+# Via piped stdin from GitLab CLI:
+glab issue list --output json | python graph_ops.py import-gitlab --out work-graph.json
+```
+
+---
+
+### 20. `import-md`
+Imports tasks and dependency relations from structured Markdown tasklists (`backlog.md`).
+```bash
+python graph_ops.py import-md backlog.md --out work-graph.json
+```
+

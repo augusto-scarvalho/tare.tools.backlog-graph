@@ -61,6 +61,10 @@ Once installed, the `graph-backlog` and `graph-ops` commands become globally ava
 | `doctor` | Full health, integrity, and cycle audit report | `python graph_ops.py doctor` |
 | `export` | Exports to interactive HTML, JSON, or Markdown | `python graph_ops.py export --output backlog.html` |
 | `visualize` | Starts local web server with DAG visualizer | `python graph_ops.py visualize --port 8080` |
+| `import-github` | Ingests GitHub Issues JSON / piped stdin | `gh issue list --json ... \| python graph_ops.py import-github` |
+| `import-linear` | Ingests Linear CSV or JSON export payloads | `python graph_ops.py import-linear export.csv` |
+| `import-gitlab` | Ingests GitLab Issues JSON / piped stdin | `glab issue list --output json \| python graph_ops.py import-gitlab` |
+| `import-md` | Ingests Markdown tasklists with `(depends: ...)` | `python graph_ops.py import-md backlog.md` |
 
 ---
 

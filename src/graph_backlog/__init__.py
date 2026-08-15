@@ -24,6 +24,14 @@ from .packet import generate_packet, format_packet_markdown
 from .ledger import GraphLedger
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
+from .adapters import (
+    MarkdownAdapter,
+    MermaidAdapter,
+    CsvAdapter,
+    GitHubIssuesAdapter,
+    LinearAdapter,
+    GitLabAdapter
+)
 
 __version__ = "0.2.0"
 
@@ -53,5 +61,11 @@ __all__ = [
     "simulate_completions",
     "generate_html_viewer",
     "serve_visualizer",
+    "MarkdownAdapter",
+    "MermaidAdapter",
+    "CsvAdapter",
+    "GitHubIssuesAdapter",
+    "LinearAdapter",
+    "GitLabAdapter",
     "__version__",
 ]
