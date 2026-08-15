@@ -48,7 +48,22 @@ graph-ops = "graph_backlog.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"graph_backlog" = [
-    "contracts/policies/*.json",
-    "contracts/schemas/*.json"
-]
+graph_backlog = ["data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/graph_backlog"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 75
+
+[tool.mutmut]
+paths_to_mutate = "src/graph_backlog/"
+runner = "pytest -q"
+tests_dir = "tests/"

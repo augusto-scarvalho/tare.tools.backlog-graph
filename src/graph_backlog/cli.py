@@ -172,6 +172,12 @@ def build_parser() -> argparse.ArgumentParser:
     cn.add_argument("--grade", default="B", help="Evidence grade (A, B, C, D)")
     cn.add_argument("--save", action="store_true", help="Save changes to graph file directly")
 
+    # Mutation testing
+    mt = sp.add_parser("mutation-test")
+    mt.add_argument("--target", default="src/graph_backlog/algorithms.py", help="File to mutate")
+    mt.add_argument("--max-mutants", type=int, default=25, help="Max mutants to test")
+    mt.add_argument("--test-module", action="append", help="Test modules to run against mutants")
+
     srv = sp.add_parser("visualize")
     srv.add_argument("--port", type=int, default=8080)
     srv.add_argument("--no-browser", action="store_true")
@@ -455,6 +461,23 @@ def main(argv: list[str] | None = None) -> int:
             if args.save:
                 atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
             obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save)}
+        elif args.cmd == "mutation-test":
+            from .mutation_testing import MutationEngine
+            tests = args.test_module or ["tests.test_algorithms", "tests.test_validation", "tests.test_graph_ops"]
+            res = MutationEngine.run_mutation_test(
+                target_file=args.target,
+                test_modules=tests,
+                max_mutants=args.max_mutants
+            )
+            obj = {
+                "target": args.target,
+                "total_mutants": res.total_mutants,
+                "killed": res.killed,
+                "survived": res.survived,
+                "mutation_score_percent": res.score_percentage,
+                "status": "PASS" if res.score_percentage >= 70.0 else "WARN",
+                "details": res.details
+            }
         elif args.cmd == "visualize":
             serve_visualizer(graph, port=args.port, open_browser=not args.no_browser)
             return PASS

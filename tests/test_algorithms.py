@@ -60,6 +60,42 @@ class AlgorithmsTests(unittest.TestCase):
         self.assertEqual(cp["status"], "PASS")
         self.assertEqual(cp["edge_length"], 2)
 
+    def test_operational_readiness_profiles(self) -> None:
+        node2 = self.sample_graph.by_id["TASK-02"]
+        # Planning profile
+        res_plan = readiness(self.sample_graph, node2, profile="planning")
+        self.assertTrue(res_plan["ready"])
+
+        # Operational profile with missing identity
+        bad_node = dict(node2)
+        bad_node["canonical_system"] = None
+        res_op1 = readiness(self.sample_graph, bad_node, profile="operational")
+        self.assertFalse(res_op1["ready"])
+        self.assertIn("canonical_identity_missing", res_op1["reasons"])
+
+        # Stale state
+        stale_node = dict(node2)
+        stale_node["staleness_state"] = "STALE"
+        res_op2 = readiness(self.sample_graph, stale_node, profile="operational")
+        self.assertFalse(res_op2["ready"])
+        self.assertIn("canonical_revision_or_freshness_unproven", res_op2["reasons"])
+
+        # Insufficient materialization scope
+        scoped_node = dict(node2)
+        scoped_node["readiness"] = {"required_materialization_scopes": ["prod_deploy"]}
+        scoped_node["completion"] = {"materialization_scope": "local"}
+        res_op3 = readiness(self.sample_graph, scoped_node, profile="operational")
+        self.assertFalse(res_op3["ready"])
+        self.assertIn("materialization_scope_insufficient", res_op3["reasons"])
+
+        # Insufficient evidence grade
+        grade_node = dict(node2)
+        grade_node["readiness"] = {"minimum_evidence_grade": "A"}
+        grade_node["completion"] = {"evidence_grade": "D"}
+        res_op4 = readiness(self.sample_graph, grade_node, profile="operational")
+        self.assertFalse(res_op4["ready"])
+        self.assertIn("evidence_grade_insufficient", res_op4["reasons"])
+
     def test_ranked_next(self) -> None:
         next_items = ranked_next(self.sample_graph, limit=5)
         self.assertTrue(len(next_items) > 0)
