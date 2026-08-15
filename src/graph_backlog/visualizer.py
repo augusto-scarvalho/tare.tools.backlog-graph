@@ -820,6 +820,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
         <option value="__UPLOAD__">📂 Open Local JSON File...</option>
       </select>
+      <button class="action-btn" id="toggleDemosBtn" onclick="toggleHideDemos()" title="Toggle visibility of built-in demo projects (persisted in localStorage)" style="padding:6px 8px;">
+        👁️
+      </button>
       <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
     </div>
     
@@ -1031,16 +1034,76 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       resetFilters();
     }
 
+    const STORAGE_KEY_HIDE_DEMOS = 'SIGNAL_GRAPH_HIDE_DEMOS';
+    let hideDemos = false;
+    try {
+      hideDemos = localStorage.getItem(STORAGE_KEY_HIDE_DEMOS) === 'true';
+    } catch (e) {}
+
+    let currentProjectKey = '__ACTIVE__';
+
+    function populateProjectSelector(currentVal = currentProjectKey) {
+      const selector = document.getElementById('projectSelector');
+      if (!selector) return;
+
+      currentProjectKey = currentVal;
+      let html = `<option value="__ACTIVE__" ${currentVal === '__ACTIVE__' ? 'selected' : ''}>📁 Active Project</option>`;
+
+      if (!hideDemos) {
+        html += `
+          <option value="transmedia" ${currentVal === 'transmedia' ? 'selected' : ''}>🎬 Demo: Epic Transmedia (42 tasks)</option>
+          <option value="saas" ${currentVal === 'saas' ? 'selected' : ''}>🏢 Demo: CloudPulse SaaS (33 tasks)</option>
+          <option value="rag" ${currentVal === 'rag' ? 'selected' : ''}>🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
+          <option value="sample" ${currentVal === 'sample' ? 'selected' : ''}>🧪 Demo: Core Sample (3 tasks)</option>
+        `;
+      }
+
+      html += `
+        <option value="__UPLOAD__">📂 Open Local JSON File...</option>
+        <option value="__TOGGLE_DEMOS__">${hideDemos ? '👁️ Show Demo Backlogs' : '🚫 Hide Demo Backlogs'}</option>
+      `;
+
+      selector.innerHTML = html;
+
+      const toggleBtn = document.getElementById('toggleDemosBtn');
+      if (toggleBtn) {
+        toggleBtn.className = `action-btn ${hideDemos ? '' : 'active'}`;
+        toggleBtn.textContent = hideDemos ? '👁️‍🗨️' : '👁️';
+        toggleBtn.title = hideDemos ? 'Show Built-in Demo Projects (Currently Hidden)' : 'Hide Built-in Demo Projects (Currently Visible)';
+      }
+    }
+
+    function toggleHideDemos() {
+      hideDemos = !hideDemos;
+      try {
+        localStorage.setItem(STORAGE_KEY_HIDE_DEMOS, hideDemos ? 'true' : 'false');
+      } catch (e) {}
+
+      const isDemoVal = ['transmedia', 'saas', 'rag', 'sample'].includes(currentProjectKey);
+      if (hideDemos && isDemoVal) {
+        switchProject('__ACTIVE__');
+      } else {
+        populateProjectSelector(currentProjectKey);
+      }
+    }
+
     function switchProject(val) {
+      if (val === '__TOGGLE_DEMOS__') {
+        toggleHideDemos();
+        return;
+      }
       if (val === '__UPLOAD__') {
         const upEl = document.getElementById('fileUploadInput');
         if (upEl) upEl.click();
+        populateProjectSelector(currentProjectKey);
         return;
       }
       if (val === '__ACTIVE__' || val === 'active') {
         loadGraph(BUILTIN_PROJECTS.active);
+        populateProjectSelector('__ACTIVE__');
       } else if (BUILTIN_PROJECTS[val]) {
         loadGraph(BUILTIN_PROJECTS[val]);
+        populateProjectSelector(val);
       }
     }
 
@@ -2613,7 +2676,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     document.getElementById('statusFilter').addEventListener('change', render);
     document.getElementById('clusterFilter').addEventListener('change', render);
 
-    // Initialize default active graph
+    // Initialize project selector and active graph
+    populateProjectSelector('__ACTIVE__');
     loadGraph(BUILTIN_PROJECTS.active);
   </script>
 </body>

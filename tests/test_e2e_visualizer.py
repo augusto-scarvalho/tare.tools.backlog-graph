@@ -243,6 +243,25 @@ class VisualizerE2ETests(unittest.TestCase):
             page.select_option("#projectSelector", "sample")
             self.assertEqual(page.locator("#statTotal").text_content(), "3")
 
+            # 16.5 Test Hide/Show Synthetic Demos with LocalStorage Persistence
+            self.assertEqual(page.locator("#projectSelector option[value='saas']").count(), 1)
+            
+            # Click Toggle Demos Button (hide demos)
+            page.click("#toggleDemosBtn")
+            self.assertEqual(page.locator("#projectSelector option[value='saas']").count(), 0)
+            self.assertEqual(page.locator("#projectSelector option[value='transmedia']").count(), 0)
+            
+            # Verify localStorage value
+            storage_val = page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_HIDE_DEMOS')")
+            self.assertEqual(storage_val, "true")
+            
+            # Click Toggle Demos Button again (show demos)
+            page.click("#toggleDemosBtn")
+            self.assertEqual(page.locator("#projectSelector option[value='saas']").count(), 1)
+            self.assertEqual(page.locator("#projectSelector option[value='transmedia']").count(), 1)
+            storage_val = page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_HIDE_DEMOS')")
+            self.assertEqual(storage_val, "false")
+
             # 17. Test ⚡ Graph Ops Station Modal & DAG Navigation
             page.click("#opsModalBtn")
             self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
