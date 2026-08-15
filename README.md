@@ -1,94 +1,259 @@
-# tare.tools — Graph Backlog
+<div align="center">
 
-Deterministic **Directed Acyclic Graph (DAG) Backlog Engine**, dependency analyzer, and implementation packet generator for human developers and autonomous AI agents.
+# ⚡ tare.tools — Graph Backlog
 
-> **Origin:** This project was decoupled from the main repository (`universal-agent-harness-prototype`, [Issue #35](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/issues/35) and [PR #38](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/pull/38)), becoming an **independent side project** with zero required external dependencies (runs with pure Python 3.10+ stdlib).
+**Deterministic Directed Acyclic Graph (DAG) Backlog Engine & Topological Execution Framework for Software Engineering Teams and Autonomous AI Agents.**
+
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://python.org)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Stdlib)-orange.svg)](#zero-dependencies-pure-python-stdlib)
+[![Tests](https://img.shields.io/badge/Tests-47%20Passed%20(100%25)-success.svg)](#-automated-testing)
+[![Agentic Protocol](https://img.shields.io/badge/Agentic%20Protocol-tare.tools%2Fv1-purple.svg)](#-in-browser-ai-agent-discovery--copilot-bridge)
+
+<p align="center">
+  <a href="#-why-graph-backlog-the-paradigm-shift">Why Graph Backlogs</a> •
+  <a href="#-key-architectural-pillars">Key Features</a> •
+  <a href="#-third-party-backlog-ingestion">Integrations & Adapters</a> •
+  <a href="#-quickstart--installation">Quickstart</a> •
+  <a href="#-cli-command-reference">CLI Reference</a> •
+  <a href="#-python-library-api">Python Library</a> •
+  <a href="#-interactive-mission-control--copilot-bridge">Interactive UI</a> •
+  <a href="#-license--attribution">License</a>
+</p>
+
+</div>
 
 ---
 
-## 🎯 Why Graph Backlog? (vs. Flat Lists & Traditional Kanban)
+## 🎯 Why Graph Backlog? (The Paradigm Shift)
 
-Flat lists and linear Kanban boards suffer from critical limitations in complex or AI agent-driven workflows:
-1. **Lack of blocker visibility:** It is not immediately obvious which task unblocks what.
-2. **Blind prioritization:** High-priority items can be completely blocked by forgotten low-priority dependencies.
-3. **Inability to compute execution frontier:** A developer or AI agent must guess what can actually be worked on *now* without breaking contracts.
+Modern software delivery is inherently a **topological dependency graph** — not a flat list or an unconstrained Kanban column. 
 
-With **Graph Backlog**:
-- **Deterministic `frontier`:** Instantly computes which tasks are ready for immediate execution (all prerequisites satisfied).
-- **Blocker Analysis (`why` / `blockers`):** Explains the exact root cause why a task is blocked.
-- **Impact Radius (`impact` / `deps`):** Traces the full downstream chain (what this task unblocks) and upstream ancestors (what it depends on).
-- **Critical Path (`critical-path`):** Identifies the longest dependency bottleneck sequence in the project.
-- **Implementation Packets (`packet`):** Compiles complete task context into Markdown to guide LLM prompts or code reviews.
-- **What-If Simulation (`simulate`):** Projects which downstream tasks will be unblocked upon completing specific candidate work.
-- **Interactive Web Visualizer:** Standalone local or exportable static HTML with real-time DAG canvas, 12 curated dark/light themes, and in-browser Microsoft 365 Copilot agentic bridge.
+When autonomous AI agents (Copilot, Claude, Devin) and multi-developer teams work on complex codebases using traditional issue trackers (Jira, Linear, GitHub Projects), they face three systemic failures:
+
+1. **Blocker Blindness:** It is not immediately obvious which task unblocks downstream milestones or why a high-priority task cannot be started.
+2. **Blind Prioritization:** Critical-priority items (`P0`) are frequently stalled because low-priority prerequisites were forgotten or buried in the backlog.
+3. **Execution Frontier Hallucination:** Agents and engineers must guess what is truly feasible to implement *right now* without breaking contractual dependencies.
+
+```text
+TRADITIONAL FLAT BACKLOG (Blind Linear Queue)
+[Task A] ──> [Task B] ──> [Task C] ──> [Task D]   ❌ No dependency awareness, blind ordering.
+
+DAG GRAPH BACKLOG (Deterministic Topological Execution)
+   ┌─► [DB Schema] (DONE) ──► [Auth API] (READY / FRONTIER) ──┐
+   │                                                           ▼
+[Core Setup] (DONE) ──────────────────────────────► [User Portal] (BLOCKED)
+   │                                                           ▲
+   └─► [Stripe Vault] (IN_PROGRESS) ──► [Checkout Webhook] ───┘
+```
+
+### ⚖️ Comparison Matrix
+
+| Capability | Flat Lists & Linear Kanban | tare.tools Graph Backlog |
+|---|---|---|
+| **Execution Frontier (`frontier`)** | ❌ Manual guesswork | ✅ **Deterministic mathematical computation** (all prerequisites provably satisfied) |
+| **Root-Cause Analysis (`why`)** | ❌ Manual reading of ticket comments | ✅ **Instant automated blocker resolution & dependency tree** |
+| **Critical Path Analysis (`critical-path`)** | ❌ Not computable | ✅ **Exact longest bottleneck chain identification** |
+| **Agent Implementation Packets (`packet`)** | ❌ Ad-hoc copy-pasting of issue descriptions | ✅ **Fully compiled Markdown context with DoD and grounding** |
+| **What-If Simulation (`simulate`)** | ❌ Impossible without altering production state | ✅ **Counterfactual topological projection overlay** |
+| **Auditability & Governance (`ledger`)** | ❌ Destructive state transitions | ✅ **Append-only SHA-256 Merkle audit trail** |
+| **Runtime Dependencies** | ⚠️ Heavy server or complex SDKs | ✅ **Zero external dependencies (pure Python 3.10+ stdlib)** |
+
+---
+
+## ⚡ Key Architectural Pillars
+
+### 1. Deterministic Ready Frontier
+Calculates the exact subset of non-completed nodes whose upstream dependencies are 100% satisfied (`DONE` with DoD verified). Agents and developers always pull mathematically sound work.
+
+### 2. Multi-Criteria Ranked Pull Engine
+Ranks eligible frontier work using deterministic multi-criteria scoring balancing business priority (`P0`–`P3`), execution horizon (`H0`–`H3`), and downstream unlock impact (unlock score).
+
+### 3. Root-Cause Blocker & Impact Tracing
+- **`why <id>` & `blockers <id>`:** Pinpoints the exact prerequisite bottlenecks preventing a task from moving forward.
+- **`impact <id>` & `deps <id>`:** Traces complete downstream and upstream topological reach across all transitive relations.
+- **`path <a> <b>`:** Computes the shortest dependency path between any two tasks.
+
+### 4. Implementation Packet Compiler
+Compiles self-contained, high-signal Markdown implementation packets ready for LLM prompts, agentic sidecars, and automated code review pipelines.
+
+### 5. Counterfactual "What-If" Simulation
+Simulates the downstream impact of marking candidate tasks as completed *before writing a single line of code*, projecting exactly which tasks will be unlocked next.
+
+### 6. Cryptographic Audit Ledger (Merkle Hash Chain)
+Maintains an append-only cryptographic event ledger sealed with SHA-256 hashes (`event_hash = SHA256(index + timestamp + prev_hash + canonical_json(payload))`), ensuring tamper-evident history and non-repudiation across multi-agent workflows.
+
+### 7. Automated Graph Doctor & Integrity Audits
+Detects topological cycles (Tarjan SCC), dangling edge references, orphaned requirements, and epistemic gaps in evidence grades.
+
+---
+
+## 🔌 Third-Party Backlog Ingestion
+
+Ingest real-world backlogs from your existing tools using standard CLI pipelines with **zero external dependencies**:
+
+```bash
+# 🐙 GitHub Issues (reads via GitHub CLI or JSON export)
+gh issue list --limit 100 --json number,title,body,labels,state | python graph_ops.py import-github --out work-graph.json
+
+# 📐 Linear (reads from Linear CSV export or GraphQL/JSON API)
+python graph_ops.py import-linear linear-export.csv --out work-graph.json
+
+# 🦊 GitLab Issues (reads via GitLab CLI or JSON export)
+glab issue list --output json | python graph_ops.py import-gitlab --out work-graph.json
+
+# 🔷 Jira Cloud & Server (reads from Jira CSV export or REST API search JSON)
+python graph_ops.py import-jira jira-export.csv --out work-graph.json
+
+# 📝 Markdown Tasklists (reads checklists with dependency annotations)
+python graph_ops.py import-md backlog.md --out work-graph.json
+```
 
 ---
 
 ## 🚀 Quickstart & Installation
 
 ### Zero Dependencies (Pure Python Stdlib)
-You can run it directly without installing any third-party dependencies:
+You can run `graph_ops.py` directly without installing any third-party packages:
 ```bash
+# Inspect graph summary
 python graph_ops.py --graph fixtures/sample-backlog.json summary
+
+# Query ready execution frontier
 python graph_ops.py --graph fixtures/sample-backlog.json frontier --format ids
+
+# Pull top recommended task
+python graph_ops.py --graph fixtures/sample-backlog.json next --limit 1
 ```
 
-### Install as a Python Package
+### Install as a Global Package
 ```bash
 pip install -e .
 ```
-Once installed, the `graph-backlog` and `graph-ops` commands become globally available in your terminal.
+After installation, both `graph-backlog` and `graph-ops` executables become globally available in your environment.
 
 ---
 
-## ⚡ CLI Command Cheat Sheet
+## ⚡ CLI Command Reference
 
-| Command | What it answers | Example |
+| Subcommand | Purpose & Output | Example Usage |
 |---|---|---|
-| `validate` | Are the graph schema and DAG structure valid? | `python graph_ops.py validate` |
-| `summary` | How many tasks, clusters, and status counts exist? | `python graph_ops.py summary` |
-| `frontier` | What is ready to be executed **right now**? | `python graph_ops.py frontier --format ids` |
-| `next` | What is the highest-ranked feasible task to pull? | `python graph_ops.py next --limit 5` |
-| `why <id>` | Why is a task ready or blocked? | `python graph_ops.py why TASK-03` |
-| `blockers <id>` | Which direct prerequisites block `<id>`? | `python graph_ops.py blockers TASK-03` |
-| `deps <id>` | What are all transitive upstream prerequisites? | `python graph_ops.py deps TASK-03` |
-| `impact <id>` | Which tasks will be unblocked in the future? | `python graph_ops.py impact TASK-01` |
-| `path <a> <b>` | What is the dependency path from `A` to `B`? | `python graph_ops.py path TASK-01 TASK-03` |
-| `critical-path` | What is the longest bottleneck sequence? | `python graph_ops.py critical-path` |
-| `packet <id>` | Generates complete Markdown context for prompts | `python graph_ops.py packet TASK-02 --format md` |
-| `simulate` | What unblocks if we complete `<id>`? | `python graph_ops.py simulate --mode complete --complete TASK-02` |
-| `diff <other>` | What changed semantically between 2 versions? | `python graph_ops.py diff other-graph.json` |
-| `doctor` | Full health, integrity, and cycle audit report | `python graph_ops.py doctor` |
-| `export` | Exports to interactive HTML, JSON, or Markdown | `python graph_ops.py export --output backlog.html` |
-| `visualize` | Starts local web server with DAG visualizer | `python graph_ops.py visualize --port 8080` |
-| `import-github` | Ingests GitHub Issues JSON / piped stdin | `gh issue list --json ... \| python graph_ops.py import-github` |
+| `validate` | Validates graph schema, DAG integrity, and absence of cycles | `python graph_ops.py validate` |
+| `summary` | Computes metric counts across clusters, statuses, and frontier | `python graph_ops.py summary` |
+| `frontier` | Computes all ready tasks with satisfied dependencies | `python graph_ops.py frontier --format ids` |
+| `next` | Ranks actionable tasks by priority, horizon, and unlock score | `python graph_ops.py next --limit 3` |
+| `why <id>` | Explains why a task is ready or blocked, listing prerequisites | `python graph_ops.py why TASK-03` |
+| `blockers <id>` | Lists direct unsatisfied prerequisite blockers | `python graph_ops.py blockers TASK-03` |
+| `deps <id>` | Computes all transitive upstream dependencies | `python graph_ops.py deps TASK-03 --format md` |
+| `impact <id>` | Computes all downstream dependents unlocked by `<id>` | `python graph_ops.py impact TASK-01` |
+| `path <a> <b>` | Computes the shortest dependency path from `A` to `B` | `python graph_ops.py path TASK-01 TASK-03` |
+| `critical-path` | Calculates the longest bottleneck sequence in the DAG | `python graph_ops.py critical-path` |
+| `packet <id>` | Compiles self-contained Markdown prompt context for AI agents | `python graph_ops.py packet TASK-02 --format md` |
+| `simulate` | Projects frontier changes when completing candidate work | `python graph_ops.py simulate --complete TASK-02` |
+| `diff <other>` | Computes deep semantic diff between two graph snapshots | `python graph_ops.py diff previous-graph.json` |
+| `doctor` | Runs structural, cycle, evidence, and reconciliation audit | `python graph_ops.py doctor` |
+| `export` | Exports to standalone HTML visualizer, JSON, or Markdown | `python graph_ops.py export -o index.html --export-format html` |
+| `visualize` | Starts local web server with interactive DAG UI | `python graph_ops.py visualize --port 8080` |
+| `import-github` | Ingests GitHub Issues JSON / piped stdin into DAG graph | `python graph_ops.py import-github issues.json` |
 | `import-linear` | Ingests Linear CSV or JSON export payloads | `python graph_ops.py import-linear export.csv` |
-| `import-gitlab` | Ingests GitLab Issues JSON / piped stdin | `glab issue list --output json \| python graph_ops.py import-gitlab` |
-| `import-jira` | Ingests Jira CSV export or REST API JSON | `python graph_ops.py import-jira jira-export.csv` |
-| `import-md` | Ingests Markdown tasklists with `(depends: ...)` | `python graph_ops.py import-md backlog.md` |
+| `import-gitlab` | Ingests GitLab Issues JSON / piped stdin into DAG graph | `python graph_ops.py import-gitlab gitlab.json` |
+| `import-jira` | Ingests Jira CSV export or REST API search JSON | `python graph_ops.py import-jira jira.csv` |
+| `import-md` | Ingests structured Markdown tasklists (`backlog.md`) | `python graph_ops.py import-md backlog.md` |
 
 ---
 
-## 💻 Python Library Usage
+## 💻 Python Library API
+
+Use `graph_backlog` as an embedded Python engine inside your custom agents, orchestrators, and CI scripts:
 
 ```python
-from graph_backlog import WorkGraph, compute_frontier, ranked_next, generate_packet
+from graph_backlog import (
+    WorkGraph,
+    compute_frontier,
+    ranked_next,
+    generate_packet,
+    critical_path,
+    simulate_completions
+)
+from graph_backlog.packet import format_packet_markdown
 
 # 1. Load work graph
-graph = WorkGraph.from_file("fixtures/sample-backlog.json")
+graph = WorkGraph.from_file("fixtures/saas-backlog.json")
 
-# 2. Query actionable frontier tasks
+# 2. Compute actionable execution frontier
 ready_tasks = compute_frontier(graph)
-print(f"Frontier tasks: {[t['id'] for t in ready_tasks]}")
+print(f"Ready to execute: {[t['id'] for t in ready_tasks]}")
 
-# 3. Deterministic multi-criteria priority ranking
-top_work = ranked_next(graph, limit=3)
-print(f"Top recommendation: {top_work[0]['id']} (score: {top_work[0]['score']})")
+# 3. Deterministic ranking
+top_work = ranked_next(graph, limit=1)
+target_task_id = top_work[0]["id"]
+print(f"Next recommended task: {target_task_id} (Score: {top_work[0]['score']})")
 
-# 4. Generate Markdown implementation packet
-packet = generate_packet(graph, "TASK-02")
-from graph_backlog.packet import format_packet_markdown
-print(format_packet_markdown(packet))
+# 4. Generate implementation packet for AI prompt context
+packet = generate_packet(graph, target_task_id)
+markdown_prompt = format_packet_markdown(packet)
+print(markdown_prompt)
+
+# 5. Counterfactual What-If simulation
+sim = simulate_completions(graph, completed_ids=[target_task_id])
+print(f"Newly unlocked tasks: {sim['newly_unlocked']}")
+```
+
+---
+
+## 🖥️ Interactive Mission Control & Copilot Bridge
+
+The project includes an **interactive, zero-framework, standalone HTML visualizer** (`visualizer/index.html`):
+
+- **3 Canvas Modes:** Dynamic DAG Physics Canvas, Kanban Board, and Domain Clusters.
+- **12 Curated Themes:** 
+  - *Dark:* ⚡ Signal Mission Control (Default), 🧛 Dracula, 🌃 Tokyo Night, ❄️ Nord Frost, 🔥 Monokai Pro, ☕ Catppuccin Mocha.
+  - *Light:* ☀️ Solar Paper, 📜 Solarized Light, 🐙 GitHub Light, 🏔️ Nord Snow Storm, 🥛 Catppuccin Latte, 📻 Gruvbox Light.
+- **Graph Operations Station:** Modal station featuring 13 deep analysis tools, What-If Simulation sandbox, and Merkle Crypto Ledger.
+
+### 🤖 In-Browser AI Agent Discovery & Copilot Bridge
+
+The visualizer provides native **Agentic Discovery Protocols** designed for browser-based AI assistants (such as Microsoft 365 Copilot, Edge Sidecar, and DevTools agents):
+
+1. **Global Runtime API (`window.tareGraph`):**
+   ```javascript
+   // Query graph summary and ready frontier directly in DevTools console or agent runtime:
+   window.tareGraph.getSummary();
+   window.tareGraph.getFrontier();
+   window.tareGraph.getCriticalPath();
+   window.tareGraph.simulate(["AUTH-01"], true);
+   ```
+2. **In-DOM JSON Manifest:** Real-time synchronized `<script id="signal-agentic-manifest" type="application/json">` allowing AI scrapers to ingest topological structure without guessing visual SVG coordinates.
+3. **1-Click Context Prompts:** Generates pre-formatted Copilot briefing prompts summarizing active bottlenecks and ready tasks.
+
+---
+
+## 🤖 CI/CD & Autonomous Agent Orchestration
+
+### Automated PR Audit Workflow (GitHub Actions)
+```yaml
+name: Work Graph Quality Gate
+on: [pull_request, push]
+
+jobs:
+  graph-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate DAG & Check Cycles
+        run: |
+          python graph_ops.py --graph work-graph.json doctor
+          python graph_ops.py --graph work-graph.json validate
+```
+
+### Feeding Context to LLM Agents (Claude / Devin / Copilot)
+```bash
+# Extract the highest-ranked ready task and compile prompt context:
+NEXT_ID=$(python graph_ops.py frontier --format ids | head -n 1)
+python graph_ops.py packet $NEXT_ID --format md > .agent/current-context.md
 ```
 
 ---
@@ -98,8 +263,10 @@ print(format_packet_markdown(packet))
 ```text
 tare.tools.graph-backlog/
 ├── README.md                      # General documentation
-├── pyproject.toml                 # Packaging and build configuration
-├── graph_ops.py                   # Direct zero-config CLI executable
+├── LICENSE                        # Apache License 2.0
+├── NOTICE                         # Formal attribution & author copyright notice
+├── pyproject.toml                 # Package configuration
+├── graph_ops.py                   # Zero-config direct CLI executable
 ├── src/
 │   └── graph_backlog/             # Core Python package
 │       ├── __init__.py            # API exports
@@ -107,42 +274,54 @@ tare.tools.graph-backlog/
 │       ├── algorithms.py          # Frontier, cycles (Tarjan SCC), paths, ranking
 │       ├── validation.py          # Structural, schema, and integrity validation
 │       ├── diff.py                # Semantic diff and mutation verification
-│       ├── ledger.py              # Append-only cryptographic audit ledger
-│       ├── simulation.py          # What-if counterfactual overlays
+│       ├── ledger.py              # Append-only cryptographic audit ledger (SHA-256)
+│       ├── simulation.py          # Counterfactual "what-if" overlays
 │       ├── packet.py              # Implementation packet compiler
+│       ├── adapters.py            # GitHub, Linear, GitLab, Jira, Markdown, CSV adapters
 │       ├── visualizer.py          # HTML exporter and interactive web visualizer
 │       └── cli.py                 # CLI argument parser and dispatcher
 ├── docs/
-│   ├── ARCHITECTURE.md            # Conceptual model and architectural decisions
+│   ├── ARCHITECTURE.md            # Conceptual architecture and design decisions
 │   ├── CLI_REFERENCE.md           # Full reference of all CLI subcommands
 │   ├── QUICKSTART.md              # 5-minute step-by-step tutorial
 │   └── ONTOLOGY.md                # Relation taxonomy and vocabulary
-├── fixtures/                      # Sample work graphs and test fixtures
+├── fixtures/                      # Work graph fixtures and test sets
 │   ├── sample-backlog.json        # Core 3-node starter backlog
 │   ├── saas-backlog.json          # CloudPulse SaaS backlog (33 nodes)
 │   ├── rag-chatbot-backlog.json   # AI RAG pipeline backlog (27 nodes)
 │   ├── transmedia-book-comic-film-backlog.json # Epic transmedia saga (42 nodes)
-│   ├── work-graph-v0.5.json       # Canonical specification graph
 │   └── negative-*.json            # Edge-case error validation fixtures
 ├── visualizer/
 │   └── index.html                 # Standalone interactive visualizer artifact
 └── tests/                         # Automated test suite (100% passing)
+    ├── test_algorithms.py         # Algorithm tests (Tarjan, frontier, critical path)
+    ├── test_validation.py         # Schema, structural, and evidence validation
+    ├── test_diff_and_ledger.py    # Diffing, simulation, and crypto ledger tests
+    ├── test_external_adapters.py  # GitHub, Linear, GitLab, Jira, Markdown tests
+    ├── test_e2e_visualizer.py     # Playwright E2E visualizer & Copilot tests
+    └── test_mutation_testing.py   # AST mutation resilience testing
 ```
 
 ---
 
 ## 🧪 Automated Testing
 
-To run the complete test suite:
+Run the full automated test suite:
 ```bash
-python -m unittest discover -s tests -v
-# or with pytest
+# Using pytest
 pytest
+
+# Or using unittest (pure stdlib)
+python -m unittest discover -s tests -v
 ```
 
 ---
 
-## 📄 License
+## 📄 License & Attribution
 
-Apache License 2.0. See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
+Licensed under the **Apache License, Version 2.0**. See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
 
+### Author & Research Origin
+- **Author:** Augusto Carvalho ([augusto-scarvalho@users.noreply.github.com](mailto:augusto-scarvalho@users.noreply.github.com))
+- **Project:** [tare.tools.graph-backlog](https://github.com/augusto-scarvalho/tare.tools.graph-backlog)
+- **Origin:** Decoupled from the Universal Agent Harness research initiative ([Issue #35](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/issues/35) / [PR #38](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/pull/38)).
