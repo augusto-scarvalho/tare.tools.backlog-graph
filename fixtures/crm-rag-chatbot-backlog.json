@@ -1,0 +1,2349 @@
+{
+  "meta": {
+    "schema": "work-graph-poc/0.5",
+    "title": "OmniAgent CRM — Enterprise RAG & Autonomous Support Chatbot",
+    "snapshot": "2026-08-15-rag-crm-v1",
+    "generated_at": "2026-08-15T12:00:00Z",
+    "projection_run_id": "proj-rag-crm-001"
+  },
+  "sources": {
+    "PRD-AI-01": {
+      "kind": "product_requirement",
+      "title": "OmniAgent Enterprise CRM RAG Master PRD",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/specs/prd-omniagent-rag.md"
+    },
+    "ARCH-AI-01": {
+      "kind": "architecture_decision",
+      "title": "ADR-004: Hybrid RAG Architecture, Vector DB & CRM Action Tooling",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/adr/004-rag-vector-crm-architecture.md"
+    },
+    "SEC-AI-01": {
+      "kind": "security_policy",
+      "title": "Enterprise LLM Safety, PII Redaction & Prompt Injection Standard",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/security/llm-safety-policy.md"
+    }
+  },
+  "nodes": [
+    {
+      "id": "RAG-01",
+      "title": "Vector Database Deployment & Multi-Tenant Partitioning",
+      "kind": "task",
+      "cluster": "00-ai-infra-embeddings",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "ai-infra",
+        "vector-db",
+        "qdrant"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "vector_db_ping_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Deploy clustered Qdrant/pgvector instance with HNSW index configuration, tenant-isolated namespaces, and payload filtering.",
+      "exit_criteria": [
+        "Vector search response time < 15ms at 1M vectors",
+        "Tenant payload filter strictly enforces collection isolation"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-vectordb"
+      ],
+      "unlock_score": 14,
+      "tags": [
+        "vector-db",
+        "qdrant",
+        "hnsw",
+        "ai-infra"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-01",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-12T10:00:00Z",
+        "dod_evidence": [
+          "Vector DB cluster benchmarked and healthy in staging"
+        ]
+      }
+    },
+    {
+      "id": "RAG-02",
+      "title": "Embedding Pipeline & Semantic Chunking Strategy",
+      "kind": "task",
+      "cluster": "00-ai-infra-embeddings",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "ai-infra",
+        "embeddings",
+        "nlp"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "chunking_eval_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Implement hierarchical chunking (512 tokens with 10% overlap) and batch vectorization using OpenAI text-embedding-3-large / BGE-M3.",
+      "exit_criteria": [
+        "Chunk boundary preserves semantic section headings and markdown tables",
+        "Embedding worker handles rate limits with token bucket backoff"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-embeddings"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "embeddings",
+        "chunking",
+        "nlp",
+        "tokenization"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-02",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-12T14:00:00Z",
+        "dod_evidence": [
+          "Chunking accuracy and semantic cohesion verified against test corpus"
+        ]
+      }
+    },
+    {
+      "id": "RAG-03",
+      "title": "Document Parsing Engine (PDF, HTML, Docx & Knowledge Articles)",
+      "kind": "task",
+      "cluster": "00-ai-infra-embeddings",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "ai-infra",
+        "etl",
+        "document-parsing"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "parser_test_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Build high-accuracy document extractor for customer knowledge bases, extracting text, hierarchy, tables, and image captions.",
+      "exit_criteria": [
+        "Extracts structured tables with Markdown format",
+        "Corrupted or password-protected documents fail gracefully with detailed error log"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-parser"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "parser",
+        "pdf",
+        "unstructured",
+        "knowledge-base"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-03",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-13T11:00:00Z",
+        "dod_evidence": [
+          "1,000 synthetic CRM support documents parsed without data loss"
+        ]
+      }
+    },
+    {
+      "id": "RAG-04",
+      "title": "Cross-Encoder Semantic Re-ranking Service",
+      "kind": "task",
+      "cluster": "00-ai-infra-embeddings",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "ai-infra",
+        "reranking",
+        "search"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "reranker_benchmark_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Deploy Cohere Rerank / BGE-Reranker service to re-score top-50 vector candidates down to top-5 most relevant context passages.",
+      "exit_criteria": [
+        "Re-ranking latency < 45ms for 50 candidate passages",
+        "NDCG@5 improved by at least 18% over raw vector similarity"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-rerank"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "reranking",
+        "cross-encoder",
+        "relevance",
+        "search"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-04",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-10",
+      "title": "Salesforce & HubSpot CRM Connector",
+      "kind": "task",
+      "cluster": "01-crm-connectors",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "crm",
+        "integrations",
+        "salesforce",
+        "hubspot"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "crm_oauth_sync_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "OAuth 2.0 connector for Salesforce (REST/SOQL) and HubSpot API to sync Accounts, Contacts, Deals, and Activity timelines.",
+      "exit_criteria": [
+        "Bi-directional token refresh and automatic reconnect on 401 Unauthorized",
+        "Schema mapping converts custom CRM fields to standardized customer entity"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-crm-connectors"
+      ],
+      "unlock_score": 14,
+      "tags": [
+        "crm",
+        "salesforce",
+        "hubspot",
+        "oauth"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-10",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-13T17:00:00Z",
+        "dod_evidence": [
+          "Salesforce Sandbox and HubSpot test portal OAuth sync successful"
+        ]
+      }
+    },
+    {
+      "id": "RAG-11",
+      "title": "Zendesk & Freshdesk Support Ticket Ingestion",
+      "kind": "task",
+      "cluster": "01-crm-connectors",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "crm",
+        "support",
+        "zendesk"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "ticket_ingestion_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Extract resolved ticket conversations, public agent responses, internal macros, and Help Center knowledge base articles.",
+      "exit_criteria": [
+        "Conversations sanitized of internal private notes unless explicit role granted",
+        "Resolved solutions vectorized with ticket metadata (tags, product, resolution time)"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-zendesk"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "zendesk",
+        "support",
+        "help-center",
+        "crm"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-11",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-12",
+      "title": "Incremental CDC Sync & Webhook Event Stream",
+      "kind": "task",
+      "cluster": "01-crm-connectors",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "crm",
+        "cdc",
+        "webhooks",
+        "streaming"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "cdc_latency_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Real-time sync listening to CRM webhooks (deal updated, ticket closed, contact created) to update vector store incrementally under 60s.",
+      "exit_criteria": [
+        "Outdated vectors deleted and replaced on document update",
+        "Zero redundant full-table scans"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-cdc"
+      ],
+      "unlock_score": 5,
+      "tags": [
+        "cdc",
+        "webhooks",
+        "incremental-sync",
+        "streaming"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-12",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-13",
+      "title": "PII Masking, DLP & Sanitization Guardrail",
+      "kind": "task",
+      "cluster": "01-crm-connectors",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "security",
+        "pii",
+        "dlp",
+        "compliance"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "pii_redaction_eval_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Automatic redaction of SSNs, credit card numbers, passwords, and sensitive health info prior to embedding and LLM prompt forwarding.",
+      "exit_criteria": [
+        "100% detection rate on standard synthetic PII benchmark (Presidio / regex)",
+        "Redacted fields replaced with tokenized placeholders (e.g. `[REDACTED_EMAIL]`)"
+      ],
+      "source_refs": [
+        "SEC-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-AI-01"
+      ],
+      "source_claim_ids": [
+        "SEC-AI-01:claim-pii"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "pii",
+        "dlp",
+        "security",
+        "gdpr",
+        "sanitization"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-13",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-20",
+      "title": "Hybrid Search Engine (Dense Vectors + Sparse BM25 Fusion)",
+      "kind": "task",
+      "cluster": "02-rag-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "rag-core",
+        "hybrid-search",
+        "bm25"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "hybrid_search_eval_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Combine dense vector semantic similarity with exact keyword sparse BM25 indexing using Reciprocal Rank Fusion (RRF).",
+      "exit_criteria": [
+        "Exact part number / error code queries retrieve correct articles in top-1 position",
+        "Semantic paraphrased queries achieve Recall@10 > 92%"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-hybrid"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "hybrid-search",
+        "bm25",
+        "rrf",
+        "retrieval"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-20",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-21",
+      "title": "Contextual Query Rewriter & Multi-Turn Conversation Memory",
+      "kind": "task",
+      "cluster": "02-rag-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "rag-core",
+        "query-expansion",
+        "memory"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "query_rewriter_eval"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Resolve coreferences, pronouns, and implicit context across multi-turn user conversation prior to search query dispatch.",
+      "exit_criteria": [
+        "Follow-up question 'How much does it cost?' rewritten to include the specific product named 3 turns earlier",
+        "Sliding memory window discards obsolete tokens without losing entity state"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-query-rewriter"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "query-rewriting",
+        "conversation-memory",
+        "multi-turn"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-21",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-22",
+      "title": "Grounding System, Prompt Assembly & Citations Anchor",
+      "kind": "task",
+      "cluster": "02-rag-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "rag-core",
+        "synthesis",
+        "grounding",
+        "citations"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "grounding_citations_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Assemble LLM prompt with retrieved context, system instructions, tone controls, and inline clickable citation markers `[^1]`.",
+      "exit_criteria": [
+        "Every factual statement in LLM response maps to a valid citation source link",
+        "Out-of-domain questions gracefully refuse with helpful standard redirection"
+      ],
+      "source_refs": [
+        "PRD-AI-01",
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-grounding"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "grounding",
+        "citations",
+        "prompt-engineering",
+        "synthesis"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-22",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-23",
+      "title": "Hallucination Detector & Real-Time Fact-Checking Guardrail",
+      "kind": "task",
+      "cluster": "02-rag-core-engine",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "ai-safety",
+        "hallucination",
+        "guardrails"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "hallucination_guard_eval"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Post-generation verification checking generated response against retrieved passages using small fast model / NLI classifier.",
+      "exit_criteria": [
+        "Detects ungrounded fabricated dates, prices, or feature claims with 96% precision",
+        "Failed checks trigger automatic regenerated fallback response"
+      ],
+      "source_refs": [
+        "SEC-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-AI-01"
+      ],
+      "source_claim_ids": [
+        "SEC-AI-01:claim-hallucination"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "hallucination-detection",
+        "nli",
+        "guardrails",
+        "safety"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-23",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-24",
+      "title": "Seamless Human Agent Handoff Protocol",
+      "kind": "task",
+      "cluster": "02-rag-core-engine",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "support",
+        "handoff",
+        "crm"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "handoff_integration_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Automatic escalation to human agent queue when sentiment turns negative, confidence drops below threshold, or user requests human.",
+      "exit_criteria": [
+        "Full conversation transcript and AI summary packaged and injected into Zendesk/LiveChat agent window",
+        "User notified with live queue position and estimated wait time"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-handoff"
+      ],
+      "unlock_score": 5,
+      "tags": [
+        "handoff",
+        "human-in-the-loop",
+        "escalation",
+        "support"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-24",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-30",
+      "title": "Autonomous Function Calling Engine for CRM Actions",
+      "kind": "task",
+      "cluster": "03-agentic-tooling",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "agentic",
+        "tool-calling",
+        "crm-actions"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "tool_calling_eval_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Equip LLM with structured JSON tools: `create_crm_lead()`, `update_ticket_status()`, `schedule_demo()`, `query_account_balance()`.",
+      "exit_criteria": [
+        "Zod schema validation prevents invalid arguments",
+        "Tool execution errors handled and reported to LLM for self-correction"
+      ],
+      "source_refs": [
+        "PRD-AI-01",
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-tools"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "function-calling",
+        "tool-use",
+        "autonomous-agent",
+        "crm"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-30",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-31",
+      "title": "Human-in-the-Loop Confirmation Gate for Critical Actions",
+      "kind": "task",
+      "cluster": "03-agentic-tooling",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "agentic",
+        "hitl",
+        "safety",
+        "approval"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "Supervisor Approval",
+      "evidence_required": [
+        "hitl_workflow_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Enforce interactive approval modals before executing destructive CRM mutations (e.g. canceling subscriptions, deleting records, refunding).",
+      "exit_criteria": [
+        "Destructive actions blocked in pending state until authenticated confirmation",
+        "Audit log records who approved the action with timestamp"
+      ],
+      "source_refs": [
+        "SEC-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-AI-01"
+      ],
+      "source_claim_ids": [
+        "SEC-AI-01:claim-hitl"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "hitl",
+        "safety",
+        "approval-workflow",
+        "security"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-31",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-32",
+      "title": "Real-Time Sentiment Analysis & High-Value Account Routing",
+      "kind": "task",
+      "cluster": "03-agentic-tooling",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "agentic",
+        "sentiment",
+        "routing"
+      ],
+      "priority": "P1",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": [
+        "sentiment_eval_receipt"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Analyze user sentiment velocity and cross-reference CRM Annual Recurring Revenue (ARR) to prioritize VIP account escalations.",
+      "exit_criteria": [
+        "Accounts > $50k ARR with churn risk flagged to Account Executive Slack channel in < 5s",
+        "Tone adapted dynamically (more empathetic/concise) based on customer frustration score"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-sentiment"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "sentiment",
+        "routing",
+        "vip",
+        "churn-prevention"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-32",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-40",
+      "title": "Embeddable Chatbot Widget & SIGNAL Design Tokens",
+      "kind": "task",
+      "cluster": "04-frontend-chat-ui",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "widget",
+        "design-system"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "widget_build_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Lightweight (< 40kb gzip) script-tag embeddable chat widget adhering to SIGNAL dark-warm aesthetic (`#0A0B08`, `#CBF23F`).",
+      "exit_criteria": [
+        "Zero CSS bleed into host website DOM via Shadow DOM isolation",
+        "Mobile bottom sheet / desktop floating drawer responsiveness verified"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-widget"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "widget",
+        "frontend",
+        "signal-design",
+        "shadow-dom"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-40",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-14T09:00:00Z",
+        "dod_evidence": [
+          "Shadow DOM widget tested cleanly across React, Vue, and vanilla HTML"
+        ]
+      }
+    },
+    {
+      "id": "RAG-41",
+      "title": "Streaming Markdown Renderer & Source Citations Drawer",
+      "kind": "task",
+      "cluster": "04-frontend-chat-ui",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "streaming",
+        "markdown",
+        "citations"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "streaming_ui_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Real-time Server-Sent Events (SSE) token stream with syntax-highlighted code blocks, tables, and side drawer for inspected citation sources.",
+      "exit_criteria": [
+        "First token rendered in < 350ms from request dispatch",
+        "Clicking citation badge `[^1]` smoothly opens drawer previewing exact knowledge excerpt"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-streaming-ui"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "streaming",
+        "markdown",
+        "sse",
+        "citations-ui"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-41",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-42",
+      "title": "Copilot Sidebar Extension for Internal Support Agents",
+      "kind": "task",
+      "cluster": "04-frontend-chat-ui",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "copilot",
+        "agent-extension"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "copilot_extension_receipt"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Chrome Extension / Zendesk App sidebar that auto-suggests RAG responses and CRM actions directly to human support representatives.",
+      "exit_criteria": [
+        "1-click insert draft response into Zendesk/Intercom reply box",
+        "Predicted customer churn and upsell opportunities shown in agent HUD"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-copilot"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "copilot",
+        "zendesk-app",
+        "chrome-extension",
+        "agent-tools"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-42",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-43",
+      "title": "Interactive Feedback Loop (RLHF Thumbs Up/Down & Flagging)",
+      "kind": "task",
+      "cluster": "04-frontend-chat-ui",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "feedback",
+        "rlhf"
+      ],
+      "priority": "P2",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": [
+        "feedback_pipeline_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Micro-feedback buttons allowing users to rate answer quality, report factual inaccuracy, and provide correction notes.",
+      "exit_criteria": [
+        "Downvoted responses automatically tagged in evaluation dataset for review",
+        "Feedback linked with exact generation run ID and prompt trace"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-feedback"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "feedback",
+        "rlhf",
+        "evals",
+        "telemetry"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-43",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-50",
+      "title": "LLM Tracing, Token Analytics & OpenLLMetry Pipeline",
+      "kind": "task",
+      "cluster": "05-evals-observability",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "observability",
+        "langfuse",
+        "telemetry"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "langfuse_trace_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Instrument all LLM completions, vector searches, and tool executions with OpenTelemetry / Langfuse trace IDs.",
+      "exit_criteria": [
+        "Full trace includes input tokens, output tokens, latency breakdown, and exact prompt payload",
+        "Cost per conversation computed and aggregated in real-time"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-tracing"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "observability",
+        "tracing",
+        "langfuse",
+        "token-metrics"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-50",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-14T14:00:00Z",
+        "dod_evidence": [
+          "Langfuse tracing verified in staging across 500 test chats"
+        ]
+      }
+    },
+    {
+      "id": "RAG-51",
+      "title": "Automated RAG Triad Evaluation Pipeline (Ragas)",
+      "kind": "task",
+      "cluster": "05-evals-observability",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "evals",
+        "ragas",
+        "quality"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "ragas_eval_report"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Automated CI/CD evaluation running Ragas benchmark for: Context Precision, Faithfulness (Groundedness), and Answer Relevance.",
+      "exit_criteria": [
+        "Faithfulness score >= 0.92 on golden QA dataset",
+        "PR blocked if answer relevance drops by > 3%"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-ragas"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "evals",
+        "ragas",
+        "faithfulness",
+        "ci-cd-evals"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-51",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-52",
+      "title": "Token Quota & LLM Cost Allocation Engine",
+      "kind": "task",
+      "cluster": "05-evals-observability",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "cost-control",
+        "billing",
+        "quotas"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "quota_enforcement_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Enforce monthly token and dollar caps per CRM organization with tiered rate limits and graceful degraded fallback models.",
+      "exit_criteria": [
+        "Tenants hitting 90% quota receive email notification",
+        "Hard cap exceeded returns clear HTTP 429 quota exhausted response"
+      ],
+      "source_refs": [
+        "PRD-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-quota"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "cost-control",
+        "quotas",
+        "rate-limiting",
+        "token-budgets"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-52",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-53",
+      "title": "Red Teaming & Prompt Injection Vulnerability Testing",
+      "kind": "task",
+      "cluster": "05-evals-observability",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "security",
+        "red-teaming",
+        "prompt-injection"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "Security Officer Sign-off",
+      "evidence_required": [
+        "red_team_pentest_report"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Adversarial test suite simulating direct/indirect prompt injections, system prompt extraction, and jailbreak attempts.",
+      "exit_criteria": [
+        "Zero system prompt leakage across 500 adversarial attack vectors (PyRIT / Garak)",
+        "Indirect prompt injection inside CRM documents intercepted before tool execution"
+      ],
+      "source_refs": [
+        "SEC-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-AI-01"
+      ],
+      "source_claim_ids": [
+        "SEC-AI-01:claim-redteam"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "red-teaming",
+        "security",
+        "jailbreak",
+        "prompt-injection"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-53",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-60",
+      "title": "Staging Deployment & Multi-Tenant Concurrency Benchmarking",
+      "kind": "task",
+      "cluster": "06-compliance-deploy",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "staging",
+        "load-testing"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "staging_benchmark_report"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Deploy complete RAG pipeline to Staging and execute Locust load test simulating 500 concurrent customer chats.",
+      "exit_criteria": [
+        "p95 end-to-end response latency < 1.8s under peak concurrency",
+        "Zero 500 Internal Server Errors or connection pool exhaustions"
+      ],
+      "source_refs": [
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-AI-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-AI-01:claim-staging"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "staging",
+        "load-testing",
+        "benchmarks",
+        "devops"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-60",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-61",
+      "title": "Zero-Downtime Production Deployment & SLA Monitoring",
+      "kind": "task",
+      "cluster": "06-compliance-deploy",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "production",
+        "sre",
+        "launch"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "Enterprise Launch Permit",
+      "evidence_required": [
+        "production_sla_receipt"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Production launch across multi-region ECS/Kubernetes with automated healthchecks, fallback LLM providers, and 99.9% uptime SLA.",
+      "exit_criteria": [
+        "Automatic fallback to backup LLM provider (Azure OpenAI -> Anthropic) on provider outage",
+        "Live error budget alerts configured in Datadog / PagerDuty"
+      ],
+      "source_refs": [
+        "PRD-AI-01",
+        "ARCH-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-AI-01"
+      ],
+      "source_claim_ids": [
+        "PRD-AI-01:claim-prod-launch"
+      ],
+      "unlock_score": 6,
+      "tags": [
+        "production",
+        "launch",
+        "sre",
+        "zero-downtime"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-61",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "RAG-62",
+      "title": "GDPR Right-to-be-Forgotten & Vector Purge Engine",
+      "kind": "task",
+      "cluster": "06-compliance-deploy",
+      "horizon": "H3",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "compliance",
+        "gdpr",
+        "privacy"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "DPO Approval",
+      "evidence_required": [
+        "gdpr_deletion_receipt"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Automated workflow to hard-delete customer records, associated embedding chunks, and conversation transcripts upon GDPR DSAR request.",
+      "exit_criteria": [
+        "User vector records purged across all collections in < 10 seconds",
+        "Audit certificate of deletion generated for compliance records"
+      ],
+      "source_refs": [
+        "SEC-AI-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-AI-01"
+      ],
+      "source_claim_ids": [
+        "SEC-AI-01:claim-gdpr"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "gdpr",
+        "privacy",
+        "dsar",
+        "compliance"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "RAG-62",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-rag-crm-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "RAG-01",
+      "to": "RAG-04",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Re-ranking scores candidate vectors from vector DB"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-02",
+      "to": "RAG-04",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Re-ranking requires embedded chunks"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-03",
+      "to": "RAG-11",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Zendesk article ingestion uses document parser"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-10",
+      "to": "RAG-11",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Ticket ingestion links to CRM contacts"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-10",
+      "to": "RAG-12",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "CDC pipeline tracks CRM object changes"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-11",
+      "to": "RAG-12",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "CDC pipeline tracks Zendesk ticket events"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-10",
+      "to": "RAG-13",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "PII masking applies to CRM customer records"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-01",
+      "to": "RAG-20",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Hybrid search queries dense vector database"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-04",
+      "to": "RAG-20",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Hybrid search integrates semantic re-ranker"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-20",
+      "to": "RAG-21",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Query rewriter feeds rewritten queries to hybrid search"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-20",
+      "to": "RAG-22",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Prompt assembly uses retrieved hybrid search context"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-13",
+      "to": "RAG-22",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Prompt assembly uses PII-sanitized customer data"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-22",
+      "to": "RAG-23",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Hallucination detector verifies prompt generation against grounding context"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-22",
+      "to": "RAG-24",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Handoff protocol triggers on low-grounding confidence"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-11",
+      "to": "RAG-24",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Handoff routes tickets into Zendesk agent queues"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-22",
+      "to": "RAG-30",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "CRM tool calling triggered by grounded LLM intent"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-10",
+      "to": "RAG-30",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "CRM actions execute against Salesforce/HubSpot API"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-30",
+      "to": "RAG-31",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "HITL gate wraps destructive CRM tool executions"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-21",
+      "to": "RAG-32",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Sentiment analyzer evaluates multi-turn context"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-30",
+      "to": "RAG-32",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "VIP routing checks CRM ARR via account tool"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-40",
+      "to": "RAG-41",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Streaming markdown renders inside chat widget"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-22",
+      "to": "RAG-41",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Streaming citations connect to prompt citations anchor"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-40",
+      "to": "RAG-42",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Copilot sidebar shares chat component tokens"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-30",
+      "to": "RAG-42",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Copilot suggests CRM actions to human agents"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-41",
+      "to": "RAG-43",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Feedback widget renders on streamed responses"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-22",
+      "to": "RAG-51",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Ragas evaluation benchmarks grounded prompt responses"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-50",
+      "to": "RAG-51",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Ragas evaluation fetches Langfuse execution traces"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-50",
+      "to": "RAG-52",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Cost engine aggregates Langfuse token metrics"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-23",
+      "to": "RAG-53",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Red teaming tests hallucination and safety guardrails"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-51",
+      "to": "RAG-53",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Red teaming measures evaluation degradation"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-20",
+      "to": "RAG-60",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Staging benchmarks hybrid search throughput"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-40",
+      "to": "RAG-60",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Staging benchmarks client widget connection load"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-60",
+      "to": "RAG-61",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production launch requires verified staging benchmarks"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-23",
+      "to": "RAG-61",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production launch requires active hallucination guardrails"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-42",
+      "to": "RAG-61",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production launch enables internal agent copilot"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-01",
+      "to": "RAG-62",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "GDPR purge executes vector deletion on Qdrant"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "RAG-12",
+      "to": "RAG-62",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "GDPR purge tracks CDC deletion tombstones"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    }
+  ]
+}
