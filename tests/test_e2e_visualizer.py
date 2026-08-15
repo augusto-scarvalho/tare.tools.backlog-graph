@@ -228,7 +228,7 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
             
             # Tab 1: Doctor Audit
-            self.assertIn("GRAPH TOPOLOGY HEALTHY", page.locator("#opsModalContent").text_content())
+            self.assertIn("GRAPH TOPOLOGY & INTEGRITY HEALTHY", page.locator("#opsModalContent").text_content())
             
             # Tab 2: Action Queue & Path Finder
             page.click("#modalTabRanked")
@@ -256,14 +256,40 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
             self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
             
-            # Tab 3: Export Station
+            # Tab 3: Semantic Diff (Op 9)
             page.click("#opsModalBtn")
+            page.click("#modalTabDiff")
+            self.assertIn("Semantic Diff Engine", page.locator("#opsModalContent").text_content())
+            
+            # Tab 4: Cryptographic Ledger (Op 10)
+            page.click("#modalTabLedger")
+            self.assertIn("Verified SHA-256 Chain", page.locator("#opsModalContent").text_content())
+            self.assertIn("INIT_GRAPH", page.locator("#opsModalContent").text_content())
+            
+            # Tab 5: Agent Implementation Packet (Op 11)
+            page.click("#modalTabAgent")
+            self.assertIn("Implementation Packet", page.locator("#agentPacketText").input_value())
+            
+            # Tab 6: Universal Export (Op 13)
             page.click("#modalTabExport")
-            self.assertTrue(page.locator("button:has-text('Download JSON')").is_visible())
+            self.assertTrue(page.locator("button:has-text('JSON Graph')").is_visible())
+            self.assertTrue(page.locator("button:has-text('Mermaid Flowchart')").is_visible())
+            self.assertTrue(page.locator("button:has-text('Markdown Spec')").is_visible())
+            self.assertTrue(page.locator("button:has-text('CSV Table')").is_visible())
             
             # Close modal via Escape
             page.keyboard.press("Escape")
             self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
+
+            # 18. Test Transitive Closure Buttons in Inspector (Op 6)
+            page.click("#tabDagBtn")
+            page.click("#dagNode_TASK-03")
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-03")
+            
+            # Click Upstream Blockers Closure
+            page.click("#traceAncestorsBtn")
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
 
             browser.close()
 
