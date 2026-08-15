@@ -289,7 +289,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       border-radius: var(--radius-xs);
       padding: var(--space-3);
       cursor: pointer;
-      transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -300,12 +300,50 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       border-color: var(--border-strong);
       transform: translateY(-1px);
     }
-    .task-card.selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 0 12px var(--accent-bg);
-      background: var(--surface-3);
+    
+    /* Pulse Keyframe Animation */
+    @keyframes nodeGlowPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 1px var(--accent), 0 0 14px var(--accent-bg);
+      }
+      50% {
+        box-shadow: 0 0 0 2px var(--accent), 0 0 22px rgba(203, 242, 63, 0.4);
+      }
     }
     
+    @keyframes electricPulse {
+      0% {
+        stroke-dashoffset: 24;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .task-card.selected {
+      border-color: var(--accent) !important;
+      background: var(--surface-3) !important;
+      animation: nodeGlowPulse 2s infinite ease-in-out;
+      z-index: 2;
+    }
+    
+    .task-card.chain-upstream {
+      border-color: rgba(203, 242, 63, 0.7) !important;
+      background: rgba(203, 242, 63, 0.06) !important;
+      box-shadow: 0 0 0 1px rgba(203, 242, 63, 0.3);
+    }
+
+    .task-card.chain-downstream {
+      border-color: rgba(69, 224, 196, 0.7) !important;
+      background: rgba(69, 224, 196, 0.06) !important;
+      box-shadow: 0 0 0 1px rgba(69, 224, 196, 0.3);
+    }
+
+    .task-card.dimmed {
+      opacity: 0.28 !important;
+      filter: grayscale(35%);
+    }
+
     /* SIGNAL Status Rail (color + symbol + text) */
     .task-card.status-ready {
       border-left: 3px solid var(--accent);
@@ -394,6 +432,33 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       cursor: grabbing;
     }
     
+    /* Pulse Edge Classes */
+    .edge-pulse-upstream {
+      stroke: var(--accent) !important;
+      stroke-width: 2.5px !important;
+      stroke-dasharray: 8 4;
+      animation: electricPulse 0.75s linear infinite;
+      filter: drop-shadow(0 0 5px rgba(203, 242, 63, 0.85));
+    }
+    
+    .edge-pulse-downstream {
+      stroke: var(--stream) !important;
+      stroke-width: 2px !important;
+      stroke-dasharray: 8 4;
+      animation: electricPulse 0.75s linear infinite;
+      filter: drop-shadow(0 0 4px rgba(69, 224, 196, 0.85));
+    }
+    
+    .edge-dimmed {
+      opacity: 0.15 !important;
+      stroke: #1E2216 !important;
+    }
+    
+    .dag-node-dimmed {
+      opacity: 0.22 !important;
+      filter: grayscale(40%);
+    }
+
     /* Canvas Floating HUD */
     .dag-hud {
       position: absolute;
@@ -526,6 +591,22 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     .stat-metric.metric-ready span {
       color: var(--accent);
     }
+    .esc-hint {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .kbd-pill {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: var(--text-primary);
+      font-size: 10px;
+    }
   </style>
 </head>
 <body class="atmo">
@@ -587,7 +668,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="inspector-drawer" id="inspectorDrawer">
       <div class="inspector-header">
         <div class="inspector-id" id="inspId">Select a task</div>
-        <div class="inspector-title" id="inspTitle">Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context.</div>
+        <div class="inspector-title" id="inspTitle">Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context. Press [Esc] to deselect.</div>
       </div>
 
       <div class="section-block">
@@ -634,7 +715,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="stat-metric metric-ready">⚡ Actionable Frontier: <span id="statReady">0</span></div>
     <div class="stat-metric">Done: <span id="statDone">0</span></div>
     <div class="stat-metric">Edges: <span id="statEdges">0</span></div>
-    <div class="stat-metric" style="margin-left:auto;">Engine: <span>tare.tools SIGNAL DAG v0.2</span></div>
+    <div class="esc-hint"><span>Press</span> <kbd class="kbd-pill">Esc</kbd> <span>to deselect node & path</span></div>
   </footer>
 
   <script>
@@ -644,7 +725,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     const byId = {};
     nodes.forEach(n => byId[n.id] = n);
 
-    let selectedNodeId = nodes[0] ? nodes[0].id : null;
+    let selectedNodeId = null;
     let simulatedDoneSet = new Set();
     let showCriticalPath = false;
     let currentView = 'grid';
@@ -695,6 +776,52 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       return true;
     }
 
+    /* ==========================================================================
+       Recursive Dependency & Ancestor Chain Traversals
+       ========================================================================== */
+
+    function getRecursiveUpstream(startId) {
+      const visitedNodes = new Set();
+      const edgeKeys = new Set();
+      if (!startId) return { nodes: visitedNodes, edges: edgeKeys };
+
+      const queue = [startId];
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        edges.forEach(e => {
+          if (e.to === curr && e.semantic !== false) {
+            edgeKeys.add(`${e.from}->${e.to}`);
+            if (!visitedNodes.has(e.from)) {
+              visitedNodes.add(e.from);
+              queue.push(e.from);
+            }
+          }
+        });
+      }
+      return { nodes: visitedNodes, edges: edgeKeys };
+    }
+
+    function getRecursiveDownstream(startId) {
+      const visitedNodes = new Set();
+      const edgeKeys = new Set();
+      if (!startId) return { nodes: visitedNodes, edges: edgeKeys };
+
+      const queue = [startId];
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        edges.forEach(e => {
+          if (e.from === curr && e.semantic !== false) {
+            edgeKeys.add(`${e.from}->${e.to}`);
+            if (!visitedNodes.has(e.to)) {
+              visitedNodes.add(e.to);
+              queue.push(e.to);
+            }
+          }
+        });
+      }
+      return { nodes: visitedNodes, edges: edgeKeys };
+    }
+
     function switchView(viewName) {
       currentView = viewName;
       document.getElementById('tabGridBtn').className = `tab-btn ${viewName === 'grid' ? 'active' : ''}`;
@@ -741,6 +868,10 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('statReady').textContent = readyCount;
       document.getElementById('statDone').textContent = doneCount;
       document.getElementById('statEdges').textContent = edges.length;
+
+      // Compute active dependency chain sets
+      const upstream = getRecursiveUpstream(selectedNodeId);
+      const downstream = getRecursiveDownstream(selectedNodeId);
 
       const grouped = {};
       clusters.forEach(c => grouped[c] = []);
@@ -792,8 +923,25 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
             pillLabel = 'SIMULATED';
           }
 
-          card.className = `task-card ${statusClass} ${n.id === selectedNodeId ? 'selected' : ''}`;
-          card.onclick = () => selectNode(n.id);
+          // Chain highlight & dimming
+          let chainClass = '';
+          if (selectedNodeId) {
+            if (n.id === selectedNodeId) {
+              chainClass = 'selected';
+            } else if (upstream.nodes.has(n.id)) {
+              chainClass = 'chain-upstream';
+            } else if (downstream.nodes.has(n.id)) {
+              chainClass = 'chain-downstream';
+            } else {
+              chainClass = 'dimmed';
+            }
+          }
+
+          card.className = `task-card ${statusClass} ${chainClass}`;
+          card.onclick = (e) => {
+            e.stopPropagation();
+            selectNode(n.id);
+          };
 
           card.innerHTML = `
             <div class="card-top">
@@ -817,7 +965,10 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     function selectNode(id) {
       selectedNodeId = id;
       const n = byId[id];
-      if (!n) return;
+      if (!n) {
+        deselectNode();
+        return;
+      }
 
       document.getElementById('inspId').textContent = n.id;
       document.getElementById('inspTitle').textContent = n.title || '';
@@ -863,6 +1014,19 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       render();
     }
 
+    function deselectNode() {
+      selectedNodeId = null;
+      document.getElementById('inspId').textContent = 'Select a task';
+      document.getElementById('inspTitle').textContent = 'Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context. Press [Esc] to deselect.';
+      document.getElementById('inspState').textContent = '-';
+      document.getElementById('simToggle').checked = false;
+      document.getElementById('inspSummary').textContent = '-';
+      document.getElementById('inspCriteria').textContent = '-';
+      document.getElementById('inspPrereqs').innerHTML = 'None';
+      document.getElementById('inspDownstream').innerHTML = 'None';
+      render();
+    }
+
     function toggleSimulateCurrent() {
       if (!selectedNodeId) return;
       if (simulatedDoneSet.has(selectedNodeId)) {
@@ -887,7 +1051,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       simulatedDoneSet.clear();
       showCriticalPath = false;
       document.getElementById('criticalPathBtn').className = 'action-btn';
-      render();
+      deselectNode();
     }
 
     function copyImplementationPacket() {
@@ -1030,6 +1194,10 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         computeAutoLayout(visible);
       }
 
+      // Compute recursive chains for electrical pulse highlight
+      const upstream = getRecursiveUpstream(selectedNodeId);
+      const downstream = getRecursiveDownstream(selectedNodeId);
+
       // Render Edges
       edges.forEach(e => {
         if (!vSet.has(e.from) || !vSet.has(e.to)) return;
@@ -1043,20 +1211,20 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           path.setAttribute('d', d);
           path.setAttribute('fill', 'none');
           
-          let strokeColor = '#2B3020';
-          let strokeWidth = '1.5';
-
-          // Highlight edges connected to selected node
-          if (e.to === selectedNodeId) {
-            strokeColor = '#F2685C';
-            strokeWidth = '2';
-          } else if (e.from === selectedNodeId) {
-            strokeColor = '#45E0C4';
-            strokeWidth = '2';
+          const edgeKey = `${e.from}->${e.to}`;
+          if (selectedNodeId) {
+            if (upstream.edges.has(edgeKey)) {
+              path.setAttribute('class', 'edge-pulse-upstream');
+            } else if (downstream.edges.has(edgeKey)) {
+              path.setAttribute('class', 'edge-pulse-downstream');
+            } else {
+              path.setAttribute('class', 'edge-dimmed');
+            }
+          } else {
+            path.setAttribute('stroke', '#2B3020');
+            path.setAttribute('stroke-width', '1.5');
           }
 
-          path.setAttribute('stroke', strokeColor);
-          path.setAttribute('stroke-width', strokeWidth);
           edgesLayer.appendChild(path);
         }
       });
@@ -1070,6 +1238,17 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
         g.setAttribute('data-id', n.id);
         g.style.cursor = 'grab';
+
+        // Dimming & selection classes
+        if (selectedNodeId) {
+          if (n.id === selectedNodeId) {
+            g.setAttribute('class', 'dag-node-selected');
+          } else if (upstream.nodes.has(n.id) || downstream.nodes.has(n.id)) {
+            g.setAttribute('class', 'dag-node-chain');
+          } else {
+            g.setAttribute('class', 'dag-node-dimmed');
+          }
+        }
 
         // Drag node listeners
         g.addEventListener('mousedown', (e) => {
@@ -1093,6 +1272,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         else strokeColor = '#F2685C';
 
         if (n.id === selectedNodeId) strokeColor = '#CBF23F';
+        else if (upstream.nodes.has(n.id)) strokeColor = '#CBF23F';
+        else if (downstream.nodes.has(n.id)) strokeColor = '#45E0C4';
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '160');
@@ -1100,7 +1281,16 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         rect.setAttribute('rx', '6');
         rect.setAttribute('fill', n.id === selectedNodeId ? '#1B1F14' : '#14170E');
         rect.setAttribute('stroke', strokeColor);
-        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2' : '1');
+        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : (upstream.nodes.has(n.id) || downstream.nodes.has(n.id) ? '2' : '1'));
+        
+        if (n.id === selectedNodeId) {
+          rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(203, 242, 63, 0.45))');
+        } else if (upstream.nodes.has(n.id)) {
+          rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(203, 242, 63, 0.3))');
+        } else if (downstream.nodes.has(n.id)) {
+          rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(69, 224, 196, 0.3))');
+        }
+
         g.appendChild(rect);
 
         // Status indicator pip
@@ -1179,8 +1369,11 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
         isDraggingNode = false;
         draggedNodeId = null;
-      }
-      if (isPanningCanvas) {
+      } else if (isPanningCanvas) {
+        // If clicking on empty canvas without panning, deselect node
+        if (Math.abs(e.clientX - (panStartX + panX)) < 3 && Math.abs(e.clientY - (panStartY + panY)) < 3) {
+          deselectNode();
+        }
         isPanningCanvas = false;
         svgEl.classList.remove('panning');
       }
@@ -1194,13 +1387,26 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       updateViewportTransform();
     }, { passive: false });
 
+    // Press Escape to deselect current node and clear active pulse path
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        deselectNode();
+      }
+    });
+
+    // Click outside in grid view to deselect
+    document.getElementById('gridView').addEventListener('click', (e) => {
+      if (e.target.id === 'gridView' || e.target.id === 'clustersContainer') {
+        deselectNode();
+      }
+    });
+
     // Attach filter listeners
     document.getElementById('searchInput').addEventListener('input', render);
     document.getElementById('statusFilter').addEventListener('change', render);
     document.getElementById('clusterFilter').addEventListener('change', render);
 
     render();
-    if (nodes.length > 0) selectNode(nodes[0].id);
   </script>
 </body>
 </html>"""

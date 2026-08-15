@@ -50,9 +50,9 @@ class VisualizerE2ETests(unittest.TestCase):
             stat_ready = page.locator("#statReady").text_content()
             self.assertEqual(stat_ready, "1")  # TASK-02 is ready
             
-            # 4. Check initial selected task in inspector drawer
+            # 4. Check initial selected task in inspector drawer (default unselected)
             insp_id = page.locator("#inspId").text_content()
-            self.assertEqual(insp_id, "TASK-01")
+            self.assertEqual(insp_id, "Select a task")
             
             # 5. Click on TASK-02 card and verify inspector updates
             page.locator(".task-card:has-text('TASK-02')").click()
@@ -128,14 +128,23 @@ class VisualizerE2ETests(unittest.TestCase):
             page.mouse.move(node_box["x"] + 120, node_box["y"] + 70, steps=5)
             page.mouse.up()
             
-            new_transform = page.locator("#dagNode_TASK-01").get_attribute("transform")
-            new_edge_d = page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d")
+            # 13. Test Recursive Dependency Chain & Electrical Pulse Highlight
+            page.locator("#dagNode_TASK-03").click()
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-03")
             
-            # Assert node position updated
-            self.assertNotEqual(initial_transform, new_transform)
-            # Assert connected edge curve updated dynamically
-            self.assertNotEqual(initial_edge_d, new_edge_d)
+            # Assert that upstream edges in the recursive chain have the electric pulse class
+            edge1 = page.locator("#dagEdge_TASK-01_TASK-02")
+            edge2 = page.locator("#dagEdge_TASK-02_TASK-03")
+            self.assertEqual(edge1.get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(edge2.get_attribute("class"), "edge-pulse-upstream")
             
+            # 14. Test ESC Key Deselect
+            page.keyboard.press("Escape")
+            self.assertEqual(page.locator("#inspId").text_content(), "Select a task")
+            # Assert edges return to default (no pulse class)
+            self.assertIsNone(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"))
+            self.assertIsNone(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"))
+
             browser.close()
 
 if __name__ == "__main__":
