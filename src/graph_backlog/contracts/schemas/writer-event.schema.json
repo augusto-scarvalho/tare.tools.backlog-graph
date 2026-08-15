@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://tare.tools/schemas/work-graph-writer-event-1.json",
+  "type":"object","additionalProperties":false,
+  "required":["event_id","producer","aggregate_id","aggregate_version","patch","tombstone","idempotency_key","payload_hash","causation_id","visited_consumers","auth_alg","auth_key_id","signature"],
+  "properties":{
+    "event_id":{"type":"string","minLength":1},"producer":{"type":"string","minLength":1},"aggregate_id":{"type":"string","minLength":1},
+    "aggregate_version":{"type":"integer","minimum":1},"patch":{"type":"object"},"tombstone":{"type":"boolean"},
+    "idempotency_key":{"type":"string","minLength":1},"payload_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "causation_id":{"type":["string","null"]},"visited_consumers":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "auth_alg":{"const":"HMAC-SHA256"},"auth_key_id":{"type":"string","minLength":1},"signature":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

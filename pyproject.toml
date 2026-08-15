@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tare-tools-graph-backlog"
+version = "0.2.0"
+description = "Deterministic DAG-based work graph backlog, dependency analyzer, and implementation packet engine."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Augusto Carvalho", email = "augusto-scarvalho@users.noreply.github.com" }
+]
+keywords = [
+    "dag",
+    "graph",
+    "backlog",
+    "dependencies",
+    "project-management",
+    "ai-agents",
+    "planning",
+    "tare-tools"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "jsonschema>=4.0"
+]
+
+[project.scripts]
+graph-backlog = "graph_backlog.cli:main"
+graph-ops = "graph_backlog.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"graph_backlog" = [
+    "contracts/policies/*.json",
+    "contracts/schemas/*.json"
+]

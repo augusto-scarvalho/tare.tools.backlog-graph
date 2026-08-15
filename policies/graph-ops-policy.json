@@ -1,0 +1,70 @@
+{
+  "actionability": {
+    "actionable_kinds": [
+      "work",
+      "train",
+      "task_candidate",
+      "research_task",
+      "implementation_packet",
+      "blocker_resolution_candidate",
+      "implementation_candidate",
+      "bug_candidate",
+      "documentation",
+      "candidate",
+      "task",
+      "spike",
+      "work_item",
+      "ticket"
+    ],
+    "default_actionable_only": true,
+    "note": "Actionability is a planning filter only. It does not grant Authority or execution eligibility."
+  },
+  "authority_boundary": "POC projection operations only. No TaskStore/Git/GitHub/Authority mutation.",
+  "completion": {
+    "default_hidden": [
+      "DONE",
+      "SUPERSEDED"
+    ]
+  },
+  "graph_schema": "work-graph-poc/0.5",
+  "output": {
+    "default_format": "json",
+    "deterministic_sort": true,
+    "max_default_results": 50
+  },
+  "ranking": {
+    "authority_penalty": 2,
+    "criticality": {
+      "critical": 25,
+      "critical-path": 25,
+      "foundation": 18,
+      "high": 15,
+      "low": 2,
+      "medium": 8,
+      "structural": 20
+    },
+    "horizon": {
+      "H0": 25,
+      "H1": 20,
+      "H2": 15,
+      "H3": 10,
+      "H4": 5
+    },
+    "partial_penalty": 3,
+    "priority": {
+      "P0": 50,
+      "P1": 35,
+      "P2": 20,
+      "P3": 5,
+      "critical": 50,
+      "high": 40,
+      "historical": 0,
+      "low": 10,
+      "med": 25,
+      "medium": 25
+    },
+    "unlock_score_multiplier": 4
+  },
+  "relation_semantics": "relation-taxonomy.json owns blocking/direction/satisfaction semantics; this policy must not duplicate them.",
+  "schema": "tare.tools/graph-ops-policy/0.2"
+}

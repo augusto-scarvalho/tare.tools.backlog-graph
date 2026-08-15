@@ -1,0 +1,502 @@
+{
+  "authority_boundary": "Relation semantics influence projection feasibility only; they do not mint canonical dependencies or Authority.",
+  "default": {
+    "dependency_effect": "none",
+    "direction": "source_to_target",
+    "prerequisite_role": null,
+    "required_materialization_scope": "none",
+    "satisfaction_mode": "none"
+  },
+  "relations": {
+    "BASE_OF": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "BECAME_RECOVERY_SUBJECT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "BECAME_RECOVERY_SUBJECT_FOR": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "BLOCKS": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "BLOCKS_STRONGER_AUTOMATION": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "CAN_RUN_IN_SAME_BOUNDED_SESSION": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CAN_RUN_PARALLEL_WITH": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CONFIRMS_BLOCKER": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CONSTRAINS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "COORDINATION_PROJECTED_AS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CROSS_CUTS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CURRENT_AUTHORITY_CONTEXT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "CURRENT_BASE_CONTEXT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "DEPENDS_ON": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "DISCOVERS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "DOGFOOD_INPUT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "ENABLES": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "ENABLES_STRONGER_EFFECT_CEILING": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "EVIDENCE_FOR": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "HARDENING_SUPPORTS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "INFORMS": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "LINEAGE_TO": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "MAPPED_TO": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "MAPS_TO": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PARTIALLY_SUPERSEDES_SNAPSHOT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PILOT_FOR": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PRECEDES": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PROJECTED_BY": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PROVENANCE_SUPPORT": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "PROVIDES_EVIDENCE_SEAMS_FOR": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "QUALIFIES_EXISTING_SEAM": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "RECORDED_COMPLETION": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "RELATED_RESEARCH": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "REQUIRES_AUDIT": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "SATISFIED_OR_SUPERSEDED_BY": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "SUPERSEDED_BY": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "successor",
+      "dependent_role": null,
+      "description": "Explicit replacement/successor relation; not itself a blocking edge.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "successor requirement",
+      "satisfaction_mode": "successor_resolution",
+      "superseded_rule": "target must satisfy prerequisite checks before source SUPERSEDED is considered satisfied"
+    },
+    "SUPPORTS_LINEAGE": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "UNBLOCKS": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "UNLOCKS": {
+      "accepted_terminal_status": [
+        "DONE"
+      ],
+      "dependency_effect": "prerequisite",
+      "dependent_role": "target",
+      "description": "Blocking/prerequisite relation in this POC projection.",
+      "direction": "source_to_target",
+      "prerequisite_role": "source",
+      "required_materialization_scope": "edge.requirements.materialization_scope or caller/profile requirement",
+      "satisfaction_mode": "completion_and_requirements",
+      "superseded_rule": "follow semantic SUPERSEDED_BY successor and require successor satisfaction"
+    },
+    "UNLOCKS_EDITORIAL_WORK": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "UNLOCKS_EVIDENCE": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "UNLOCKS_RESEARCH": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    },
+    "UNLOCKS_RESEARCH_EVIDENCE": {
+      "accepted_terminal_status": [],
+      "dependency_effect": "none",
+      "dependent_role": null,
+      "description": "Non-blocking lineage/evidence/planning relation.",
+      "direction": "source_to_target",
+      "prerequisite_role": null,
+      "required_materialization_scope": "none",
+      "satisfaction_mode": "none",
+      "superseded_rule": "none"
+    }
+  },
+  "schema": "tare.tools/relation-taxonomy/0.2"
+}
