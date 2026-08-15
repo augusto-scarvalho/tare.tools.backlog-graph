@@ -2513,9 +2513,16 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     /* Global Mouse Listeners for Smooth Node Dragging & Canvas Panning */
     const svgEl = document.getElementById('dagSvg');
 
+    let canvasMouseDownX = 0;
+    let canvasMouseDownY = 0;
+    let hasPannedCanvas = false;
+
     svgEl.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       isPanningCanvas = true;
+      canvasMouseDownX = e.clientX;
+      canvasMouseDownY = e.clientY;
+      hasPannedCanvas = false;
       panStartX = e.clientX - panX;
       panStartY = e.clientY - panY;
       svgEl.classList.add('panning');
@@ -2536,6 +2543,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
         updateEdgePaths();
       } else if (isPanningCanvas) {
+        if (Math.abs(e.clientX - canvasMouseDownX) > 4 || Math.abs(e.clientY - canvasMouseDownY) > 4) {
+          hasPannedCanvas = true;
+        }
         panX = e.clientX - panStartX;
         panY = e.clientY - panStartY;
         updateViewportTransform();
@@ -2547,13 +2557,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         const gEl = document.getElementById(`dagNode_${draggedNodeId}`);
         if (gEl) gEl.style.cursor = 'grab';
         
-        if (!hasMovedSignificantly) {
-          selectNode(draggedNodeId);
-        }
+        // Retain selection of the dragged node without wiping any paths
+        selectNode(draggedNodeId);
+        
         isDraggingNode = false;
         draggedNodeId = null;
       } else if (isPanningCanvas) {
-        if (Math.abs(e.clientX - (panStartX + panX)) < 3 && Math.abs(e.clientY - (panStartY + panY)) < 3) {
+        // Only deselect if it was a quick static click on empty background without drag/pan
+        if (!hasPannedCanvas) {
           deselectNode();
         }
         isPanningCanvas = false;
