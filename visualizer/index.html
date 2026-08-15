@@ -154,25 +154,42 @@
       flex-shrink: 0;
     }
     
-    /* Subnav Tier 2: View Switcher & Action Tools */
+    /* Subnav Tier 2: View Switcher (Centered) & Action Tools (Right) */
     .subnav-bar {
       height: var(--h-subnav);
       background: var(--surface-1);
       border-bottom: 1px solid var(--border-subtle);
       padding: 0 var(--space-4);
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
       gap: var(--space-3);
-      flex-wrap: nowrap;
       z-index: 9;
     }
 
     .subnav-left {
+      /* Left balance */
+    }
+
+    .subnav-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: center;
+    }
+
+    .subnav-right {
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      flex-wrap: nowrap;
+      justify-self: end;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+      margin: 0 4px;
     }
 
     .view-tabs {
@@ -873,19 +890,25 @@
     <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset</button>
   </header>
 
-  <!-- Subnav Tier 2: View Switcher & Action Tools -->
+  <!-- Subnav Tier 2: View Switcher (Centered) & Actions/Shortcuts (Right) -->
   <div class="subnav-bar">
-    <div class="subnav-left">
+    <div class="subnav-left"></div>
+
+    <div class="subnav-center">
       <div class="view-tabs">
         <button class="tab-btn active" id="tabGridBtn" onclick="switchView('grid')">Clusters / Modules</button>
         <button class="tab-btn" id="tabKanbanBtn" onclick="switchView('kanban')">Classic Kanban</button>
         <button class="tab-btn" id="tabDagBtn" onclick="switchView('dag')">Interactive DAG Canvas</button>
       </div>
+    </div>
+
+    <div class="subnav-right">
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
       <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent); font-weight:700;">⚡ Graph Ops (13 Ops)</button>
-    </div>
-    <div class="esc-hint">
-      Press <span class="kbd-pill">Esc</span> to deselect / clear active paths
+      <div class="nav-divider"></div>
+      <div class="esc-hint" style="margin-left:0;">
+        Press <span class="kbd-pill">Esc</span> to deselect / clear active paths
+      </div>
     </div>
   </div>
 
