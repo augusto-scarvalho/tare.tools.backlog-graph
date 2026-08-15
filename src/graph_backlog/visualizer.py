@@ -14,6 +14,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="agentic-protocol" content="tare.tools/graph-backlog/v1">
+  <meta name="agentic-runtime" content="window.tareGraph">
+  <meta name="copilot-instructions" content="Interactive Directed Acyclic Work Graph Backlog. Query the global window.tareGraph runtime or read #signal-agentic-manifest for full topological details, ready tasks, and critical path bottlenecks.">
   <title>tare.tools — Graph Backlog (SIGNAL Mission Control)</title>
   <style>
     /* ==========================================================================
@@ -869,9 +872,24 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text-primary);
       font-size: 10px;
     }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
   </style>
 </head>
 <body class="atmo">
+  <!-- Agentic AI Discovery Manifest & Live State for Microsoft 365 Copilot & LLM Runtimes -->
+  <script id="signal-agentic-manifest" type="application/json" data-agentic-protocol="tare.tools/graph-backlog/v1"></script>
+  <section id="agenticCopilotTrail" class="sr-only" aria-label="AI Agent Inspection Trail" data-agentic-role="graph-backlog-summary"></section>
+
   <header>
     <!-- Left: Brand Logo, Project Title & Theme Selector -->
     <div class="header-left">
@@ -952,6 +970,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <div class="subnav-right">
+      <button class="action-btn" id="copilotBridgeBtn" onclick="openOpsModal('copilot')" style="border-color:rgba(38, 139, 210, 0.45); color:var(--accent); font-weight:700;">🤖 Copilot Bridge</button>
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
       <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent); font-weight:700;">⚡ Graph Ops (13 Ops)</button>
       <div class="nav-divider"></div>
@@ -1062,6 +1081,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         <button class="modal-nav-btn" id="modalTabDiff" onclick="switchOpsTab('diff')">🔄 Semantic Diff (Op 9)</button>
         <button class="modal-nav-btn" id="modalTabLedger" onclick="switchOpsTab('ledger')">🔒 Crypto Ledger (Op 10)</button>
         <button class="modal-nav-btn" id="modalTabAgent" onclick="switchOpsTab('agent')">🤖 Agent Packet (Op 11)</button>
+        <button class="modal-nav-btn" id="modalTabCopilot" onclick="switchOpsTab('copilot')">🧠 Copilot & AI Bridge</button>
         <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')">💾 Universal Export (Op 13)</button>
       </div>
       <div class="modal-body" id="opsModalContent"></div>
@@ -2063,6 +2083,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       if (currentView === 'kanban') renderKanban();
       if (currentView === 'dag') renderDag();
+      updateAgenticManifest();
     }
 
     function selectNode(id) {
@@ -2751,7 +2772,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     function switchOpsTab(tab) {
-      ['doctor', 'ranked', 'diff', 'ledger', 'agent', 'export'].forEach(t => {
+      ['doctor', 'ranked', 'diff', 'ledger', 'agent', 'copilot', 'export'].forEach(t => {
         const btn = document.getElementById('modalTab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) btn.className = `modal-nav-btn ${t === tab ? 'active' : ''}`;
       });
@@ -2769,6 +2790,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         renderLedgerTab(body);
       } else if (tab === 'agent') {
         renderAgentPacketTab(body);
+      } else if (tab === 'copilot') {
+        renderCopilotBridgeTab(body);
       } else if (tab === 'export') {
         renderExportTab(body);
       }
@@ -3157,6 +3180,297 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         alert('✅ Agent Implementation Packet copied to clipboard!');
       });
     }
+
+    /* ==========================================================================
+       Microsoft 365 Copilot & Agentic Discovery Bridge (In-Browser Runtime API)
+       ========================================================================== */
+
+    function renderCopilotBridgeTab(container) {
+      const summary = window.tareGraph.getSummary();
+      const contextPrompt = window.tareGraph.getCopilotContext();
+      const manifestEl = document.getElementById('signal-agentic-manifest');
+      const manifestJson = manifestEl ? manifestEl.textContent : '{}';
+
+      container.innerHTML = `
+        <div class="report-card pass">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:700; color:var(--accent);">🤖 Microsoft 365 Copilot & In-Browser AI Bridge (Agentic Runtime)</span>
+            <span class="signal-pill pill-ready">Global API: window.tareGraph</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.5;">
+            In-browser AI assistants (Microsoft 365 Copilot in Edge, sidecars, and browser devtools) can directly query the live, high-precision DAG structure via <code>window.tareGraph</code> or inspect <code>#signal-agentic-manifest</code> instead of scraping and guessing visual DOM elements.
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <!-- 1-Click Copilot Context Prompt -->
+          <div class="report-card" style="display:flex; flex-direction:column; gap:6px;">
+            <div class="section-label">📋 1-Click Copilot Context Prompt</div>
+            <div style="font-size:11px; color:var(--text-secondary);">
+              Ready-to-paste system prompt summarizing the active project, ready frontier, and bottleneck paths for Microsoft 365 Copilot:
+            </div>
+            <textarea id="copilotContextText" style="flex:1; min-height:160px; background:var(--surface-1); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:4px; padding:8px; font-family:var(--font-mono); font-size:11px; resize:vertical;" readonly>${contextPrompt}</textarea>
+            <button class="action-btn" onclick="copyCopilotPrompt()" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border); justify-content:center;">
+              📋 Copy Context Prompt for Copilot
+            </button>
+          </div>
+
+          <!-- Ephemeral Script Runner & Sandbox -->
+          <div class="report-card" style="display:flex; flex-direction:column; gap:6px;">
+            <div class="section-label">⚡ Ephemeral Script Runner (Test Copilot Methods)</div>
+            <div style="font-size:11px; color:var(--text-secondary);">
+              Click any method to execute it live against <code>window.tareGraph</code>:
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+              <button class="action-btn" onclick="runCopilotSandbox('getSummary()')">tareGraph.getSummary()</button>
+              <button class="action-btn" onclick="runCopilotSandbox('getFrontier()')">tareGraph.getFrontier()</button>
+              <button class="action-btn" onclick="runCopilotSandbox('getCriticalPath()')">tareGraph.getCriticalPath()</button>
+              <button class="action-btn" onclick="runCopilotSandbox('getDoctorAudit()')">tareGraph.getDoctorAudit()</button>
+              <button class="action-btn" onclick="runCopilotSandbox('getRankedPriority()')">tareGraph.getRankedPriority()</button>
+              <button class="action-btn" onclick="runCopilotSandbox('help()')">tareGraph.help()</button>
+            </div>
+            <div class="section-label" style="margin-top:4px;">Live Execution Output:</div>
+            <pre id="copilotSandboxOutput" style="flex:1; min-height:110px; max-height:160px; overflow:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:4px; padding:6px; font-size:10px; font-family:var(--font-mono); color:var(--accent);">${JSON.stringify(summary, null, 2)}</pre>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="section-label">🔍 Live In-DOM Agentic Manifest (<code>#signal-agentic-manifest</code>)</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">
+            Embedded directly in HTML as <code>&lt;script id="signal-agentic-manifest" type="application/json"&gt;</code> for headless DOM parsers and Copilot page context readers:
+          </div>
+          <pre id="manifestPreview" style="max-height:140px; overflow:auto; background:var(--surface-1); border:1px solid var(--border-subtle); border-radius:4px; padding:6px; font-size:10px; font-family:var(--font-mono); color:var(--text-primary);">${manifestJson}</pre>
+        </div>
+      `;
+    }
+
+    function runCopilotSandbox(methodStr) {
+      try {
+        let res;
+        if (methodStr === 'getSummary()') res = window.tareGraph.getSummary();
+        else if (methodStr === 'getFrontier()') res = window.tareGraph.getFrontier();
+        else if (methodStr === 'getCriticalPath()') res = window.tareGraph.getCriticalPath();
+        else if (methodStr === 'getDoctorAudit()') res = window.tareGraph.getDoctorAudit();
+        else if (methodStr === 'getRankedPriority()') res = window.tareGraph.getRankedPriority();
+        else if (methodStr === 'help()') res = window.tareGraph.help();
+        
+        const out = document.getElementById('copilotSandboxOutput');
+        if (out) {
+          out.textContent = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        }
+      } catch (err) {
+        const out = document.getElementById('copilotSandboxOutput');
+        if (out) out.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    function copyCopilotPrompt() {
+      const text = document.getElementById('copilotContextText').value;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✅ Copilot Context Prompt copied to clipboard!');
+      });
+    }
+
+    function updateAgenticManifest() {
+      if (!RAW_GRAPH) return;
+      const readyNodes = nodes.filter(isNodeReady);
+      const doneNodes = nodes.filter(n => getStatus(n) === 'DONE');
+      const cp = computeCriticalPath();
+      const sccs = detectCyclesTarjan();
+      const dangling = edges.filter(e => !byId[e.from] || !byId[e.to]);
+
+      const manifestData = {
+        protocol: "tare.tools/graph-backlog/v1",
+        project: {
+          id: currentProjectKey || "active",
+          title: (RAW_GRAPH.meta && RAW_GRAPH.meta.title) || "SIGNAL Graph Backlog",
+          stats: {
+            total_tasks: nodes.length,
+            total_edges: edges.length,
+            ready_frontier_count: readyNodes.length,
+            done_count: doneNodes.length,
+            critical_path_length: cp.path.length
+          }
+        },
+        runtime_api: {
+          global: "window.tareGraph",
+          methods: [
+            "tareGraph.getSummary()",
+            "tareGraph.getFrontier()",
+            "tareGraph.getCriticalPath()",
+            "tareGraph.getDoctorAudit()",
+            "tareGraph.getRankedPriority()",
+            "tareGraph.getNode(id)",
+            "tareGraph.simulate(id, done)",
+            "tareGraph.findPath(fromId, toId)",
+            "tareGraph.getCopilotContext()"
+          ]
+        },
+        actionable_frontier_ids: readyNodes.map(n => n.id),
+        critical_path_ids: cp.path,
+        nodes: nodes.map(n => ({
+          id: n.id,
+          title: n.title,
+          cluster: n.cluster || 'general',
+          priority: n.priority || 'P1',
+          horizon: n.horizon || 'H1',
+          status: getStatus(n),
+          is_ready: isNodeReady(n),
+          prerequisites: edges.filter(e => e.to === n.id).map(e => e.from),
+          unlocks: edges.filter(e => e.from === n.id).map(e => e.to),
+          exit_criteria: n.exit_criteria || []
+        })),
+        edges: edges.map(e => ({ from: e.from, to: e.to, type: e.type || 'BLOCKS' }))
+      };
+
+      const manifestEl = document.getElementById('signal-agentic-manifest');
+      if (manifestEl) {
+        manifestEl.textContent = JSON.stringify(manifestData, null, 2);
+      }
+
+      const trailEl = document.getElementById('agenticCopilotTrail');
+      if (trailEl) {
+        trailEl.textContent = `PROJECT: ${manifestData.project.title} | TASKS: ${nodes.length} | READY FRONTIER: ${readyNodes.map(n => n.id).join(', ')} | CRITICAL PATH: ${cp.path.join(' -> ')} | RUNTIME: window.tareGraph`;
+      }
+    }
+
+    /* ==========================================================================
+       Global Window Agentic API Runtime (window.tareGraph & window.__SIGNAL_AGENT_API__)
+       ========================================================================== */
+    window.tareGraph = {
+      version: "1.0.0",
+      protocol: "tare.tools/graph-backlog/v1",
+      getRawGraph: () => RAW_GRAPH,
+      getSummary: () => {
+        const readyNodes = nodes.filter(isNodeReady);
+        const doneNodes = nodes.filter(n => getStatus(n) === 'DONE');
+        const blockedNodes = nodes.filter(n => getStatus(n) !== 'DONE' && !isNodeReady(n));
+        const cp = computeCriticalPath();
+        return {
+          title: (RAW_GRAPH.meta && RAW_GRAPH.meta.title) || 'Active Backlog',
+          totalTasks: nodes.length,
+          totalEdges: edges.length,
+          readyFrontierCount: readyNodes.length,
+          doneCount: doneNodes.length,
+          blockedCount: blockedNodes.length,
+          criticalPathLength: cp.path.length,
+          clusters: Array.from(new Set(nodes.map(n => n.cluster || 'general'))),
+          activeProjectId: currentProjectKey,
+          activeTheme: currentTheme
+        };
+      },
+      getFrontier: () => nodes.filter(isNodeReady).map(n => ({
+        id: n.id,
+        title: n.title,
+        cluster: n.cluster || 'general',
+        priority: n.priority || 'P1',
+        horizon: n.horizon || 'H1',
+        exit_criteria: n.exit_criteria || [],
+        unlocks: edges.filter(e => e.from === n.id).map(e => e.to)
+      })),
+      getCriticalPath: () => {
+        const cp = computeCriticalPath();
+        return {
+          path: cp.path,
+          length: cp.path.length,
+          tasks: cp.path.map(id => byId[id]).filter(Boolean)
+        };
+      },
+      getRankedPriority: () => {
+        const ready = nodes.filter(isNodeReady);
+        const pW = { P0: 50, P1: 35, P2: 20, P3: 10 };
+        const cW = { CRITICAL: 25, HIGH: 15, MEDIUM: 10, LOW: 5 };
+        const hW = { H0: 20, H1: 15, H2: 10, H3: 5 };
+        return ready.map(n => {
+          const score = (pW[n.priority] || 35) + (cW[n.criticality] || 10) + (hW[n.horizon] || 10) + (n.unlock_score || 0) * 2;
+          return { id: n.id, title: n.title, score, priority: n.priority, horizon: n.horizon, exit_criteria: n.exit_criteria };
+        }).sort((a, b) => b.score - a.score);
+      },
+      getDoctorAudit: () => {
+        const sccs = detectCyclesTarjan();
+        const dangling = edges.filter(e => !byId[e.from] || !byId[e.to]);
+        return {
+          healthy: sccs.length === 0 && dangling.length === 0,
+          cycles: sccs,
+          danglingEdges: dangling,
+          nodesCount: nodes.length,
+          edgesCount: edges.length
+        };
+      },
+      getNode: (id) => {
+        const n = byId[id];
+        if (!n) return null;
+        return {
+          ...n,
+          status: getStatus(n),
+          isReady: isNodeReady(n),
+          prerequisites: edges.filter(e => e.to === id).map(e => ({ id: e.from, status: byId[e.from] ? getStatus(byId[e.from]) : 'UNKNOWN' })),
+          unlocks: edges.filter(e => e.from === id).map(e => ({ id: e.to, status: byId[e.to] ? getStatus(byId[e.to]) : 'UNKNOWN' }))
+        };
+      },
+      findPath: (startId, endId) => {
+        if (startId === endId) return [startId];
+        const adj = {};
+        nodes.forEach(n => adj[n.id] = []);
+        edges.forEach(e => { if (adj[e.from]) adj[e.from].push(e.to); });
+        const queue = [[startId]];
+        const visited = new Set([startId]);
+        while (queue.length > 0) {
+          const path = queue.shift();
+          const curr = path[path.length - 1];
+          if (curr === endId) return path;
+          (adj[curr] || []).forEach(nxt => {
+            if (!visited.has(nxt)) {
+              visited.add(nxt);
+              queue.push([...path, nxt]);
+            }
+          });
+        }
+        return null;
+      },
+      simulate: (nodeId, done = true) => {
+        if (done) simulatedDoneSet.add(nodeId);
+        else simulatedDoneSet.delete(nodeId);
+        render();
+        updateAgenticManifest();
+        return {
+          simulatedDone: Array.from(simulatedDoneSet),
+          newFrontier: nodes.filter(isNodeReady).map(n => n.id)
+        };
+      },
+      resetSimulation: () => {
+        simulatedDoneSet.clear();
+        render();
+        updateAgenticManifest();
+        return { status: "Simulation cleared" };
+      },
+      getCopilotContext: () => {
+        const title = (RAW_GRAPH.meta && RAW_GRAPH.meta.title) || 'Active Backlog';
+        const ready = nodes.filter(isNodeReady);
+        const done = nodes.filter(n => getStatus(n) === 'DONE');
+        const cp = computeCriticalPath();
+        const frontierMd = ready.map(n => `- **${n.id}**: ${n.title} (Priority: ${n.priority || 'P1'}, Horizon: ${n.horizon || 'H1'}, Unlocks: ${(edges.filter(e => e.from === n.id).map(e => e.to).join(', ')) || 'None'})\\n  *Exit Criteria:* ${(n.exit_criteria || []).join('; ') || 'None'}`).join('\\n') || 'None';
+        const cpMd = cp.path.join(' ➔ ') || 'None';
+
+        return "# Work Graph Context: " + title + "\\n\\n## Executive Backlog Health\\n- **Total Tasks:** " + nodes.length + " | **Edges:** " + edges.length + "\\n- **Completed:** " + done.length + " tasks\\n- **Actionable Ready Frontier:** " + ready.length + " tasks ready with zero unfulfilled blockers\\n- **Critical Path Length:** " + cp.path.length + " tasks\\n\\n## Bottleneck Sequence (Critical Path)\\n```\\n" + cpMd + "\\n```\\n\\n## Actionable Frontier Tasks (Ready to Execute Immediately)\\n" + frontierMd + "\\n\\n## In-Browser Ephemeral JavaScript API\\nAs Microsoft 365 Copilot, you can query or simulate state changes live in this page session:\\n- tareGraph.getFrontier() -> Returns actionable ready tasks array\\n- tareGraph.getCriticalPath() -> Returns bottleneck sequence\\n- tareGraph.getNode(taskId) -> Returns task prerequisites & exit criteria\\n- tareGraph.simulate(taskId, true) -> Ephemeral What-If simulation\\n- tareGraph.getDoctorAudit() -> Topology & deadlock detection";
+      },
+      select: (id) => selectNode(id),
+      switchProject: (projectId) => switchProject(projectId),
+      setTheme: (themeId) => applyTheme(themeId),
+      help: () => `tare.tools Graph Backlog Agentic API:
+- tareGraph.getSummary()       -> Project overview and stats
+- tareGraph.getFrontier()      -> Currently actionable ready tasks
+- tareGraph.getCriticalPath()  -> Critical path bottleneck sequence
+- tareGraph.getRankedPriority()-> Top actionable tasks ranked by priority score
+- tareGraph.getDoctorAudit()   -> Graph integrity check (cycles, deadlocks, dangling edges)
+- tareGraph.getNode(id)        -> Full task details, prerequisites, and exit criteria
+- tareGraph.findPath(from, to) -> Shortest dependency route between two tasks
+- tareGraph.simulate(id, done) -> Run ephemeral What-If simulation
+- tareGraph.getCopilotContext()-> Complete prompt context for LLM reasoning
+- tareGraph.select(id)         -> Select task in UI
+- tareGraph.switchProject(id)  -> Switch active graph in UI`
+    };
+    window.__SIGNAL_AGENT_API__ = window.tareGraph;
 
     function renderExportTab(container) {
       container.innerHTML = `

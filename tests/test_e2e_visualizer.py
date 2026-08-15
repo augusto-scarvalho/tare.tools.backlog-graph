@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import os
 import tempfile
 import unittest
@@ -362,6 +363,55 @@ class VisualizerE2ETests(unittest.TestCase):
             page.click("#traceAncestorsBtn")
             self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
             self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
+
+            # 19. Test Microsoft 365 Copilot & Agentic Discovery Bridge
+            # 19.1 Meta tags and In-DOM Manifest
+            self.assertEqual(page.locator("meta[name='agentic-protocol']").get_attribute("content"), "tare.tools/graph-backlog/v1")
+            self.assertEqual(page.locator("meta[name='agentic-runtime']").get_attribute("content"), "window.tareGraph")
+            manifest_str = page.locator("#signal-agentic-manifest").text_content()
+            manifest_json = json.loads(manifest_str)
+            self.assertEqual(manifest_json["protocol"], "tare.tools/graph-backlog/v1")
+            self.assertTrue(len(manifest_json["nodes"]) > 0)
+            self.assertTrue(len(manifest_json["actionable_frontier_ids"]) > 0)
+
+            # 19.2 Window Runtime API (window.tareGraph & window.__SIGNAL_AGENT_API__)
+            api_summary = page.evaluate("() => window.tareGraph.getSummary()")
+            self.assertEqual(api_summary["totalTasks"], 3)
+            self.assertEqual(api_summary["activeTheme"], "signal")
+            
+            api_frontier = page.evaluate("() => window.tareGraph.getFrontier()")
+            self.assertEqual(len(api_frontier), 1)
+            self.assertEqual(api_frontier[0]["id"], "TASK-02")
+            
+            api_cp = page.evaluate("() => window.tareGraph.getCriticalPath()")
+            self.assertEqual(api_cp["length"], 3)
+            self.assertEqual(api_cp["path"], ["TASK-01", "TASK-02", "TASK-03"])
+            
+            api_audit = page.evaluate("() => window.tareGraph.getDoctorAudit()")
+            self.assertTrue(api_audit["healthy"])
+            
+            api_ctx = page.evaluate("() => window.tareGraph.getCopilotContext()")
+            self.assertIn("Work Graph Context", api_ctx)
+            self.assertIn("Critical Path", api_ctx)
+
+            # 19.3 Ephemeral Simulation via API
+            sim_res = page.evaluate("() => window.tareGraph.simulate('TASK-02', true)")
+            self.assertIn("TASK-02", sim_res["simulatedDone"])
+            self.assertIn("TASK-03", sim_res["newFrontier"])
+            page.evaluate("() => window.tareGraph.resetSimulation()")
+
+            # 19.4 Copilot Bridge Subnav Button & Modal Tab
+            page.click("#copilotBridgeBtn")
+            self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
+            self.assertTrue(page.locator("#modalTabCopilot").evaluate("el => el.classList.contains('active')"))
+            self.assertIn("Work Graph Context", page.locator("#copilotContextText").input_value())
+            
+            # Test Sandbox Runner
+            page.click("button:has-text('tareGraph.getFrontier()')")
+            self.assertIn("TASK-02", page.locator("#copilotSandboxOutput").text_content())
+
+            page.keyboard.press("Escape")
+            self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
 
             browser.close()
 
