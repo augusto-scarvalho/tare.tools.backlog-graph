@@ -923,15 +923,13 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
             pillLabel = 'SIMULATED';
           }
 
-          // Chain highlight & dimming
+          // Chain highlight & dimming (Recursive upstream only)
           let chainClass = '';
           if (selectedNodeId) {
             if (n.id === selectedNodeId) {
               chainClass = 'selected';
             } else if (upstream.nodes.has(n.id)) {
               chainClass = 'chain-upstream';
-            } else if (downstream.nodes.has(n.id)) {
-              chainClass = 'chain-downstream';
             } else {
               chainClass = 'dimmed';
             }
@@ -1215,8 +1213,6 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           if (selectedNodeId) {
             if (upstream.edges.has(edgeKey)) {
               path.setAttribute('class', 'edge-pulse-upstream');
-            } else if (downstream.edges.has(edgeKey)) {
-              path.setAttribute('class', 'edge-pulse-downstream');
             } else {
               path.setAttribute('class', 'edge-dimmed');
             }
@@ -1239,11 +1235,11 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         g.setAttribute('data-id', n.id);
         g.style.cursor = 'grab';
 
-        // Dimming & selection classes
+        // Dimming & selection classes (Recursive upstream only)
         if (selectedNodeId) {
           if (n.id === selectedNodeId) {
             g.setAttribute('class', 'dag-node-selected');
-          } else if (upstream.nodes.has(n.id) || downstream.nodes.has(n.id)) {
+          } else if (upstream.nodes.has(n.id)) {
             g.setAttribute('class', 'dag-node-chain');
           } else {
             g.setAttribute('class', 'dag-node-dimmed');
@@ -1269,11 +1265,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         let strokeColor = '#2B3020';
         if (st === 'DONE') strokeColor = '#8B9173';
         else if (ready) strokeColor = '#CBF23F';
-        else strokeColor = '#F2685C';
-
         if (n.id === selectedNodeId) strokeColor = '#CBF23F';
         else if (upstream.nodes.has(n.id)) strokeColor = '#CBF23F';
-        else if (downstream.nodes.has(n.id)) strokeColor = '#45E0C4';
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '160');
@@ -1281,14 +1274,12 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         rect.setAttribute('rx', '6');
         rect.setAttribute('fill', n.id === selectedNodeId ? '#1B1F14' : '#14170E');
         rect.setAttribute('stroke', strokeColor);
-        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : (upstream.nodes.has(n.id) || downstream.nodes.has(n.id) ? '2' : '1'));
+        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : (upstream.nodes.has(n.id) ? '2' : '1'));
         
         if (n.id === selectedNodeId) {
           rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(203, 242, 63, 0.45))');
         } else if (upstream.nodes.has(n.id)) {
           rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(203, 242, 63, 0.3))');
-        } else if (downstream.nodes.has(n.id)) {
-          rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(69, 224, 196, 0.3))');
         }
 
         g.appendChild(rect);

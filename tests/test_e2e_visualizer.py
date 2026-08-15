@@ -128,15 +128,19 @@ class VisualizerE2ETests(unittest.TestCase):
             page.mouse.move(node_box["x"] + 120, node_box["y"] + 70, steps=5)
             page.mouse.up()
             
-            # 13. Test Recursive Dependency Chain & Electrical Pulse Highlight
+            # 13. Test Recursive Dependency Chain (Upstream only)
+            # When TASK-02 is selected: upstream TASK-01 pulses, downstream TASK-03 is dimmed
+            page.locator("#dagNode_TASK-02").click()
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-02")
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-dimmed")
+            self.assertEqual(page.locator("#dagNode_TASK-03").get_attribute("class"), "dag-node-dimmed")
+            
+            # When TASK-03 is selected: both upstream edges pulse
             page.locator("#dagNode_TASK-03").click()
             self.assertEqual(page.locator("#inspId").text_content(), "TASK-03")
-            
-            # Assert that upstream edges in the recursive chain have the electric pulse class
-            edge1 = page.locator("#dagEdge_TASK-01_TASK-02")
-            edge2 = page.locator("#dagEdge_TASK-02_TASK-03")
-            self.assertEqual(edge1.get_attribute("class"), "edge-pulse-upstream")
-            self.assertEqual(edge2.get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
             
             # 14. Test ESC Key Deselect
             page.keyboard.press("Escape")
