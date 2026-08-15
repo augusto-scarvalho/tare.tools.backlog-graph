@@ -1357,6 +1357,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         return;
       }
 
+      if (showCriticalPath) {
+        const cp = computeCriticalPath();
+        activeCustomPath = {
+          nodes: cp.nodeSet,
+          edges: cp.edgeSet
+        };
+      }
+
       document.getElementById('inspId').textContent = n.id;
       document.getElementById('inspTitle').textContent = n.title || '';
       
@@ -1403,7 +1411,15 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
     function deselectNode() {
       selectedNodeId = null;
-      activeCustomPath = null;
+      if (showCriticalPath) {
+        const cp = computeCriticalPath();
+        activeCustomPath = {
+          nodes: cp.nodeSet,
+          edges: cp.edgeSet
+        };
+      } else {
+        activeCustomPath = null;
+      }
       document.getElementById('inspId').textContent = 'Select a task';
       document.getElementById('inspTitle').textContent = 'Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context. Press [Esc] to deselect.';
       document.getElementById('inspState').textContent = '-';

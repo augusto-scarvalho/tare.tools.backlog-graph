@@ -151,7 +151,10 @@ class VisualizerE2ETests(unittest.TestCase):
             # TASK-03 is BLOCKED (#F2685C)
             self.assertEqual(page.locator("#dagNode_TASK-03 circle").get_attribute("fill"), "#F2685C")
             
-            # 12. Test Drag and Drop of a Node in DAG Canvas
+            # 12. Test Drag and Drop of a Node in DAG Canvas with Critical Path Active
+            page.click("#criticalPathBtn")
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            
             node_box = page.locator("#dagNode_TASK-01").bounding_box()
             self.assertIsNotNone(node_box)
             
@@ -163,6 +166,18 @@ class VisualizerE2ETests(unittest.TestCase):
             page.mouse.down()
             page.mouse.move(node_box["x"] + 120, node_box["y"] + 70, steps=5)
             page.mouse.up()
+            
+            # Verify node transform moved and connected edge curve updated
+            self.assertNotEqual(page.locator("#dagNode_TASK-01").get_attribute("transform"), initial_transform)
+            self.assertNotEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("d"), initial_edge_d)
+            
+            # CRITICAL ASSERTION: The critical path pulse highlight STILL persists after drag!
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
+            
+            # Toggle Critical Path off
+            page.click("#criticalPathBtn")
+            self.assertNotIn("active", page.locator("#criticalPathBtn").get_attribute("class"))
             
             # 13. Test Recursive Dependency Chain (Upstream only)
             # When TASK-02 is selected: upstream TASK-01 pulses, downstream TASK-03 is dimmed
