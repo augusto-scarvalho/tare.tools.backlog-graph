@@ -206,6 +206,36 @@ class VisualizerE2ETests(unittest.TestCase):
             page.select_option("#projectSelector", "sample")
             self.assertEqual(page.locator("#statTotal").text_content(), "3")
 
+            # 17. Test ⚡ Graph Ops Station Modal
+            page.click("#opsModalBtn")
+            self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
+            
+            # Tab 1: Doctor Audit
+            self.assertIn("GRAPH TOPOLOGY HEALTHY", page.locator("#opsModalContent").text_content())
+            
+            # Tab 2: Ranked Next Frontier
+            page.click("#modalTabRanked")
+            self.assertIn("TASK-02", page.locator("#opsModalContent").text_content())
+            
+            # Tab 3: Shortest Path Finder
+            page.click("#modalTabPath")
+            page.select_option("#pathStartSelect", "TASK-01")
+            page.select_option("#pathEndSelect", "TASK-03")
+            page.click("button:has-text('Find Path')")
+            self.assertIn("TASK-01 ➔ TASK-02 ➔ TASK-03", page.locator("#pathResultBox").text_content())
+            
+            # Tab 4: Topology & Hubs
+            page.click("#modalTabTopology")
+            self.assertIn("TOTAL VERTICES", page.locator("#opsModalContent").text_content())
+            
+            # Tab 5: Export Station
+            page.click("#modalTabExport")
+            self.assertTrue(page.locator("button:has-text('Download JSON')").is_visible())
+            
+            # Close modal via Escape
+            page.keyboard.press("Escape")
+            self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
+
             browser.close()
 
 if __name__ == "__main__":

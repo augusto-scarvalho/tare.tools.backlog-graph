@@ -139,6 +139,10 @@
       border-radius: var(--radius-xs);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .view-tabs {
@@ -609,6 +613,106 @@
       border-color: var(--accent);
       background: var(--surface-hover);
     }
+
+    /* ==========================================================================
+       SIGNAL Graph Ops Modal & Diagnostic Center
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 11, 8, 0.88);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .ops-modal {
+      width: 820px;
+      max-width: 92vw;
+      max-height: 86vh;
+      background: var(--surface-1);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.9), 0 0 24px var(--accent-bg);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: var(--space-3) var(--space-4);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: var(--text-md);
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .modal-close-btn:hover { color: var(--text-primary); }
+    
+    .modal-nav {
+      display: flex;
+      gap: 4px;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .modal-nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: var(--radius-xs);
+      font-size: var(--text-xs);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .modal-nav-btn:hover { color: var(--text-primary); }
+    .modal-nav-btn.active {
+      background: var(--surface-2);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-border);
+    }
+    
+    .modal-body {
+      padding: var(--space-4);
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .report-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xs);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .report-card.pass { border-left: 3px solid var(--accent); }
+    .report-card.fail { border-left: 3px solid var(--danger); }
+    .report-card.warn { border-left: 3px solid var(--warning); }
     
     /* Footer Telemetry Status Bar */
     footer {
@@ -657,7 +761,7 @@
 
     <!-- Project Selector Dropdown & File Loader -->
     <div class="controls">
-      <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:280px;">
+      <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:260px;">
         <option value="__ACTIVE__">📁 Active Project</option>
         <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
         <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
@@ -674,7 +778,7 @@
     </div>
 
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 170px;">
+      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 150px;">
       <select id="statusFilter">
         <option value="ALL">All Statuses</option>
         <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
@@ -687,6 +791,7 @@
         <option value="ALL">All Clusters</option>
       </select>
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
+      <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent);">⚡ Graph Ops</button>
       <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset</button>
     </div>
   </header>
@@ -764,6 +869,24 @@
       <button class="action-btn" id="copyPacketBtn" onclick="copyImplementationPacket()" style="justify-content:center; margin-top:8px;">
         📋 Copy Agent Implementation Packet
       </button>
+    </div>
+  </div>
+
+  <!-- Graph Operations & Diagnostic Modal -->
+  <div class="modal-backdrop" id="opsModalBackdrop" onclick="handleBackdropClick(event)">
+    <div class="ops-modal">
+      <div class="modal-header">
+        <div class="modal-title">⚡ SIGNAL Graph Algorithms & Operations Station</div>
+        <button class="modal-close-btn" onclick="closeOpsModal()">✕</button>
+      </div>
+      <div class="modal-nav">
+        <button class="modal-nav-btn active" id="modalTabDoctor" onclick="switchOpsTab('doctor')">🔍 Graph Doctor</button>
+        <button class="modal-nav-btn" id="modalTabRanked" onclick="switchOpsTab('ranked')">🏆 Ranked Next Frontier</button>
+        <button class="modal-nav-btn" id="modalTabPath" onclick="switchOpsTab('path')">🧭 Shortest Path</button>
+        <button class="modal-nav-btn" id="modalTabTopology" onclick="switchOpsTab('topology')">📊 Topology & Hubs</button>
+        <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')">💾 Export Station</button>
+      </div>
+      <div class="modal-body" id="opsModalContent"></div>
     </div>
   </div>
 
@@ -6953,6 +7076,381 @@
       updateViewportTransform();
     }
 
+    /* ==========================================================================
+       SIGNAL Deterministic Graph Operations & Diagnostic Suite
+       ========================================================================== */
+
+    function detectCyclesTarjan() {
+      let index = 0;
+      const indices = {};
+      const lowlink = {};
+      const onStack = {};
+      const stack = [];
+      const sccs = [];
+
+      const adj = {};
+      nodes.forEach(n => adj[n.id] = []);
+      edges.forEach(e => {
+        if (adj[e.from]) adj[e.from].push(e.to);
+      });
+
+      function strongConnect(v) {
+        indices[v] = index;
+        lowlink[v] = index;
+        index++;
+        stack.push(v);
+        onStack[v] = true;
+
+        (adj[v] || []).forEach(w => {
+          if (indices[w] === undefined) {
+            strongConnect(w);
+            lowlink[v] = Math.min(lowlink[v], lowlink[w]);
+          } else if (onStack[w]) {
+            lowlink[v] = Math.min(lowlink[v], indices[w]);
+          }
+        });
+
+        if (lowlink[v] === indices[v]) {
+          const scc = [];
+          while (true) {
+            const w = stack.pop();
+            onStack[w] = false;
+            scc.push(w);
+            if (w === v) break;
+          }
+          if (scc.length > 1) {
+            sccs.push(scc);
+          }
+        }
+      }
+
+      nodes.forEach(n => {
+        if (indices[n.id] === undefined) strongConnect(n.id);
+      });
+
+      return sccs;
+    }
+
+    function openOpsModal(tab = 'doctor') {
+      document.getElementById('opsModalBackdrop').classList.add('active');
+      switchOpsTab(tab);
+    }
+
+    function closeOpsModal() {
+      document.getElementById('opsModalBackdrop').classList.remove('active');
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target.id === 'opsModalBackdrop') closeOpsModal();
+    }
+
+    function switchOpsTab(tab) {
+      ['doctor', 'ranked', 'path', 'topology', 'export'].forEach(t => {
+        const btn = document.getElementById('modalTab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.className = `modal-nav-btn ${t === tab ? 'active' : ''}`;
+      });
+
+      const body = document.getElementById('opsModalContent');
+      body.innerHTML = '';
+
+      if (tab === 'doctor') {
+        renderDoctorTab(body);
+      } else if (tab === 'ranked') {
+        renderRankedTab(body);
+      } else if (tab === 'path') {
+        renderPathTab(body);
+      } else if (tab === 'topology') {
+        renderTopologyTab(body);
+      } else if (tab === 'export') {
+        renderExportTab(body);
+      }
+    }
+
+    function renderDoctorTab(container) {
+      const sccs = detectCyclesTarjan();
+      const dangling = edges.filter(e => !byId[e.from] || !byId[e.to]);
+      const readyNodes = nodes.filter(isNodeReady);
+      const doneNodes = nodes.filter(n => getStatus(n) === 'DONE');
+      const blockedNodes = nodes.filter(n => getStatus(n) !== 'DONE' && !isNodeReady(n));
+
+      const isHealthy = sccs.length === 0 && dangling.length === 0;
+
+      container.innerHTML = `
+        <div class="report-card ${isHealthy ? 'pass' : 'fail'}">
+          <div style="font-size:13px; font-weight:700; color:${isHealthy ? 'var(--accent)' : 'var(--danger)'};">
+            ${isHealthy ? '✅ GRAPH TOPOLOGY HEALTHY (Deterministic Pass)' : '❌ INTEGRITY ERRORS DETECTED'}
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Tarjan SCC Cycles: <strong>${sccs.length}</strong> | Dangling Edges: <strong>${dangling.length}</strong> | Verified Nodes: <strong>${nodes.length}</strong>
+          </div>
+        </div>
+
+        <div class="report-card">
+          <div class="section-label">Topological Partition Summary</div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:4px;">
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">⚡ ACTIONABLE FRONTIER</div>
+              <div style="font-size:18px; font-weight:700; color:var(--accent);">${readyNodes.length}</div>
+            </div>
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">🟢 COMPLETED / SHIPPED</div>
+              <div style="font-size:18px; font-weight:700; color:var(--text-muted);">${doneNodes.length}</div>
+            </div>
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">🚫 BLOCKED BACKLOG</div>
+              <div style="font-size:18px; font-weight:700; color:var(--danger);">${blockedNodes.length}</div>
+            </div>
+          </div>
+        </div>
+
+        ${sccs.length > 0 ? `
+          <div class="report-card fail">
+            <div class="section-label" style="color:var(--danger);">Blocking Cycles Detected</div>
+            ${sccs.map(c => `<div>• Cycle: ${c.join(' ➔ ')} ➔ ${c[0]}</div>`).join('')}
+          </div>
+        ` : ''}
+
+        ${dangling.length > 0 ? `
+          <div class="report-card fail">
+            <div class="section-label" style="color:var(--danger);">Dangling Edges (Missing Nodes)</div>
+            ${dangling.map(e => `<div>• ${e.from} ➔ ${e.to}</div>`).join('')}
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function renderRankedTab(container) {
+      const readyNodes = nodes.filter(isNodeReady);
+      
+      const priorityWeights = { P0: 50, P1: 35, P2: 20, P3: 10 };
+      const criticalityWeights = { CRITICAL: 25, HIGH: 15, MEDIUM: 10, LOW: 5 };
+      const horizonWeights = { H0: 20, H1: 15, H2: 10, H3: 5 };
+
+      const scored = readyNodes.map(n => {
+        const pw = priorityWeights[n.priority] || 35;
+        const cw = criticalityWeights[n.criticality] || 10;
+        const hw = horizonWeights[n.horizon] || 10;
+        const uw = (n.unlock_score || 0) * 2;
+        const total = pw + cw + hw + uw;
+        return { node: n, score: total, parts: { pw, cw, hw, uw } };
+      }).sort((a, b) => b.score - a.score);
+
+      container.innerHTML = `
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+          Multi-criteria ranking engine sorting candidate frontier tasks by Priority + Criticality + Horizon + Downstream Unlock Score:
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${scored.length === 0 ? '<div style="color:var(--text-muted);">No actionable tasks on the frontier.</div>' : ''}
+          ${scored.map((item, idx) => `
+            <div class="report-card pass" style="cursor:pointer;" onclick="selectNode('${item.node.id}'); closeOpsModal();">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:var(--accent);">#${idx + 1} — ${item.node.id}: ${item.node.title}</span>
+                <span class="signal-pill pill-ready" style="font-size:11px;">Score: ${item.score}</span>
+              </div>
+              <div style="display:flex; gap:6px; font-size:10px; color:var(--text-muted); margin-top:2px;">
+                <span>Priority: ${item.node.priority || 'P1'} (+${item.parts.pw})</span> •
+                <span>Criticality: ${item.node.criticality || 'MEDIUM'} (+${item.parts.cw})</span> •
+                <span>Horizon: ${item.node.horizon || 'H1'} (+${item.parts.hw})</span> •
+                <span>Unlock: ${item.node.unlock_score || 0} (+${item.parts.uw})</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderPathTab(container) {
+      const nodeOptions = nodes.map(n => `<option value="${n.id}">${n.id} — ${(n.title || '').slice(0, 30)}</option>`).join('');
+
+      container.innerHTML = `
+        <div class="report-card">
+          <div class="section-label">Shortest Dependency Path Analyzer (BFS)</div>
+          <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+            <select id="pathStartSelect" style="flex:1;">${nodeOptions}</select>
+            <span style="color:var(--accent); font-weight:700;">➔</span>
+            <select id="pathEndSelect" style="flex:1;">${nodeOptions}</select>
+            <button class="action-btn" onclick="executeFindPath()" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border);">
+              Find Path
+            </button>
+          </div>
+        </div>
+        <div id="pathResultBox" style="margin-top:8px;"></div>
+      `;
+
+      if (nodes.length >= 2) {
+        document.getElementById('pathEndSelect').selectedIndex = Math.min(nodes.length - 1, 5);
+      }
+    }
+
+    function executeFindPath() {
+      const start = document.getElementById('pathStartSelect').value;
+      const end = document.getElementById('pathEndSelect').value;
+      const box = document.getElementById('pathResultBox');
+
+      if (start === end) {
+        box.innerHTML = `<div class="report-card warn">Start and target nodes are the same (${start}). Path length: 0.</div>`;
+        return;
+      }
+
+      const adj = {};
+      nodes.forEach(n => adj[n.id] = []);
+      edges.forEach(e => {
+        if (adj[e.from]) adj[e.from].push(e.to);
+      });
+
+      const queue = [[start]];
+      const visited = new Set([start]);
+      let foundPath = null;
+
+      while (queue.length > 0) {
+        const path = queue.shift();
+        const curr = path[path.length - 1];
+
+        if (curr === end) {
+          foundPath = path;
+          break;
+        }
+
+        (adj[curr] || []).forEach(nxt => {
+          if (!visited.has(nxt)) {
+            visited.add(nxt);
+            queue.push([...path, nxt]);
+          }
+        });
+      }
+
+      if (foundPath) {
+        box.innerHTML = `
+          <div class="report-card pass">
+            <div style="font-weight:700; color:var(--accent);">✅ Shortest Path Found (${foundPath.length - 1} hops):</div>
+            <div style="font-size:12px; font-family:var(--font-mono); margin: 6px 0; color:var(--text-primary);">
+              ${foundPath.join(' ➔ ')}
+            </div>
+            <button class="action-btn" onclick="highlightPathOnDag(${JSON.stringify(foundPath)}); closeOpsModal(); switchView('dag');" style="margin-top:6px; width:fit-content;">
+              ⚡ Highlight Path on DAG Canvas
+            </button>
+          </div>
+        `;
+      } else {
+        box.innerHTML = `<div class="report-card warn">No directed dependency path exists from <strong>${start}</strong> to <strong>${end}</strong>.</div>`;
+      }
+    }
+
+    function highlightPathOnDag(pathNodes) {
+      selectNode(pathNodes[pathNodes.length - 1]);
+    }
+
+    function renderTopologyTab(container) {
+      const inDeg = {};
+      const outDeg = {};
+      nodes.forEach(n => { inDeg[n.id] = 0; outDeg[n.id] = 0; });
+      edges.forEach(e => {
+        if (outDeg[e.from] !== undefined) outDeg[e.from]++;
+        if (inDeg[e.to] !== undefined) inDeg[e.to]++;
+      });
+
+      const maxIn = nodes.slice().sort((a, b) => (inDeg[b.id] || 0) - (inDeg[a.id] || 0)).slice(0, 3);
+      const maxOut = nodes.slice().sort((a, b) => (outDeg[b.id] || 0) - (outDeg[a.id] || 0)).slice(0, 3);
+
+      const maxPossibleEdges = nodes.length > 1 ? nodes.length * (nodes.length - 1) : 1;
+      const density = (edges.length / maxPossibleEdges).toFixed(4);
+
+      container.innerHTML = `
+        <div class="report-card">
+          <div class="section-label">Graph Topology & Complexity Metrics</div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:6px;">
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">TOTAL VERTICES</div>
+              <div style="font-size:18px; font-weight:700; color:var(--text-primary);">${nodes.length}</div>
+            </div>
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">DIRECTED EDGES</div>
+              <div style="font-size:18px; font-weight:700; color:var(--accent);">${edges.length}</div>
+            </div>
+            <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="font-size:10px; color:var(--text-muted);">GRAPH DENSITY</div>
+              <div style="font-size:18px; font-weight:700; color:var(--text-secondary);">${density}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div class="report-card">
+            <div class="section-label">Highest Fan-In (Blocker Hubs)</div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+              ${maxIn.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px;"><span>${n.id}</span><strong>${inDeg[n.id]} prereqs</strong></div>`).join('')}
+            </div>
+          </div>
+          <div class="report-card">
+            <div class="section-label">Highest Fan-Out (Key Enablers)</div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+              ${maxOut.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px;"><span>${n.id}</span><strong>${outDeg[n.id]} unlocks</strong></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderExportTab(container) {
+      container.innerHTML = `
+        <div class="report-card">
+          <div class="section-label">Deterministic Graph Artifact Download Station</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+            Export the current active backlog projection to universal formats for LLM agents, git ledgers, and architectural diagrams:
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+            <button class="action-btn" onclick="downloadArtifact('json')" style="justify-content:center; padding:10px;">
+              💾 Download JSON
+            </button>
+            <button class="action-btn" onclick="downloadArtifact('mermaid')" style="justify-content:center; padding:10px;">
+              📊 Download Mermaid
+            </button>
+            <button class="action-btn" onclick="downloadArtifact('md')" style="justify-content:center; padding:10px;">
+              📝 Download Markdown
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function downloadArtifact(format) {
+      let content = '';
+      let filename = 'backlog.' + format;
+      let mimeType = 'text/plain';
+
+      if (format === 'json') {
+        content = JSON.stringify(RAW_GRAPH, null, 2);
+        filename = 'work-graph.json';
+        mimeType = 'application/json';
+      } else if (format === 'mermaid') {
+        content = 'flowchart TD\n';
+        nodes.forEach(n => {
+          content += `    ${n.id}["${n.id}: ${n.title.replace(/"/g, "'")}"]\n`;
+        });
+        edges.forEach(e => {
+          content += `    ${e.from} --> ${e.to}\n`;
+        });
+        filename = 'backlog.mermaid';
+      } else if (format === 'md') {
+        content = `# Backlog Graph Export\n\n| ID | Title | Cluster | Priority | Status |\n|---|---|---|---|---|\n`;
+        nodes.forEach(n => {
+          content += `| ${n.id} | ${n.title} | ${n.cluster || 'general'} | ${n.priority || 'P1'} | ${getStatus(n)} |\n`;
+        });
+        filename = 'backlog.md';
+        mimeType = 'text/markdown';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
     /* Global Mouse Listeners for Smooth Node Dragging & Canvas Panning */
     const svgEl = document.getElementById('dagSvg');
 
@@ -7013,10 +7511,15 @@
       updateViewportTransform();
     }, { passive: false });
 
-    // Press Escape to deselect current node and clear active pulse path
+    // Press Escape to deselect current node, clear active pulse path, and close modals
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || e.key === 'Esc') {
-        deselectNode();
+        const modal = document.getElementById('opsModalBackdrop');
+        if (modal && modal.classList.contains('active')) {
+          closeOpsModal();
+        } else {
+          deselectNode();
+        }
       }
     });
 
