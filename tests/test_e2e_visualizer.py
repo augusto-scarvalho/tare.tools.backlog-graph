@@ -78,15 +78,31 @@ class VisualizerE2ETests(unittest.TestCase):
             page.select_option("#statusFilter", "ALL")
             
             # 9. Test Interactive What-If Simulation
-            page.locator(".task-card:has-text('TASK-02')").click()
+            page.locator(".task-card:has-text('TASK-02')").first.click()
             page.check("#simToggle")
             
             # Now with TASK-02 simulated as DONE, TASK-03 should become READY in real time
-            page.locator(".task-card:has-text('TASK-03')").click()
+            page.locator(".task-card:has-text('TASK-03')").first.click()
             sim_insp_state = page.locator("#inspState").text_content()
             self.assertIn("READY", sim_insp_state)
             
-            # 10. Test Tab Switching to Interactive DAG Canvas
+            # 10. Test Classic Kanban View (3rd View Mode)
+            page.click("#tabKanbanBtn")
+            self.assertTrue(page.locator("#kanbanView").is_visible())
+            lanes_count = page.locator(".kanban-lane").count()
+            self.assertEqual(lanes_count, 4)
+            
+            # Verify lane titles
+            self.assertIn("Blocked Backlog", page.locator(".kanban-lane").nth(0).text_content())
+            self.assertIn("Ready Frontier", page.locator(".kanban-lane").nth(1).text_content())
+            self.assertIn("In Progress", page.locator(".kanban-lane").nth(2).text_content())
+            self.assertIn("Done / Shipped", page.locator(".kanban-lane").nth(3).text_content())
+            
+            # Click card in Classic Kanban
+            page.locator("#laneCards_DONE .task-card").first.click()
+            self.assertEqual(page.locator("#inspId").text_content(), "TASK-01")
+            
+            # 11. Test Tab Switching to Interactive DAG Canvas
             page.click("#tabDagBtn")
             dag_svg = page.locator("#dagSvg")
             self.assertTrue(dag_svg.is_visible())

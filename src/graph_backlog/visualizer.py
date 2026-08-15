@@ -229,7 +229,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       position: relative;
     }
     
-    /* Grid / Cluster View */
+    /* View Content Base */
     .view-content {
       flex: 1;
       height: 100%;
@@ -243,6 +243,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       gap: var(--space-4);
     }
     
+    /* Clusters / Modules Grid View */
     .clusters-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -280,6 +281,57 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       padding: 1px 6px;
       border-radius: var(--radius-xs);
       border: 1px solid var(--border-subtle);
+    }
+
+    /* Classic Kanban Experience View */
+    .kanban-board {
+      display: flex;
+      gap: var(--space-4);
+      height: 100%;
+      overflow-x: auto;
+      align-items: stretch;
+    }
+    .kanban-lane {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: var(--surface-1);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .kanban-lane-header {
+      padding: var(--space-3);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kanban-lane-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kanban-lane-title.lane-blocked { color: var(--danger); }
+    .kanban-lane-title.lane-ready { color: var(--accent); }
+    .kanban-lane-title.lane-partial { color: var(--warning); }
+    .kanban-lane-title.lane-done { color: var(--text-muted); }
+    
+    .kanban-lane-cards {
+      padding: var(--space-3);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      flex: 1;
     }
     
     /* SIGNAL Task Cards (Status-rail 3px left border) */
@@ -333,12 +385,6 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       box-shadow: 0 0 0 1px rgba(203, 242, 63, 0.3);
     }
 
-    .task-card.chain-downstream {
-      border-color: rgba(69, 224, 196, 0.7) !important;
-      background: rgba(69, 224, 196, 0.06) !important;
-      box-shadow: 0 0 0 1px rgba(69, 224, 196, 0.3);
-    }
-
     .task-card.dimmed {
       opacity: 0.28 !important;
       filter: grayscale(35%);
@@ -378,6 +424,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     .card-badges {
       display: flex;
       gap: var(--space-1);
+      flex-wrap: wrap;
     }
     .signal-pill {
       font-size: 10px;
@@ -404,6 +451,17 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       background: rgba(139, 145, 115, 0.12);
       color: var(--text-muted);
       border-color: rgba(139, 145, 115, 0.32);
+    }
+    .pill-partial {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border-color: var(--warning-border);
+    }
+    .pill-cluster {
+      background: var(--surface-1);
+      color: var(--text-muted);
+      font-size: 9px;
+      text-transform: uppercase;
     }
     
     .card-title {
@@ -439,14 +497,6 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       stroke-dasharray: 8 4;
       animation: electricPulse 0.75s linear infinite;
       filter: drop-shadow(0 0 5px rgba(203, 242, 63, 0.85));
-    }
-    
-    .edge-pulse-downstream {
-      stroke: var(--stream) !important;
-      stroke-width: 2px !important;
-      stroke-dasharray: 8 4;
-      animation: electricPulse 0.75s linear infinite;
-      filter: drop-shadow(0 0 4px rgba(69, 224, 196, 0.85));
     }
     
     .edge-dimmed {
@@ -617,7 +667,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
     
     <div class="view-tabs">
-      <button class="tab-btn active" id="tabGridBtn" onclick="switchView('grid')">Kanban / Clusters</button>
+      <button class="tab-btn active" id="tabGridBtn" onclick="switchView('grid')">Clusters / Modules</button>
+      <button class="tab-btn" id="tabKanbanBtn" onclick="switchView('kanban')">Classic Kanban</button>
       <button class="tab-btn" id="tabDagBtn" onclick="switchView('dag')">Interactive DAG Canvas</button>
     </div>
 
@@ -640,9 +691,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   </header>
 
   <div class="main-workspace">
-    <!-- Grid / Kanban View -->
+    <!-- Clusters View -->
     <div class="view-content active" id="gridView">
       <div class="clusters-grid" id="clustersContainer"></div>
+    </div>
+
+    <!-- Classic Kanban Board View -->
+    <div class="view-content" id="kanbanView" style="padding:var(--space-4);">
+      <div class="kanban-board" id="kanbanBoardContainer"></div>
     </div>
 
     <!-- Interactive DAG Canvas View -->
@@ -777,7 +833,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     /* ==========================================================================
-       Recursive Dependency & Ancestor Chain Traversals
+       Recursive Upstream Ancestor Traversal (Prerequisites only)
        ========================================================================== */
 
     function getRecursiveUpstream(startId) {
@@ -801,34 +857,19 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       return { nodes: visitedNodes, edges: edgeKeys };
     }
 
-    function getRecursiveDownstream(startId) {
-      const visitedNodes = new Set();
-      const edgeKeys = new Set();
-      if (!startId) return { nodes: visitedNodes, edges: edgeKeys };
-
-      const queue = [startId];
-      while (queue.length > 0) {
-        const curr = queue.shift();
-        edges.forEach(e => {
-          if (e.from === curr && e.semantic !== false) {
-            edgeKeys.add(`${e.from}->${e.to}`);
-            if (!visitedNodes.has(e.to)) {
-              visitedNodes.add(e.to);
-              queue.push(e.to);
-            }
-          }
-        });
-      }
-      return { nodes: visitedNodes, edges: edgeKeys };
-    }
-
     function switchView(viewName) {
       currentView = viewName;
       document.getElementById('tabGridBtn').className = `tab-btn ${viewName === 'grid' ? 'active' : ''}`;
+      document.getElementById('tabKanbanBtn').className = `tab-btn ${viewName === 'kanban' ? 'active' : ''}`;
       document.getElementById('tabDagBtn').className = `tab-btn ${viewName === 'dag' ? 'active' : ''}`;
+      
       document.getElementById('gridView').className = `view-content ${viewName === 'grid' ? 'active' : ''}`;
+      document.getElementById('kanbanView').className = `view-content ${viewName === 'kanban' ? 'active' : ''}`;
       document.getElementById('dagView').className = `view-content ${viewName === 'dag' ? 'active' : ''}`;
+      
       if (viewName === 'dag') renderDag();
+      else if (viewName === 'kanban') renderKanban();
+      else render();
     }
 
     function getFilteredNodes() {
@@ -851,6 +892,102 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       });
     }
 
+    function createCardElement(n, upstream) {
+      const st = getStatus(n);
+      const ready = isNodeReady(n);
+      const card = document.createElement('div');
+      
+      let statusClass = 'status-blocked';
+      let pillClass = 'pill-blocked';
+      let pillLabel = 'BLOCKED';
+
+      if (st === 'DONE') {
+        statusClass = 'status-done';
+        pillClass = 'pill-done';
+        pillLabel = 'DONE';
+      } else if (st === 'PARTIAL') {
+        statusClass = 'status-partial';
+        pillClass = 'pill-partial';
+        pillLabel = 'PARTIAL';
+      } else if (ready) {
+        statusClass = 'status-ready';
+        pillClass = 'pill-ready';
+        pillLabel = '⚡ READY';
+      }
+
+      if (simulatedDoneSet.has(n.id)) {
+        statusClass += ' simulated-done';
+        pillLabel = 'SIMULATED';
+      }
+
+      // Chain highlight & dimming (Recursive upstream only)
+      let chainClass = '';
+      if (selectedNodeId) {
+        if (n.id === selectedNodeId) {
+          chainClass = 'selected';
+        } else if (upstream.nodes.has(n.id)) {
+          chainClass = 'chain-upstream';
+        } else {
+          chainClass = 'dimmed';
+        }
+      }
+
+      card.className = `task-card ${statusClass} ${chainClass}`;
+      card.onclick = (e) => {
+        e.stopPropagation();
+        selectNode(n.id);
+      };
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-id">${n.id}</span>
+          <div class="card-badges">
+            <span class="signal-pill ${pillClass}">${pillLabel}</span>
+            <span class="signal-pill pill-cluster">${n.cluster || 'general'}</span>
+            <span class="signal-pill">${n.priority || 'P1'}</span>
+          </div>
+        </div>
+        <div class="card-title">${n.title || ''}</div>
+      `;
+      return card;
+    }
+
+    function renderKanban() {
+      const filtered = getFilteredNodes();
+      const container = document.getElementById('kanbanBoardContainer');
+      container.innerHTML = '';
+
+      const upstream = getRecursiveUpstream(selectedNodeId);
+
+      // 4 Classic Kanban Lanes
+      const lanes = [
+        { id: 'BLOCKED', title: '🚫 Blocked Backlog', class: 'lane-blocked', filter: n => getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' && getStatus(n) !== 'PARTIAL' && !isNodeReady(n) },
+        { id: 'READY', title: '⚡ Ready Frontier', class: 'lane-ready', filter: n => isNodeReady(n) && getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' },
+        { id: 'PARTIAL', title: '⏳ In Progress / Partial', class: 'lane-partial', filter: n => getStatus(n) === 'PARTIAL' },
+        { id: 'DONE', title: '🟢 Done / Shipped', class: 'lane-done', filter: n => getStatus(n) === 'DONE' }
+      ];
+
+      lanes.forEach(lane => {
+        const laneTasks = filtered.filter(lane.filter);
+        const laneEl = document.createElement('div');
+        laneEl.className = 'kanban-lane';
+        laneEl.innerHTML = `
+          <div class="kanban-lane-header">
+            <span class="kanban-lane-title ${lane.class}">${lane.title}</span>
+            <span class="cluster-badge">${laneTasks.length}</span>
+          </div>
+          <div class="kanban-lane-cards" id="laneCards_${lane.id}"></div>
+        `;
+
+        const cardsContainer = laneEl.querySelector(`#laneCards_${lane.id}`);
+        laneTasks.forEach(n => {
+          cardsContainer.appendChild(createCardElement(n, upstream));
+        });
+
+        container.appendChild(laneEl);
+      });
+    }
+
     function render() {
       const filtered = getFilteredNodes();
       const container = document.getElementById('clustersContainer');
@@ -869,9 +1006,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('statDone').textContent = doneCount;
       document.getElementById('statEdges').textContent = edges.length;
 
-      // Compute active dependency chain sets
+      // Compute active dependency chain sets (upstream only)
       const upstream = getRecursiveUpstream(selectedNodeId);
-      const downstream = getRecursiveDownstream(selectedNodeId);
 
       const grouped = {};
       clusters.forEach(c => grouped[c] = []);
@@ -896,67 +1032,13 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         `;
 
         list.forEach(n => {
-          const st = getStatus(n);
-          const ready = isNodeReady(n);
-          const card = document.createElement('div');
-          
-          let statusClass = 'status-blocked';
-          let pillClass = 'pill-blocked';
-          let pillLabel = 'BLOCKED';
-
-          if (st === 'DONE') {
-            statusClass = 'status-done';
-            pillClass = 'pill-done';
-            pillLabel = 'DONE';
-          } else if (st === 'PARTIAL') {
-            statusClass = 'status-partial';
-            pillClass = 'pill-blocked';
-            pillLabel = 'PARTIAL';
-          } else if (ready) {
-            statusClass = 'status-ready';
-            pillClass = 'pill-ready';
-            pillLabel = '⚡ READY';
-          }
-
-          if (simulatedDoneSet.has(n.id)) {
-            statusClass += ' simulated-done';
-            pillLabel = 'SIMULATED';
-          }
-
-          // Chain highlight & dimming (Recursive upstream only)
-          let chainClass = '';
-          if (selectedNodeId) {
-            if (n.id === selectedNodeId) {
-              chainClass = 'selected';
-            } else if (upstream.nodes.has(n.id)) {
-              chainClass = 'chain-upstream';
-            } else {
-              chainClass = 'dimmed';
-            }
-          }
-
-          card.className = `task-card ${statusClass} ${chainClass}`;
-          card.onclick = (e) => {
-            e.stopPropagation();
-            selectNode(n.id);
-          };
-
-          card.innerHTML = `
-            <div class="card-top">
-              <span class="card-id">${n.id}</span>
-              <div class="card-badges">
-                <span class="signal-pill ${pillClass}">${pillLabel}</span>
-                <span class="signal-pill">${n.priority || 'P1'}</span>
-              </div>
-            </div>
-            <div class="card-title">${n.title || ''}</div>
-          `;
-          col.appendChild(card);
+          col.appendChild(createCardElement(n, upstream));
         });
 
         container.appendChild(col);
       });
 
+      if (currentView === 'kanban') renderKanban();
       if (currentView === 'dag') renderDag();
     }
 
@@ -1074,9 +1156,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('inspDownstream').innerHTML = 'None';
 
       render();
-      if (currentView === 'dag') {
-        renderDag();
-      }
+      if (currentView === 'kanban') renderKanban();
+      if (currentView === 'dag') renderDag();
 
       // Micro-animation visual feedback on reset button
       const btn = document.getElementById('resetBtn');
@@ -1226,9 +1307,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         computeAutoLayout(visible);
       }
 
-      // Compute recursive chains for electrical pulse highlight
+      // Compute recursive chains for electrical pulse highlight (upstream only)
       const upstream = getRecursiveUpstream(selectedNodeId);
-      const downstream = getRecursiveDownstream(selectedNodeId);
 
       // Render Edges
       edges.forEach(e => {
@@ -1440,9 +1520,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       }
     });
 
-    // Click outside in grid view to deselect
+    // Click outside in grid/kanban views to deselect
     document.getElementById('gridView').addEventListener('click', (e) => {
       if (e.target.id === 'gridView' || e.target.id === 'clustersContainer') {
+        deselectNode();
+      }
+    });
+    document.getElementById('kanbanView').addEventListener('click', (e) => {
+      if (e.target.id === 'kanbanView' || e.target.id === 'kanbanBoardContainer' || e.target.classList.contains('kanban-lane-cards')) {
         deselectNode();
       }
     });
