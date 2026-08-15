@@ -1,0 +1,165 @@
+flowchart TD
+    subgraph 00_lore_novel_creation["00-lore-novel-creation"]
+        BOOK_01(["BOOK-01: Worldbuilding Bible, Magic System & Historical Timeline"])
+        BOOK_02(["BOOK-02: Character Arcs, Psychological Profiles & Dialogue Voices"])
+        BOOK_03(["BOOK-03: Chapter-by-Chapter Novel Manuscript Outline"])
+        BOOK_04(["BOOK-04: First Draft Manuscript Writing (120,000 Words)"])
+        BOOK_05(["BOOK-05: Developmental & Structural Editing"])
+        BOOK_06(["BOOK-06: Line Editing, Proofreading & Sensitivity Read"])
+        BOOK_07(["BOOK-07: Cover Art, Typography & Book Typesetting"])
+        BOOK_08(["BOOK-08: Worldwide Book Release & Audiobook Production"])
+    end
+    subgraph 01_ip_legal_rights["01-ip-legal-rights"]
+        LEGAL_01(["LEGAL-01: IP Copyright Registration & Global Trademark Protection"])
+        LEGAL_02(["LEGAL-02: Comic Book Adaptation Rights & Publishing Contract"])
+        LEGAL_03(["LEGAL-03: Hollywood Studio Film Option & Purchase Agreement"])
+        LEGAL_04["LEGAL-04: Guild Clearances (SAG-AFTRA, DGA, WGA Compliance)"]
+    end
+    subgraph 02_comic_adaptation["02-comic-adaptation"]
+        COMIC_01(["COMIC-01: Comic Script & Panel-by-Panel Breakdown (Vol 1-4)"])
+        COMIC_02(["COMIC-02: Character Model Sheets, Costumes & Creature Design"])
+        COMIC_03(["COMIC-03: Rough Thumbnails & Pencils (Volumes 1-4, 180 Pages)"])
+        COMIC_04["COMIC-04: Inking & Final Line Art (180 Pages)"]
+        COMIC_05["COMIC-05: Digital Coloring, Lighting & Ambient Atmosphere"]
+        COMIC_06["COMIC-06: Lettering, Sound Effects (SFX) & Balloon Placement"]
+        COMIC_07["COMIC-07: Deluxe Hardcover Print Run & Comic-Con Launch"]
+    end
+    subgraph 03_film_preproduction["03-film-preproduction"]
+        FILM_01(["FILM-01: Hollywood Feature Screenplay (Draft 1 & Studio Polish)"])
+        FILM_02(["FILM-02: Director Lookbook & Cinematic Concept Art"])
+        FILM_03(["FILM-03: $150M Production Financing & Studio Greenlight"])
+        FILM_04["FILM-04: Principal Casting (A-List Leads & Supporting Cast)"]
+        FILM_05["FILM-05: Production Design, Physical Sets & Miniature Construction"]
+        FILM_06["FILM-06: Location Scouting & International Filming Permits"]
+        FILM_07["FILM-07: IMAX 70mm Camera Package & Custom Anamorphic Lenses"]
+    end
+    subgraph 04_film_production["04-film-production"]
+        PROD_01["PROD-01: Cast Table Read & Rehearsals"]
+        PROD_02["PROD-02: Stunt Choreography, Wirework & Combat Training"]
+        PROD_03["PROD-03: Principal Photography — Phase 1: Soundstages (60 Days)"]
+        PROD_04["PROD-04: Principal Photography — Phase 2: On-Location Shoots (45 Days)"]
+        PROD_05["PROD-05: Pickups, Second Unit & VFX Lighting Capture Wraps"]
+    end
+    subgraph 05_film_postproduction["05-film-postproduction"]
+        POST_01["POST-01: Assembly Cut & Director's Rough Edit"]
+        POST_02["POST-02: Visual Effects (VFX) Pipeline (ILM / Wētā FX, 1,400 Shots)"]
+        POST_03["POST-03: Orchestral Score Composition & Abbey Road Studio Recording"]
+        POST_04["POST-04: Foley, Sound Design & Dolby Atmos 7.1.4 Surround Mix"]
+        POST_05["POST-05: Color Grading (ACES HDR Pipeline) & Picture Lock"]
+        POST_06["POST-06: Final Theatrical Master (IMAX DMR & DCP Package)"]
+    end
+    subgraph 06_film_marketing_release["06-film-marketing-release"]
+        MKT_01["MKT-01: Teaser Trailer Launch & Viral Alternate Reality Game (ARG)"]
+        MKT_02["MKT-02: Official Main Theatrical Trailer & Soundtrack Single Debut"]
+        MKT_03["MKT-03: Global Press Tour, Leicester Square Red Carpet & Festival Premiere"]
+        MKT_04["MKT-04: Worldwide Theatrical Box Office Launch (4,500+ Screens)"]
+        MKT_05["MKT-05: Home Entertainment 4K UHD Blu-ray & Global Streaming Release"]
+    end
+    BOOK_01 -->|unlocks| BOOK_02
+    BOOK_01 -->|unlocks| BOOK_03
+    BOOK_02 -->|unlocks| BOOK_03
+    BOOK_03 -->|unlocks| BOOK_04
+    BOOK_04 -->|unlocks| BOOK_05
+    BOOK_05 -->|unlocks| BOOK_06
+    BOOK_06 -->|unlocks| BOOK_07
+    BOOK_07 -->|unlocks| BOOK_08
+    BOOK_04 -->|unlocks| LEGAL_01
+    BOOK_08 -->|unlocks| LEGAL_02
+    BOOK_08 -->|unlocks| LEGAL_03
+    LEGAL_03 -->|unlocks| LEGAL_04
+    BOOK_08 -->|unlocks| COMIC_01
+    LEGAL_02 -->|unlocks| COMIC_01
+    BOOK_01 -->|unlocks| COMIC_02
+    COMIC_01 -->|unlocks| COMIC_03
+    COMIC_02 -->|unlocks| COMIC_03
+    COMIC_03 -->|unlocks| COMIC_04
+    COMIC_04 -->|unlocks| COMIC_05
+    COMIC_05 -->|unlocks| COMIC_06
+    COMIC_06 -->|unlocks| COMIC_07
+    LEGAL_03 -->|unlocks| FILM_01
+    BOOK_03 -->|unlocks| FILM_01
+    FILM_01 -->|unlocks| FILM_02
+    COMIC_02 -->|unlocks| FILM_02
+    FILM_01 -->|unlocks| FILM_03
+    FILM_02 -->|unlocks| FILM_03
+    FILM_03 -->|unlocks| FILM_04
+    LEGAL_04 -->|unlocks| FILM_04
+    FILM_02 -->|unlocks| FILM_05
+    FILM_03 -->|unlocks| FILM_05
+    FILM_01 -->|unlocks| FILM_06
+    FILM_03 -->|unlocks| FILM_06
+    FILM_02 -->|unlocks| FILM_07
+    FILM_04 -->|unlocks| PROD_01
+    FILM_04 -->|unlocks| PROD_02
+    FILM_05 -->|unlocks| PROD_02
+    PROD_01 -->|unlocks| PROD_03
+    PROD_02 -->|unlocks| PROD_03
+    FILM_05 -->|unlocks| PROD_03
+    FILM_07 -->|unlocks| PROD_03
+    PROD_03 -->|unlocks| PROD_04
+    FILM_06 -->|unlocks| PROD_04
+    PROD_04 -->|unlocks| PROD_05
+    PROD_05 -->|unlocks| POST_01
+    POST_01 -->|unlocks| POST_02
+    POST_01 -->|unlocks| POST_03
+    POST_01 -->|unlocks| POST_04
+    POST_03 -->|unlocks| POST_04
+    POST_01 -->|unlocks| POST_05
+    POST_02 -->|unlocks| POST_05
+    POST_04 -->|unlocks| POST_06
+    POST_05 -->|unlocks| POST_06
+    POST_01 -->|unlocks| MKT_01
+    COMIC_07 -->|unlocks| MKT_01
+    MKT_01 -->|unlocks| MKT_02
+    POST_02 -->|unlocks| MKT_02
+    POST_03 -->|unlocks| MKT_02
+    POST_06 -->|unlocks| MKT_03
+    MKT_02 -->|unlocks| MKT_03
+    MKT_03 -->|unlocks| MKT_04
+    MKT_04 -->|unlocks| MKT_05
+
+    classDef done fill:#10b98122,stroke:#10b981,stroke-width:2px,color:#d1fae5;
+    classDef ready fill:#06b6d422,stroke:#06b6d4,stroke-width:2px,color:#cffafe;
+    classDef blocked fill:#f43f5e22,stroke:#f43f5e,stroke-width:1px,color:#ffe4e6;
+    class BOOK_01 done;
+    class BOOK_02 done;
+    class BOOK_03 done;
+    class BOOK_04 done;
+    class BOOK_05 done;
+    class BOOK_06 done;
+    class BOOK_07 done;
+    class BOOK_08 done;
+    class LEGAL_01 done;
+    class LEGAL_02 done;
+    class LEGAL_03 done;
+    class LEGAL_04 ready;
+    class COMIC_01 done;
+    class COMIC_02 done;
+    class COMIC_03 done;
+    class COMIC_04 ready;
+    class COMIC_05 blocked;
+    class COMIC_06 blocked;
+    class COMIC_07 blocked;
+    class FILM_01 done;
+    class FILM_02 done;
+    class FILM_03 done;
+    class FILM_04 blocked;
+    class FILM_05 ready;
+    class FILM_06 ready;
+    class FILM_07 ready;
+    class PROD_01 blocked;
+    class PROD_02 blocked;
+    class PROD_03 blocked;
+    class PROD_04 blocked;
+    class PROD_05 blocked;
+    class POST_01 blocked;
+    class POST_02 blocked;
+    class POST_03 blocked;
+    class POST_04 blocked;
+    class POST_05 blocked;
+    class POST_06 blocked;
+    class MKT_01 blocked;
+    class MKT_02 blocked;
+    class MKT_03 blocked;
+    class MKT_04 blocked;
+    class MKT_05 blocked;

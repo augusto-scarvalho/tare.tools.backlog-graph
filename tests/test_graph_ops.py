@@ -49,6 +49,15 @@ class GraphOpsTests(unittest.TestCase):
         self.assertEqual(data["node_count"], 27)
         self.assertEqual(data["edge_count"], 37)
 
+    def test_transmedia_epic_saga_backlog_validates(self) -> None:
+        p = FIXTURES / "transmedia-book-comic-film-backlog.json"
+        res = run_cmd("--graph", str(p), "validate")
+        self.assertEqual(res.returncode, 0)
+        data = json.loads(res.stdout)
+        self.assertEqual(data["status"], "PASS")
+        self.assertEqual(data["node_count"], 42)
+        self.assertEqual(data["edge_count"], 62)
+
     def test_validate_exit_code_is_one_for_invalid_graph(self) -> None:
         p = FIXTURES / "negative-invalid-status.json"
         res = run_cmd("--graph", str(p), "validate", check=False)

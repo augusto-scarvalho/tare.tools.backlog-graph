@@ -204,6 +204,11 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
 
             # 16. Test In-UI Project Selector Switching
+            # Switch to Epic Transmedia Saga (42 tasks)
+            page.select_option("#projectSelector", "transmedia")
+            self.assertEqual(page.locator("#statTotal").text_content(), "42")
+            self.assertIn("Aethelgard Saga", page.locator("#projectTitleDisplay").text_content())
+
             # Switch to OmniAgent AI RAG CRM (27 tasks)
             page.select_option("#projectSelector", "rag")
             self.assertEqual(page.locator("#statTotal").text_content(), "27")

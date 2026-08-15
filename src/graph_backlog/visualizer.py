@@ -774,6 +774,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="controls">
       <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:260px;">
         <option value="__ACTIVE__">📁 Active Project</option>
+        <option value="transmedia">🎬 Demo: Epic Transmedia (42 tasks: Book ➔ Comic ➔ Film)</option>
         <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
         <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
         <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
@@ -910,6 +911,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   <script>
     const BUILTIN_PROJECTS = {
       active: __GRAPH_JSON_PLACEHOLDER__,
+      transmedia: __TRANSMEDIA_JSON_PLACEHOLDER__,
       saas: __SAAS_JSON_PLACEHOLDER__,
       rag: __RAG_JSON_PLACEHOLDER__,
       sample: __SAMPLE_JSON_PLACEHOLDER__
@@ -2219,6 +2221,11 @@ def generate_html_viewer(graph: WorkGraph, output_path: str | Path | None = None
     
     fixtures_dir = Path(__file__).resolve().parent.parent.parent / "fixtures"
     
+    transmedia_json = "{}"
+    transmedia_path = fixtures_dir / "transmedia-book-comic-film-backlog.json"
+    if transmedia_path.exists():
+        transmedia_json = transmedia_path.read_text(encoding="utf-8").strip()
+
     saas_json = "{}"
     saas_path = fixtures_dir / "saas-backlog.json"
     if saas_path.exists():
@@ -2237,6 +2244,7 @@ def generate_html_viewer(graph: WorkGraph, output_path: str | Path | None = None
     html_content = (
         SIGNAL_HTML_TEMPLATE
         .replace("__GRAPH_JSON_PLACEHOLDER__", graph_json)
+        .replace("__TRANSMEDIA_JSON_PLACEHOLDER__", transmedia_json)
         .replace("__SAAS_JSON_PLACEHOLDER__", saas_json)
         .replace("__RAG_JSON_PLACEHOLDER__", rag_json)
         .replace("__SAMPLE_JSON_PLACEHOLDER__", sample_json)
