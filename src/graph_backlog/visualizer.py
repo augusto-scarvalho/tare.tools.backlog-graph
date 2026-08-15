@@ -1139,10 +1139,16 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         selectNode(n.id);
       };
 
+      let criticalPill = '';
+      if (showCriticalPath && activeCustomPath && activeCustomPath.nodes.has(n.id)) {
+        criticalPill = '<span class="signal-pill" style="background:rgba(232, 169, 59, 0.18); color:var(--warning); border-color:rgba(232, 169, 59, 0.45);">🔥 CRITICAL PATH</span>';
+      }
+
       card.innerHTML = `
         <div class="card-top">
           <span class="card-id">${n.id}</span>
           <div class="card-badges">
+            ${criticalPill}
             <span class="signal-pill ${pillClass}">${pillLabel}</span>
             <span class="signal-pill pill-cluster">${n.cluster || 'general'}</span>
             <span class="signal-pill">${n.priority || 'P1'}</span>
@@ -1320,10 +1326,95 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       selectNode(selectedNodeId);
     }
 
+    function computeCriticalPath() {
+      const visible = nodes.filter(n => (n.completion && n.completion.status) !== 'SUPERSEDED');
+      const vSet = new Set(visible.map(n => n.id));
+      
+      const inDegree = {};
+      const adj = {};
+      visible.forEach(n => { inDegree[n.id] = 0; adj[n.id] = []; });
+      
+      edges.forEach(e => {
+        if (vSet.has(e.from) && vSet.has(e.to) && e.semantic !== false) {
+          inDegree[e.to]++;
+          adj[e.from].push(e.to);
+        }
+      });
+
+      const dist = {};
+      const prev = {};
+      visible.forEach(n => { dist[n.id] = 0; prev[n.id] = null; });
+
+      const queue = visible.filter(n => inDegree[n.id] === 0).map(n => n.id);
+      
+      while (queue.length > 0) {
+        const u = queue.shift();
+        (adj[u] || []).forEach(v => {
+          if (dist[u] + 1 > dist[v]) {
+            dist[v] = dist[u] + 1;
+            prev[v] = u;
+          }
+          inDegree[v]--;
+          if (inDegree[v] === 0) queue.push(v);
+        });
+      }
+
+      let maxNode = null;
+      let maxDist = -1;
+      visible.forEach(n => {
+        if (dist[n.id] > maxDist) {
+          maxDist = dist[n.id];
+          maxNode = n.id;
+        }
+      });
+
+      if (!maxNode || maxDist <= 0) {
+        const first = visible.length > 0 ? [visible[0].id] : [];
+        return { path: first, nodeSet: new Set(first), edgeSet: new Set() };
+      }
+
+      const path = [];
+      let curr = maxNode;
+      while (curr) {
+        path.unshift(curr);
+        curr = prev[curr];
+      }
+
+      const edgeSet = new Set();
+      for (let i = 0; i < path.length - 1; i++) {
+        edgeSet.add(`${path[i]}->${path[i+1]}`);
+      }
+
+      return {
+        path: path,
+        nodeSet: new Set(path),
+        edgeSet: edgeSet
+      };
+    }
+
     function toggleCriticalPath() {
       showCriticalPath = !showCriticalPath;
-      document.getElementById('criticalPathBtn').className = `action-btn ${showCriticalPath ? 'active' : ''}`;
+      const btn = document.getElementById('criticalPathBtn');
+      if (btn) btn.className = `action-btn ${showCriticalPath ? 'active' : ''}`;
+      
+      if (showCriticalPath) {
+        const cp = computeCriticalPath();
+        activeCustomPath = {
+          nodes: cp.nodeSet,
+          edges: cp.edgeSet
+        };
+        if (cp.path.length > 0) {
+          selectedNodeId = cp.path[cp.path.length - 1];
+          selectNode(selectedNodeId);
+        }
+      } else {
+        activeCustomPath = null;
+        deselectNode();
+      }
+
+      render();
       if (currentView === 'dag') renderDag();
+      if (currentView === 'kanban') renderKanban();
     }
 
     function resetFilters() {

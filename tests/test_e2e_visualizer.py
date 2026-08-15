@@ -131,6 +131,18 @@ class VisualizerE2ETests(unittest.TestCase):
             page.click("#resetBtn")
             self.assertEqual(page.locator("#dagNodesLayer g").count(), 3)
             
+            # 11.5 Test Critical Path Button Toggle & DAG Highlighting
+            page.click("#criticalPathBtn")
+            self.assertIn("active", page.locator("#criticalPathBtn").get_attribute("class"))
+            # In Sample graph (TASK-01 -> TASK-02 -> TASK-03), all edges are on the critical path
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
+            
+            # Toggle Critical Path off
+            page.click("#criticalPathBtn")
+            self.assertNotIn("active", page.locator("#criticalPathBtn").get_attribute("class"))
+            self.assertIsNone(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"))
+            
             # Check DAG status colors (status rail and pips)
             # TASK-01 is DONE (#8B9173)
             self.assertEqual(page.locator("#dagNode_TASK-01 circle").get_attribute("fill"), "#8B9173")
