@@ -1,0 +1,12 @@
+tare.tools — Graph Backlog
+Copyright 2026 Augusto Carvalho
+
+This product includes software, graph algorithms, and architectural specifications
+developed by Augusto Carvalho (https://github.com/augusto-scarvalho/tare.tools.graph-backlog)
+as part of the tare.tools autonomous engineering and AI harness research project.
+
+Original Study, DAG Engine & Backlog Ontology:
+- Architectural specification for Directed Acyclic Graph (DAG) task execution
+- Topological frontier, cycle audits, and deterministic priority algorithms
+- Interactive multi-theme visualizer and in-browser agentic discovery protocols (Copilot Bridge)
+- Decoupled from the Universal Agent Harness research project (Issue #35 / PR #38)
