@@ -102,31 +102,25 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       background-size: 100% 24px;
     }
     
-    /* Header Tier 1: Main TopBar */
+    /* Header Tier 1: Main Scope & Filter Bar */
     header {
       height: var(--h-topbar);
       background: var(--surface-1);
       border-bottom: 1px solid var(--border-subtle);
       padding: 0 var(--space-4);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: var(--space-4);
+      gap: var(--space-2);
       flex-wrap: nowrap;
+      overflow-x: auto;
       z-index: 10;
-    }
-    
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      flex-shrink: 0;
     }
     
     .brand {
       display: flex;
       align-items: center;
       gap: var(--space-2);
+      flex-shrink: 0;
     }
     .brand-logo {
       font-family: var(--font-mono);
@@ -158,7 +152,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       border-radius: var(--radius-xs);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      max-width: 180px;
+      max-width: 170px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -168,13 +162,28 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 4px;
+      flex-shrink: 0;
     }
     
-    .topbar-center {
+    /* Subnav Tier 2: View Switcher & Action Tools */
+    .subnav-bar {
+      height: var(--h-subnav);
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 var(--space-4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      flex-wrap: nowrap;
+      z-index: 9;
+    }
+
+    .subnav-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      gap: var(--space-2);
+      flex-wrap: nowrap;
     }
 
     .view-tabs {
@@ -205,34 +214,6 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       background: var(--surface-2);
       color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent-border);
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      flex-shrink: 0;
-    }
-    
-    /* Subnav Tier 2: Search, Filters & Backlog Query Bar */
-    .subnav-bar {
-      height: var(--h-subnav);
-      background: var(--surface-1);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0 var(--space-4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-3);
-      flex-wrap: nowrap;
-      z-index: 9;
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      flex-wrap: nowrap;
     }
     
     .controls {
@@ -855,67 +836,64 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body class="atmo">
   <header>
-    <div class="topbar-left">
-      <div class="brand">
-        <div class="brand-logo">tare.tools</div>
-        <div class="brand-pill" id="projectTitleDisplay">SIGNAL Graph Backlog</div>
-      </div>
-
-      <div class="project-selector-group">
-        <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:240px;">
-          <option value="__ACTIVE__">📁 Active Project</option>
-          <option value="transmedia">🎬 Demo: Epic Transmedia (42 tasks: Book ➔ Comic ➔ Film)</option>
-          <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
-          <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
-          <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
-          <option value="__UPLOAD__">📂 Open Local JSON File...</option>
-        </select>
-        <button class="action-btn" id="toggleDemosBtn" onclick="toggleHideDemos()" title="Toggle visibility of built-in demo projects (persisted in localStorage)" style="padding:6px 8px;">
-          👁️
-        </button>
-        <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
-      </div>
+    <div class="brand">
+      <div class="brand-logo">tare.tools</div>
+      <div class="brand-pill" id="projectTitleDisplay">SIGNAL Graph Backlog</div>
     </div>
+
+    <select id="themeSelector" onchange="applyTheme(this.value)" style="font-weight:600; font-size:11px;" title="Interface & Canvas Theme">
+      <option value="signal">⚡ Signal (Default)</option>
+      <option value="dracula">🧛 Dracula</option>
+      <option value="tokyo_night">🌃 Tokyo Night</option>
+      <option value="nord">❄️ Nord Frost</option>
+      <option value="light">☀️ Solar Paper (Claro)</option>
+      <option value="monokai">🔥 Monokai Pro</option>
+      <option value="catppuccin">☕ Catppuccin Mocha</option>
+    </select>
+
+    <div class="project-selector-group">
+      <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:240px;">
+        <option value="__ACTIVE__">📁 Active Project</option>
+        <option value="transmedia">🎬 Demo: Epic Transmedia (42 tasks: Book ➔ Comic ➔ Film)</option>
+        <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
+        <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
+        <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
+        <option value="__UPLOAD__">📂 Open Local JSON File...</option>
+      </select>
+      <button class="action-btn" id="toggleDemosBtn" onclick="toggleHideDemos()" title="Toggle visibility of built-in demo projects (persisted in localStorage)" style="padding:6px 8px;">
+        👁️
+      </button>
+      <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
+    </div>
+
+    <select id="statusFilter">
+      <option value="ALL">All Statuses</option>
+      <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
+      <option value="NOT_DONE">NOT_DONE</option>
+      <option value="PARTIAL">PARTIAL</option>
+      <option value="DONE">DONE</option>
+      <option value="SUPERSEDED">SUPERSEDED</option>
+    </select>
+
+    <select id="clusterFilter">
+      <option value="ALL">All Clusters</option>
+    </select>
+
+    <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 220px;">
     
-    <div class="topbar-center">
+    <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset</button>
+  </header>
+
+  <!-- Subnav Tier 2: View Switcher & Action Tools -->
+  <div class="subnav-bar">
+    <div class="subnav-left">
       <div class="view-tabs">
         <button class="tab-btn active" id="tabGridBtn" onclick="switchView('grid')">Clusters / Modules</button>
         <button class="tab-btn" id="tabKanbanBtn" onclick="switchView('kanban')">Classic Kanban</button>
         <button class="tab-btn" id="tabDagBtn" onclick="switchView('dag')">Interactive DAG Canvas</button>
       </div>
-    </div>
-
-    <div class="topbar-right">
-      <select id="themeSelector" onchange="applyTheme(this.value)" style="font-weight:600; font-size:11px;" title="Interface & Canvas Theme">
-        <option value="signal">⚡ Signal (Default)</option>
-        <option value="dracula">🧛 Dracula</option>
-        <option value="tokyo_night">🌃 Tokyo Night</option>
-        <option value="nord">❄️ Nord Frost</option>
-        <option value="light">☀️ Solar Paper (Claro)</option>
-        <option value="monokai">🔥 Monokai Pro</option>
-        <option value="catppuccin">☕ Catppuccin Mocha</option>
-      </select>
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
       <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent); font-weight:700;">⚡ Graph Ops (13 Ops)</button>
-    </div>
-  </header>
-
-  <!-- Subnav Query Toolbar -->
-  <div class="subnav-bar">
-    <div class="filter-group">
-      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 220px;">
-      <select id="statusFilter">
-        <option value="ALL">All Statuses</option>
-        <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
-        <option value="NOT_DONE">NOT_DONE</option>
-        <option value="PARTIAL">PARTIAL</option>
-        <option value="DONE">DONE</option>
-        <option value="SUPERSEDED">SUPERSEDED</option>
-      </select>
-      <select id="clusterFilter">
-        <option value="ALL">All Clusters</option>
-      </select>
-      <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset Filters</button>
     </div>
     <div class="esc-hint">
       Press <span class="kbd-pill">Esc</span> to deselect / clear active paths
