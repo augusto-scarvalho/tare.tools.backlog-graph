@@ -151,7 +151,26 @@ def build_parser() -> argparse.ArgumentParser:
     # Visualizer & export
     exp = sp.add_parser("export")
     exp.add_argument("--output", "-o", required=True, help="Destination output file path")
-    exp.add_argument("--export-format", choices=["html", "json", "md"], default="html")
+    exp.add_argument("--export-format", choices=["html", "json", "md", "mermaid", "csv-nodes", "csv-edges"], default="html")
+
+    # Fast mutations
+    an = sp.add_parser("add-node")
+    an.add_argument("--id", required=True, help="Task ID")
+    an.add_argument("--title", required=True, help="Task title")
+    an.add_argument("--cluster", default="general", help="Cluster group")
+    an.add_argument("--priority", default="P1", help="Priority (P0, P1, P2, P3)")
+    an.add_argument("--horizon", default="H1", help="Horizon (H0, H1, H2)")
+    an.add_argument("--criticality", default="MEDIUM", help="Criticality (CRITICAL, HIGH, MEDIUM, LOW)")
+    an.add_argument("--summary", help="Task summary")
+    an.add_argument("--depends-on", action="append", help="Prerequisite task ID(s)")
+    an.add_argument("--tag", action="append", help="Tags")
+    an.add_argument("--save", action="store_true", help="Save changes to graph file directly")
+
+    cn = sp.add_parser("complete-node")
+    cn.add_argument("id", help="Task ID to mark DONE")
+    cn.add_argument("--evidence", help="Evidence statement / test log summary")
+    cn.add_argument("--grade", default="B", help="Evidence grade (A, B, C, D)")
+    cn.add_argument("--save", action="store_true", help="Save changes to graph file directly")
 
     srv = sp.add_parser("visualize")
     srv.add_argument("--port", type=int, default=8080)
@@ -393,9 +412,49 @@ def main(argv: list[str] | None = None) -> int:
                 atomic_write(args.output, json.dumps(stable_dict(graph.to_dict()), ensure_ascii=False, indent=2) + "\n", overwrite=True)
                 obj = {"exported": args.output, "format": "json", "nodes": len(graph.nodes)}
             elif args.export_format == "md":
-                from .jsonutil import to_markdown
-                atomic_write(args.output, to_markdown(graph.nodes), overwrite=True)
+                from .adapters import MarkdownAdapter
+                atomic_write(args.output, MarkdownAdapter.to_markdown(graph), overwrite=True)
                 obj = {"exported": args.output, "format": "md", "nodes": len(graph.nodes)}
+            elif args.export_format == "mermaid":
+                from .adapters import MermaidAdapter
+                atomic_write(args.output, MermaidAdapter.to_mermaid(graph), overwrite=True)
+                obj = {"exported": args.output, "format": "mermaid", "nodes": len(graph.nodes)}
+            elif args.export_format == "csv-nodes":
+                from .adapters import CsvAdapter
+                atomic_write(args.output, CsvAdapter.nodes_to_csv(graph), overwrite=True)
+                obj = {"exported": args.output, "format": "csv-nodes", "nodes": len(graph.nodes)}
+            elif args.export_format == "csv-edges":
+                from .adapters import CsvAdapter
+                atomic_write(args.output, CsvAdapter.edges_to_csv(graph), overwrite=True)
+                obj = {"exported": args.output, "format": "csv-edges", "edges": len(graph.edges)}
+        elif args.cmd == "add-node":
+            from .mutations import add_node_to_graph
+            new_graph_dict = add_node_to_graph(
+                graph,
+                node_id=args.id,
+                title=args.title,
+                cluster=args.cluster,
+                priority=args.priority,
+                horizon=args.horizon,
+                criticality=args.criticality,
+                summary=args.summary,
+                depends_on=args.depends_on,
+                tags=args.tag
+            )
+            if args.save:
+                atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {"status": "PASS", "action": "added_node", "node_id": args.id, "saved": bool(args.save)}
+        elif args.cmd == "complete-node":
+            from .mutations import complete_node_in_graph
+            new_graph_dict = complete_node_in_graph(
+                graph,
+                node_id=args.id,
+                evidence_summary=args.evidence,
+                evidence_grade=args.grade
+            )
+            if args.save:
+                atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save)}
         elif args.cmd == "visualize":
             serve_visualizer(graph, port=args.port, open_browser=not args.no_browser)
             return PASS

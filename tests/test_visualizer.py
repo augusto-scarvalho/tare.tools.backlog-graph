@@ -13,7 +13,7 @@ class VisualizerTests(unittest.TestCase):
     def test_generate_html_content(self) -> None:
         graph = WorkGraph.from_file(FIXTURES / "sample-backlog.json")
         html = generate_html_viewer(graph)
-        self.assertIn("tare.tools — Graph Backlog Visualizer", html)
+        self.assertIn("tare.tools — Graph Backlog", html)
         self.assertIn("TASK-01", html)
         self.assertIn("TASK-02", html)
 

@@ -1,285 +1,439 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>tare.tools — Graph Backlog Visualizer</title>
+  <title>tare.tools — Graph Backlog (SIGNAL Design System)</title>
   <style>
     :root {
-      --bg: #0d1117;
-      --card-bg: #161b22;
-      --border: #30363d;
-      --text: #c9d1d9;
-      --text-bright: #f0f6fc;
-      --text-muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-hover: #1f6feb;
-      --done: #238636;
-      --partial: #d29922;
-      --not-done: #8957e5;
-      --superseded: #484f58;
-      --blocked: #da3633;
-      --ready: #2ea043;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --bg-base: #080c14;
+      --bg-surface: #0f172a;
+      --bg-elevated: #1e293b;
+      --bg-card: #141f33;
+      --border-subtle: #1e293b;
+      --border-medium: #334155;
+      --border-bright: #475569;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --text-dim: #475569;
+      
+      --signal-emerald: #10b981;
+      --signal-emerald-glow: rgba(16, 185, 129, 0.25);
+      --signal-cyan: #06b6d4;
+      --signal-cyan-glow: rgba(6, 182, 212, 0.25);
+      --signal-amber: #f59e0b;
+      --signal-rose: #f43f5e;
+      --signal-rose-glow: rgba(244, 63, 94, 0.25);
+      --signal-indigo: #6366f1;
+      --signal-slate: #94a3b8;
+      
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--font-sans);
+      background: var(--bg-base);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
+    
     header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
+      z-index: 10;
     }
-    .header-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-bright);
+    
+    .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
-    .header-title span.badge {
-      font-size: 12px;
-      background: #1f6feb22;
-      color: var(--accent);
+    .brand-logo {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--signal-cyan-glow);
+      color: var(--signal-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.4);
       padding: 2px 8px;
-      border-radius: 12px;
-      border: 1px solid #1f6feb44;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+    
+    .view-tabs {
+      display: flex;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--signal-cyan);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
     .controls {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       flex-wrap: wrap;
     }
-    input, select, button {
-      background: var(--bg);
-      color: var(--text-bright);
-      border: 1px solid var(--border);
+    input, select, .action-btn {
+      background: var(--bg-base);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
       border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 13px;
+      padding: 7px 12px;
+      font-size: 12px;
       font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
     }
     input:focus, select:focus {
       outline: none;
-      border-color: var(--accent);
+      border-color: var(--signal-cyan);
+      color: var(--text-primary);
     }
-    button {
+    .action-btn {
       cursor: pointer;
-      background: #21262d;
-      transition: background 0.15s;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    button:hover {
-      background: #30363d;
+    .action-btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-medium);
+      color: var(--text-primary);
     }
-    button.primary {
-      background: #238636;
-      border-color: #2ea043;
-      color: #fff;
+    .action-btn.active {
+      background: var(--signal-cyan-glow);
+      border-color: var(--signal-cyan);
+      color: var(--signal-cyan);
     }
-    button.primary:hover {
-      background: #2ea043;
-    }
-    .main-layout {
+    
+    .main-workspace {
       display: flex;
       flex: 1;
       overflow: hidden;
-    }
-    .graph-panel {
-      flex: 1;
       position: relative;
-      background: radial-gradient(circle, #161b22 1px, transparent 1px);
-      background-size: 24px 24px;
-      overflow: auto;
+    }
+    
+    /* Grid View */
+    .view-content {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
       padding: 24px;
+      display: none;
+    }
+    .view-content.active {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
-    .clusters-container {
+    
+    .clusters-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 16px;
-      width: 100%;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      align-items: start;
     }
-    .cluster-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
+    
+    .cluster-column {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
-    .cluster-header {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--accent);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
+    .cluster-title-bar {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .cluster-header .count {
+    .cluster-name {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--signal-cyan);
+      font-family: var(--font-mono);
+    }
+    .cluster-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      background: var(--bg-base);
       color: var(--text-muted);
-      font-weight: 400;
-      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
     }
-    .nodes-list {
+    
+    .task-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
       gap: 8px;
-    }
-    .node-item {
-      background: #0d1117;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: all 0.15s ease;
       position: relative;
     }
-    .node-item:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    .task-card:hover {
+      border-color: var(--signal-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
-    .node-item.selected {
-      border-color: var(--accent);
-      background: #1f6feb15;
+    .task-card.selected {
+      border-color: var(--signal-cyan);
+      box-shadow: 0 0 0 1px var(--signal-cyan), 0 4px 14px rgba(6, 182, 212, 0.2);
     }
-    .node-item.ready-frontier {
-      border-left: 4px solid var(--ready);
+    
+    /* SIGNAL Status Indicators */
+    .task-card.status-ready {
+      border-left: 4px solid var(--signal-emerald);
     }
-    .node-item.blocked-node {
-      border-left: 4px solid var(--blocked);
+    .task-card.status-blocked {
+      border-left: 4px solid var(--signal-rose);
     }
-    .node-item.done-node {
-      border-left: 4px solid var(--done);
-      opacity: 0.75;
+    .task-card.status-done {
+      border-left: 4px solid var(--signal-slate);
+      opacity: 0.7;
     }
-    .node-item.partial-node {
-      border-left: 4px solid var(--partial);
+    .task-card.status-partial {
+      border-left: 4px solid var(--signal-amber);
     }
-    .node-header {
+    .task-card.simulated-done {
+      border-left: 4px solid var(--signal-cyan) !important;
+      background: rgba(6, 182, 212, 0.1) !important;
+    }
+    
+    .card-top {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 8px;
     }
-    .node-id {
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text-bright);
-      font-family: monospace;
+    .card-id {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
     }
-    .node-tags {
+    .card-badges {
       display: flex;
       gap: 4px;
     }
-    .tag {
+    .signal-pill {
+      font-family: var(--font-mono);
       font-size: 10px;
-      padding: 1px 5px;
+      font-weight: 600;
+      padding: 1px 6px;
       border-radius: 4px;
-      border: 1px solid var(--border);
-      background: #21262d;
-      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-base);
     }
-    .node-title {
+    .pill-ready {
+      background: var(--signal-emerald-glow);
+      color: var(--signal-emerald);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .pill-blocked {
+      background: var(--signal-rose-glow);
+      color: var(--signal-rose);
+      border-color: rgba(244, 63, 94, 0.4);
+    }
+    .pill-done {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--signal-slate);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+    
+    .card-title {
       font-size: 13px;
-      margin-top: 4px;
-      color: var(--text);
+      font-weight: 500;
+      color: var(--text-secondary);
       line-height: 1.35;
     }
-    .inspector-panel {
-      width: 420px;
-      background: var(--card-bg);
-      border-left: 1px solid var(--border);
+    
+    /* DAG Canvas View */
+    .dag-canvas-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      background: radial-gradient(circle, #1e293b 1px, transparent 1px);
+      background-size: 28px 28px;
+      overflow: hidden;
+    }
+    #dagSvg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #dagSvg:active {
+      cursor: grabbing;
+    }
+    
+    /* Inspector Drawer */
+    .inspector-drawer {
+      width: 440px;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
+      height: 100%;
       overflow-y: auto;
-      padding: 20px;
-      gap: 16px;
+      padding: 24px;
+      gap: 20px;
+      z-index: 5;
+    }
+    .inspector-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 16px;
+    }
+    .inspector-id {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--signal-cyan);
     }
     .inspector-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
-      color: var(--text-bright);
+      color: var(--text-primary);
+      line-height: 1.4;
     }
-    .detail-section {
+    
+    .section-block {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
-    .detail-label {
+    .section-label {
+      font-family: var(--font-mono);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
     }
-    .detail-content {
+    .section-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 12px;
       font-size: 13px;
       line-height: 1.45;
-      background: #0d1117;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
+      color: var(--text-secondary);
     }
-    .detail-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .detail-list li {
-      font-size: 12px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      background: #161b22;
-      border: 1px solid var(--border);
+    
+    .dep-item {
       display: flex;
       justify-content: space-between;
-    }
-    .stats-bar {
-      display: flex;
-      gap: 12px;
-      background: var(--card-bg);
-      border-top: 1px solid var(--border);
-      padding: 8px 20px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       font-size: 12px;
-      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.1s ease;
+      font-family: var(--font-mono);
     }
-    .stats-item span {
-      font-weight: 600;
-      color: var(--text-bright);
+    .dep-item:hover {
+      border-color: var(--signal-cyan);
+      background: var(--bg-elevated);
+    }
+    
+    /* Footer Status Bar */
+    footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      padding: 8px 24px;
+      display: flex;
+      gap: 20px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      align-items: center;
+      z-index: 10;
+    }
+    .stat-metric span {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .stat-metric.metric-ready span {
+      color: var(--signal-emerald);
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="header-title">
-      <span>tare.tools</span>
-      <span class="badge">Graph Backlog</span>
+    <div class="brand">
+      <div class="brand-logo">tare.tools</div>
+      <div class="brand-pill">SIGNAL Graph Backlog</div>
     </div>
+    
+    <div class="view-tabs">
+      <button class="tab-btn active" id="tabGridBtn" onclick="switchView('grid')">Kanban / Clusters</button>
+      <button class="tab-btn" id="tabDagBtn" onclick="switchView('dag')">Interactive DAG Canvas</button>
+    </div>
+
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 220px;">
+      <input type="text" id="searchInput" placeholder="Search tasks, IDs, tags..." style="width: 200px;">
       <select id="statusFilter">
         <option value="ALL">All Statuses</option>
-        <option value="FRONTIER">Ready Frontier (Actionable)</option>
+        <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
         <option value="NOT_DONE">NOT_DONE</option>
         <option value="PARTIAL">PARTIAL</option>
         <option value="DONE">DONE</option>
@@ -288,56 +442,91 @@
       <select id="clusterFilter">
         <option value="ALL">All Clusters</option>
       </select>
-      <button id="resetFiltersBtn">Reset</button>
+      <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
+      <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset</button>
     </div>
   </header>
 
-  <div class="main-layout">
-    <div class="graph-panel" id="graphContainer">
-      <div class="clusters-container" id="clustersGrid"></div>
+  <div class="main-workspace">
+    <!-- Grid / Kanban View -->
+    <div class="view-content active" id="gridView">
+      <div class="clusters-grid" id="clustersContainer"></div>
     </div>
-    <div class="inspector-panel" id="inspectorPanel">
-      <div class="inspector-title" id="inspectorTitle">Select a task</div>
-      <div class="detail-section">
-        <div class="detail-label">Status & Readiness</div>
-        <div class="detail-content" id="inspectorStatus">No item selected.</div>
+
+    <!-- Interactive DAG Canvas View -->
+    <div class="view-content" id="dagView" style="padding:0;">
+      <div class="dag-canvas-container">
+        <svg id="dagSvg"></svg>
       </div>
-      <div class="detail-section">
-        <div class="detail-label">Summary</div>
-        <div class="detail-content" id="inspectorSummary">-</div>
+    </div>
+
+    <!-- Inspector Drawer -->
+    <div class="inspector-drawer" id="inspectorDrawer">
+      <div class="inspector-header">
+        <div class="inspector-id" id="inspId">Select a task</div>
+        <div class="inspector-title" id="inspTitle">Click on any node in the backlog to inspect dependencies, exit criteria, and implementation context.</div>
       </div>
-      <div class="detail-section">
-        <div class="detail-label">Exit Criteria / DoD</div>
-        <div class="detail-content" id="inspectorExitCriteria">-</div>
+
+      <div class="section-block">
+        <div class="section-label">Readiness & State</div>
+        <div class="section-box" id="inspState">-</div>
       </div>
-      <div class="detail-section">
-        <div class="detail-label">Upstream Blockers / Prerequisites</div>
-        <ul class="detail-list" id="inspectorPrereqs"><li>None</li></ul>
+
+      <div class="section-block">
+        <div class="section-label">Simulation (What-If)</div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+          <input type="checkbox" id="simToggle" onchange="toggleSimulateCurrent()">
+          Simulate this task as DONE (evaluate unlocked frontier)
+        </label>
       </div>
-      <div class="detail-section">
-        <div class="detail-label">Downstream Dependents</div>
-        <ul class="detail-list" id="inspectorDownstream"><li>None</li></ul>
+
+      <div class="section-block">
+        <div class="section-label">Summary & Purpose</div>
+        <div class="section-box" id="inspSummary">-</div>
       </div>
+
+      <div class="section-block">
+        <div class="section-label">Definition of Done / Exit Criteria</div>
+        <div class="section-box" id="inspCriteria">-</div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-label">Upstream Blockers (Prerequisites)</div>
+        <div id="inspPrereqs" style="display:flex; flex-direction:column; gap:6px;">None</div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-label">Downstream Impact (Unlocks)</div>
+        <div id="inspDownstream" style="display:flex; flex-direction:column; gap:6px;">None</div>
+      </div>
+
+      <button class="action-btn" id="copyPacketBtn" onclick="copyImplementationPacket()" style="justify-content:center; margin-top:8px;">
+        📋 Copy Agent Implementation Packet
+      </button>
     </div>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stats-item">Total Tasks: <span id="statTotal">0</span></div>
-    <div class="stats-item">Frontier Ready: <span id="statReady">0</span></div>
-    <div class="stats-item">Done: <span id="statDone">0</span></div>
-    <div class="stats-item">Edges: <span id="statEdges">0</span></div>
-  </div>
+  <footer>
+    <div class="stat-metric">Total: <span id="statTotal">0</span></div>
+    <div class="stat-metric metric-ready">⚡ Actionable Frontier: <span id="statReady">0</span></div>
+    <div class="stat-metric">Done: <span id="statDone">0</span></div>
+    <div class="stat-metric">Edges: <span id="statEdges">0</span></div>
+    <div class="stat-metric" style="margin-left:auto;">Engine: <span>tare.tools DAG v0.2</span></div>
+  </footer>
 
   <script>
-    const GRAPH_DATA = {"edges": [{"confidence": {"score": 1.0}, "from": "TASK-01", "notes": ["API requires Database"], "requirements": {}, "semantic": true, "source_details": [], "source_refs": ["SRC-INIT"], "to": "TASK-02", "type": "UNLOCKS"}, {"confidence": {"score": 1.0}, "from": "TASK-02", "notes": ["Frontend requires API"], "requirements": {}, "semantic": true, "source_details": [], "source_refs": ["SRC-INIT"], "to": "TASK-03", "type": "UNLOCKS"}], "meta": {"generated_at": "2026-08-15T12:00:00Z", "projection_run_id": "proj-sample-001", "schema": "work-graph-poc/0.5", "snapshot": "2026-08-15-v1", "title": "Sample Project Backlog"}, "nodes": [{"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["storage", "data"], "canonical_id": "TASK-01", "canonical_revision": "r1", "canonical_system": "local", "cluster": "infrastructure", "completion": {"dod_satisfied": true, "evidence_grade": "A", "materialization_scope": "local", "status": "DONE"}, "confidence": {"score": 1.0}, "criticality": "CRITICAL", "epistemic_status": "CERTAIN", "evidence_required": ["test_logs"], "exit_criteria": ["All schemas validated", "Unit tests passing"], "horizon": "H0", "id": "TASK-01", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P0", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-1"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Implement relational models and automated migrations.", "tags": ["db", "backend"], "title": "Set up Database & Storage Models", "unlock_score": 10, "work_status": "PROPOSED"}, {"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["api", "service"], "canonical_id": "TASK-02", "canonical_revision": "r1", "canonical_system": "local", "cluster": "api", "completion": {"dod_satisfied": false, "evidence_grade": "B", "materialization_scope": "local", "status": "NOT_DONE"}, "confidence": {"score": 0.95}, "criticality": "HIGH", "epistemic_status": "CERTAIN", "evidence_required": ["api_integration_tests"], "exit_criteria": ["Endpoints return 200 OK", "Contract tests pass"], "horizon": "H0", "id": "TASK-02", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P0", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-2"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Develop REST/GraphQL endpoints for core business domain.", "tags": ["api", "backend"], "title": "Build Core Business API", "unlock_score": 8, "work_status": "PROPOSED"}, {"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["frontend", "ui"], "canonical_id": "TASK-03", "canonical_revision": "r1", "canonical_system": "local", "cluster": "frontend", "completion": {"dod_satisfied": false, "evidence_grade": "B", "materialization_scope": "local", "status": "NOT_DONE"}, "confidence": {"score": 0.9}, "criticality": "MEDIUM", "epistemic_status": "CERTAIN", "evidence_required": ["ui_tests"], "exit_criteria": ["UI renders correctly", "End-to-end tests pass"], "horizon": "H1", "id": "TASK-03", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P1", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-3"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Develop client dashboard consuming the Core API.", "tags": ["frontend", "ui"], "title": "Create User Interface Dashboard", "unlock_score": 5, "work_status": "PROPOSED"}], "sources": {"SRC-INIT": {"kind": "architecture_decision", "locator": "docs/architecture.md", "recoverability": "CONTENT_ADDRESSED", "title": "Initial Architecture Spec"}}};
-    
-    let selectedNodeId = null;
-    const nodes = GRAPH_DATA.nodes || [];
-    const edges = GRAPH_DATA.edges || [];
+    const RAW_GRAPH = {"edges": [{"confidence": {"score": 1.0}, "from": "TASK-01", "notes": ["API requires Database"], "requirements": {}, "semantic": true, "source_details": [], "source_refs": ["SRC-INIT"], "to": "TASK-02", "type": "UNLOCKS"}, {"confidence": {"score": 1.0}, "from": "TASK-02", "notes": ["Frontend requires API"], "requirements": {}, "semantic": true, "source_details": [], "source_refs": ["SRC-INIT"], "to": "TASK-03", "type": "UNLOCKS"}], "meta": {"generated_at": "2026-08-15T12:00:00Z", "projection_run_id": "proj-sample-001", "schema": "work-graph-poc/0.5", "snapshot": "2026-08-15-v1", "title": "Sample Project Backlog"}, "nodes": [{"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["storage", "data"], "canonical_id": "TASK-01", "canonical_revision": "r1", "canonical_system": "local", "cluster": "infrastructure", "completion": {"dod_satisfied": true, "evidence_grade": "A", "materialization_scope": "local", "status": "DONE"}, "confidence": {"score": 1.0}, "criticality": "CRITICAL", "epistemic_status": "CERTAIN", "evidence_required": ["test_logs"], "exit_criteria": ["All schemas validated", "Unit tests passing"], "horizon": "H0", "id": "TASK-01", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P0", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-1"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Implement relational models and automated migrations.", "tags": ["db", "backend"], "title": "Set up Database & Storage Models", "unlock_score": 10, "work_status": "PROPOSED"}, {"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["api", "service"], "canonical_id": "TASK-02", "canonical_revision": "r1", "canonical_system": "local", "cluster": "api", "completion": {"dod_satisfied": false, "evidence_grade": "B", "materialization_scope": "local", "status": "NOT_DONE"}, "confidence": {"score": 0.95}, "criticality": "HIGH", "epistemic_status": "CERTAIN", "evidence_required": ["api_integration_tests"], "exit_criteria": ["Endpoints return 200 OK", "Contract tests pass"], "horizon": "H0", "id": "TASK-02", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P0", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-2"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Develop REST/GraphQL endpoints for core business domain.", "tags": ["api", "backend"], "title": "Build Core Business API", "unlock_score": 8, "work_status": "PROPOSED"}, {"admission_state": "ADMITTED", "authority_required": "none", "bounded_contexts": ["frontend", "ui"], "canonical_id": "TASK-03", "canonical_revision": "r1", "canonical_system": "local", "cluster": "frontend", "completion": {"dod_satisfied": false, "evidence_grade": "B", "materialization_scope": "local", "status": "NOT_DONE"}, "confidence": {"score": 0.9}, "criticality": "MEDIUM", "epistemic_status": "CERTAIN", "evidence_required": ["ui_tests"], "exit_criteria": ["UI renders correctly", "End-to-end tests pass"], "horizon": "H1", "id": "TASK-03", "items": [], "kind": "task", "metrics": {}, "notes": [], "observed_at": "2026-08-15T12:00:00Z", "priority": "P1", "projection_run_id": "proj-sample-001", "provenance": ["SRC-INIT"], "readiness": {"operational_identity_required": true}, "source_claim_ids": ["SRC-INIT:claim-3"], "source_details": [], "source_refs": ["SRC-INIT"], "staleness_state": "FRESH", "summary": "Develop client dashboard consuming the Core API.", "tags": ["frontend", "ui"], "title": "Create User Interface Dashboard", "unlock_score": 5, "work_status": "PROPOSED"}], "sources": {"SRC-INIT": {"kind": "architecture_decision", "locator": "docs/architecture.md", "recoverability": "CONTENT_ADDRESSED", "title": "Initial Architecture Spec"}}};
+    const nodes = RAW_GRAPH.nodes || [];
+    const edges = RAW_GRAPH.edges || [];
     const byId = {};
     nodes.forEach(n => byId[n.id] = n);
 
-    // Build cluster options
+    let selectedNodeId = nodes[0] ? nodes[0].id : null;
+    let simulatedDoneSet = new Set();
+    let showCriticalPath = false;
+    let currentView = 'grid';
+
+    // Populate cluster filter
     const clusters = [...new Set(nodes.map(n => n.cluster || 'general'))].sort();
     const clusterSelect = document.getElementById('clusterFilter');
     clusters.forEach(c => {
@@ -348,13 +537,14 @@
     });
 
     function getStatus(n) {
+      if (simulatedDoneSet.has(n.id)) return 'DONE';
       return (n.completion && n.completion.status) || 'NOT_DONE';
     }
 
-    function isReady(n) {
+    function isNodeReady(n) {
       const st = getStatus(n);
       if (st === 'DONE' || st === 'SUPERSEDED') return false;
-      const blockers = (edges || []).filter(e => e.to === n.id && (e.semantic !== false));
+      const blockers = edges.filter(e => e.to === n.id && (e.semantic !== false));
       for (const b of blockers) {
         const src = byId[b.from];
         if (!src || getStatus(src) !== 'DONE') return false;
@@ -362,13 +552,22 @@
       return true;
     }
 
+    function switchView(viewName) {
+      currentView = viewName;
+      document.getElementById('tabGridBtn').className = `tab-btn ${viewName === 'grid' ? 'active' : ''}`;
+      document.getElementById('tabDagBtn').className = `tab-btn ${viewName === 'dag' ? 'active' : ''}`;
+      document.getElementById('gridView').className = `view-content ${viewName === 'grid' ? 'active' : ''}`;
+      document.getElementById('dagView').className = `view-content ${viewName === 'dag' ? 'active' : ''}`;
+      if (viewName === 'dag') renderDag();
+    }
+
     function render() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const statusF = document.getElementById('statusFilter').value;
       const clusterF = document.getElementById('clusterFilter').value;
 
-      const grid = document.getElementById('clustersGrid');
-      grid.innerHTML = '';
+      const container = document.getElementById('clustersContainer');
+      container.innerHTML = '';
 
       let readyCount = 0;
       let doneCount = 0;
@@ -378,17 +577,16 @@
 
       nodes.forEach(n => {
         const st = getStatus(n);
-        const ready = isReady(n);
+        const ready = isNodeReady(n);
         if (ready) readyCount++;
         if (st === 'DONE') doneCount++;
 
-        // Filter
         if (statusF === 'FRONTIER' && !ready) return;
         if (statusF !== 'ALL' && statusF !== 'FRONTIER' && st !== statusF) return;
         if (clusterF !== 'ALL' && (n.cluster || 'general') !== clusterF) return;
         if (search) {
-          const text = (n.id + ' ' + (n.title || '') + ' ' + (n.summary || '') + ' ' + (n.tags || []).join(' ')).toLowerCase();
-          if (!text.includes(search)) return;
+          const hay = (n.id + ' ' + (n.title || '') + ' ' + (n.summary || '') + ' ' + (n.tags || []).join(' ')).toLowerCase();
+          if (!hay.includes(search)) return;
         }
 
         const cl = n.cluster || 'general';
@@ -405,45 +603,63 @@
         const list = grouped[cl];
         if (list.length === 0) return;
 
-        const card = document.createElement('div');
-        card.className = 'cluster-card';
-
-        const head = document.createElement('div');
-        head.className = 'cluster-header';
-        head.innerHTML = `<span>${cl}</span><span class="count">${list.length} tasks</span>`;
-        card.appendChild(head);
-
-        const listDiv = document.createElement('div');
-        listDiv.className = 'nodes-list';
+        const col = document.createElement('div');
+        col.className = 'cluster-column';
+        col.innerHTML = `
+          <div class="cluster-title-bar">
+            <span class="cluster-name">${cl}</span>
+            <span class="cluster-badge">${list.length}</span>
+          </div>
+        `;
 
         list.forEach(n => {
           const st = getStatus(n);
-          const ready = isReady(n);
-          const item = document.createElement('div');
-          let classState = 'blocked-node';
-          if (st === 'DONE') classState = 'done-node';
-          else if (st === 'PARTIAL') classState = 'partial-node';
-          else if (ready) classState = 'ready-frontier';
+          const ready = isNodeReady(n);
+          const card = document.createElement('div');
+          
+          let statusClass = 'status-blocked';
+          let pillClass = 'pill-blocked';
+          let pillLabel = 'BLOCKED';
 
-          item.className = `node-item ${classState} ${n.id === selectedNodeId ? 'selected' : ''}`;
-          item.onclick = () => selectNode(n.id);
+          if (st === 'DONE') {
+            statusClass = 'status-done';
+            pillClass = 'pill-done';
+            pillLabel = 'DONE';
+          } else if (st === 'PARTIAL') {
+            statusClass = 'status-partial';
+            pillClass = 'pill-blocked';
+            pillLabel = 'PARTIAL';
+          } else if (ready) {
+            statusClass = 'status-ready';
+            pillClass = 'pill-ready';
+            pillLabel = '⚡ READY';
+          }
 
-          item.innerHTML = `
-            <div class="node-header">
-              <span class="node-id">${n.id}</span>
-              <div class="node-tags">
-                <span class="tag">${n.priority || 'P1'}</span>
-                <span class="tag">${st}</span>
+          if (simulatedDoneSet.has(n.id)) {
+            statusClass += ' simulated-done';
+            pillLabel = 'SIMULATED';
+          }
+
+          card.className = `task-card ${statusClass} ${n.id === selectedNodeId ? 'selected' : ''}`;
+          card.onclick = () => selectNode(n.id);
+
+          card.innerHTML = `
+            <div class="card-top">
+              <span class="card-id">${n.id}</span>
+              <div class="card-badges">
+                <span class="signal-pill ${pillClass}">${pillLabel}</span>
+                <span class="signal-pill">${n.priority || 'P1'}</span>
               </div>
             </div>
-            <div class="node-title">${n.title || ''}</div>
+            <div class="card-title">${n.title || ''}</div>
           `;
-          listDiv.appendChild(item);
+          col.appendChild(card);
         });
 
-        card.appendChild(listDiv);
-        grid.appendChild(card);
+        container.appendChild(col);
       });
+
+      if (currentView === 'dag') renderDag();
     }
 
     function selectNode(id) {
@@ -451,54 +667,211 @@
       const n = byId[id];
       if (!n) return;
 
-      document.getElementById('inspectorTitle').textContent = `${n.id}: ${n.title || ''}`;
+      document.getElementById('inspId').textContent = n.id;
+      document.getElementById('inspTitle').textContent = n.title || '';
+      
       const st = getStatus(n);
-      const ready = isReady(n);
-      document.getElementById('inspectorStatus').innerHTML = `
-        <strong>Status:</strong> ${st} | <strong>Readiness:</strong> ${ready ? '<span style="color:var(--ready)">READY (Frontier)</span>' : '<span style="color:var(--blocked)">BLOCKED</span>'}<br>
-        <strong>Priority:</strong> ${n.priority || 'P1'} | <strong>Horizon:</strong> ${n.horizon || 'H1'} | <strong>Criticality:</strong> ${n.criticality || 'MEDIUM'}
+      const ready = isNodeReady(n);
+      document.getElementById('inspState').innerHTML = `
+        <strong>Status:</strong> ${st}<br>
+        <strong>Feasibility:</strong> ${ready ? '<span style="color:var(--signal-emerald);font-weight:700;">⚡ READY (Actionable Frontier)</span>' : '<span style="color:var(--signal-rose);font-weight:700;">BLOCKED</span>'}<br>
+        <strong>Cluster:</strong> ${n.cluster || 'general'} | <strong>Priority:</strong> ${n.priority || 'P1'} | <strong>Horizon:</strong> ${n.horizon || 'H1'}
       `;
-      document.getElementById('inspectorSummary').textContent = n.summary || 'No summary provided.';
+
+      document.getElementById('simToggle').checked = simulatedDoneSet.has(n.id);
+      document.getElementById('inspSummary').textContent = n.summary || 'No summary declared.';
       
       const ec = n.exit_criteria || [];
-      document.getElementById('inspectorExitCriteria').innerHTML = ec.length > 0
+      document.getElementById('inspCriteria').innerHTML = ec.length > 0
         ? ec.map(x => `<div>• ${x}</div>`).join('')
-        : '<em>Standard completion criteria.</em>';
+        : '<em>Standard Definition of Done.</em>';
 
       // Prereqs
       const prereqs = edges.filter(e => e.to === id);
-      const prList = document.getElementById('inspectorPrereqs');
-      prList.innerHTML = prereqs.length > 0
+      const prDiv = document.getElementById('inspPrereqs');
+      prDiv.innerHTML = prereqs.length > 0
         ? prereqs.map(e => {
             const pNode = byId[e.from];
             const pSt = pNode ? getStatus(pNode) : 'UNKNOWN';
-            return `<li onclick="selectNode('${e.from}')" style="cursor:pointer;"><strong>${e.from}</strong> [${pSt}] <span>${e.type}</span></li>`;
+            return `<div class="dep-item" onclick="selectNode('${e.from}')"><span>${e.from} [${pSt}]</span><span>${e.type}</span></div>`;
           }).join('')
-        : '<li>No upstream blockers.</li>';
+        : '<div style="font-size:12px;color:var(--text-muted);">No upstream blockers.</div>';
 
       // Downstream
       const downstream = edges.filter(e => e.from === id);
-      const dsList = document.getElementById('inspectorDownstream');
-      dsList.innerHTML = downstream.length > 0
+      const dsDiv = document.getElementById('inspDownstream');
+      dsDiv.innerHTML = downstream.length > 0
         ? downstream.map(e => {
             const dNode = byId[e.to];
             const dSt = dNode ? getStatus(dNode) : 'UNKNOWN';
-            return `<li onclick="selectNode('${e.to}')" style="cursor:pointer;"><strong>${e.to}</strong> [${dSt}] <span>${e.type}</span></li>`;
+            return `<div class="dep-item" onclick="selectNode('${e.to}')"><span>${e.to} [${dSt}]</span><span>${e.type}</span></div>`;
           }).join('')
-        : '<li>No downstream dependents.</li>';
+        : '<div style="font-size:12px;color:var(--text-muted);">No downstream dependents.</div>';
 
       render();
     }
 
-    document.getElementById('searchInput').addEventListener('input', render);
-    document.getElementById('statusFilter').addEventListener('change', render);
-    document.getElementById('clusterFilter').addEventListener('change', render);
-    document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+    function toggleSimulateCurrent() {
+      if (!selectedNodeId) return;
+      if (simulatedDoneSet.has(selectedNodeId)) {
+        simulatedDoneSet.delete(selectedNodeId);
+      } else {
+        simulatedDoneSet.add(selectedNodeId);
+      }
+      render();
+      selectNode(selectedNodeId);
+    }
+
+    function toggleCriticalPath() {
+      showCriticalPath = !showCriticalPath;
+      document.getElementById('criticalPathBtn').className = `action-btn ${showCriticalPath ? 'active' : ''}`;
+      if (currentView === 'dag') renderDag();
+    }
+
+    function resetFilters() {
       document.getElementById('searchInput').value = '';
       document.getElementById('statusFilter').value = 'ALL';
       document.getElementById('clusterFilter').value = 'ALL';
+      simulatedDoneSet.clear();
+      showCriticalPath = false;
+      document.getElementById('criticalPathBtn').className = 'action-btn';
       render();
-    });
+    }
+
+    function copyImplementationPacket() {
+      if (!selectedNodeId) return;
+      const n = byId[selectedNodeId];
+      const packetMd = `# Implementation Packet: ${n.id}\n\n**Title:** ${n.title}\n**Status:** ${getStatus(n)}\n\n## Summary\n${n.summary || ''}\n\n## Definition of Done\n${(n.exit_criteria || []).map(x => '- [ ] ' + x).join('\n')}`;
+      navigator.clipboard.writeText(packetMd).then(() => {
+        const btn = document.getElementById('copyPacketBtn');
+        btn.textContent = '✅ Copied to Clipboard!';
+        setTimeout(() => btn.textContent = '📋 Copy Agent Implementation Packet', 2000);
+      });
+    }
+
+    /* SVG DAG Renderer */
+    function renderDag() {
+      const svg = document.getElementById('dagSvg');
+      svg.innerHTML = '';
+
+      // Compute topological levels
+      const inDegree = {};
+      const adj = {};
+      nodes.forEach(n => { inDegree[n.id] = 0; adj[n.id] = []; });
+      edges.forEach(e => {
+        if (inDegree[e.to] !== undefined) inDegree[e.to]++;
+        if (adj[e.from]) adj[e.from].push(e.to);
+      });
+
+      const levels = {};
+      nodes.forEach(n => levels[n.id] = 0);
+
+      const queue = nodes.filter(n => inDegree[n.id] === 0).map(n => n.id);
+      while (queue.length > 0) {
+        const u = queue.shift();
+        (adj[u] || []).forEach(v => {
+          levels[v] = Math.max(levels[v] || 0, (levels[u] || 0) + 1);
+          inDegree[v]--;
+          if (inDegree[v] === 0) queue.push(v);
+        });
+      }
+
+      // Group nodes by level
+      const byLevel = {};
+      nodes.forEach(n => {
+        const lvl = levels[n.id] || 0;
+        if (!byLevel[lvl]) byLevel[lvl] = [];
+        byLevel[lvl].push(n);
+      });
+
+      const nodeCoords = {};
+      const colWidth = 240;
+      const rowHeight = 90;
+      const offsetX = 60;
+      const offsetY = 60;
+
+      Object.keys(byLevel).forEach(lvlStr => {
+        const lvl = parseInt(lvlStr);
+        const list = byLevel[lvl];
+        list.forEach((n, idx) => {
+          nodeCoords[n.id] = {
+            x: offsetX + lvl * colWidth,
+            y: offsetY + idx * rowHeight
+          };
+        });
+      });
+
+      // Render Edges
+      edges.forEach(e => {
+        const src = nodeCoords[e.from];
+        const dst = nodeCoords[e.to];
+        if (src && dst) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          const midX = (src.x + 160 + dst.x) / 2;
+          const d = `M ${src.x + 160} ${src.y + 24} C ${midX} ${src.y + 24}, ${midX} ${dst.y + 24}, ${dst.x} ${dst.y + 24}`;
+          path.setAttribute('d', d);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', '#334155');
+          path.setAttribute('stroke-width', '2');
+          svg.appendChild(path);
+        }
+      });
+
+      // Render Nodes
+      nodes.forEach(n => {
+        const pos = nodeCoords[n.id];
+        if (!pos) return;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+        g.style.cursor = 'pointer';
+        g.onclick = () => selectNode(n.id);
+
+        const st = getStatus(n);
+        const ready = isNodeReady(n);
+        let strokeColor = '#334155';
+        if (st === 'DONE') strokeColor = '#64748b';
+        else if (ready) strokeColor = '#10b981';
+        else strokeColor = '#f43f5e';
+
+        if (n.id === selectedNodeId) strokeColor = '#06b6d4';
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', '160');
+        rect.setAttribute('height', '48');
+        rect.setAttribute('rx', '6');
+        rect.setAttribute('fill', '#141f33');
+        rect.setAttribute('stroke', strokeColor);
+        rect.setAttribute('stroke-width', n.id === selectedNodeId ? '2.5' : '1.5');
+        g.appendChild(rect);
+
+        const idText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        idText.setAttribute('x', '10');
+        idText.setAttribute('y', '18');
+        idText.setAttribute('fill', '#f8fafc');
+        idText.setAttribute('font-size', '11');
+        idText.setAttribute('font-weight', 'bold');
+        idText.setAttribute('font-family', 'ui-monospace, monospace');
+        idText.textContent = n.id;
+        g.appendChild(idText);
+
+        const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        titleText.setAttribute('x', '10');
+        titleText.setAttribute('y', '36');
+        titleText.setAttribute('fill', '#94a3b8');
+        titleText.setAttribute('font-size', '10');
+        const trunc = (n.title || '').length > 20 ? (n.title || '').slice(0, 18) + '...' : (n.title || '');
+        titleText.textContent = trunc;
+        g.appendChild(titleText);
+
+        svg.appendChild(g);
+      });
+    }
+
+    // Attach listeners
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('statusFilter').addEventListener('change', render);
+    document.getElementById('clusterFilter').addEventListener('change', render);
 
     render();
     if (nodes.length > 0) selectNode(nodes[0].id);
