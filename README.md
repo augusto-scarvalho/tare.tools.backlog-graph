@@ -1,86 +1,86 @@
 # tare.tools — Graph Backlog
 
-Motor determinístico de **Backlog em Grafos Acíclicos Dirigidos (DAG)**, analisador de dependências e gerador de pacotes de implementação para desenvolvimento humano e agentes autônomos.
+Deterministic **Directed Acyclic Graph (DAG) Backlog Engine**, dependency analyzer, and implementation packet generator for human developers and autonomous AI agents.
 
-> **Origem:** Este projeto foi desacoplado do projeto principal (`universal-agent-harness-prototype`, [Issue #35](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/issues/35) e [PR #38](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/pull/38)), tornando-se um **side project independente**, sem dependências externas obrigatórias (funciona com puro Python 3.10+ stdlib).
-
----
-
-## 🎯 Por que Backlog em Grafos? (vs. Listas / Kanban Tradicionais)
-
-Listas planas e quadros Kanban sofrem de limitações graves em projetos complexos ou orientados a agentes de IA:
-1. **Falta de visibilidade de bloqueios:** Não é óbvio qual tarefa desbloqueia o quê.
-2. **Priorização cega:** Tarefas de alta prioridade podem estar completamente bloqueadas por itens esquecidos de prioridade menor.
-3. **Impossibilidade de cálculo de fronteira:** Um desenvolvedor ou agente precisa adivinhar o que pode ser executado agora sem quebrar dependências.
-
-Com o **Graph Backlog**:
-- **`frontier` determinística:** Calcula instantaneamente quais tarefas estão prontas para execução (todos os pré-requisitos satisfeitos).
-- **Análise de Bloqueios (`why` / `blockers`):** Explica a causa raiz exata pela qual uma tarefa está travada.
-- **Raio de Impacto (`impact` / `deps`):** Mapeia toda a cadeia descendente (o que essa tarefa destrava) e ascendente (do que ela depende).
-- **Caminho Crítico (`critical-path`):** Encontra a maior sequência de dependências do projeto.
-- **Pacotes de Implementação (`packet`):** Compila o contexto completo de uma tarefa em Markdown para guiar prompts de agentes ou revisões de código.
-- **Simulação "What-If" (`simulate`):** Preveja quais tarefas serão destravadas ao concluir itens específicos.
-- **Visualizador Web Interativo:** Interface local ou exportável em HTML estático independente.
+> **Origin:** This project was decoupled from the main repository (`universal-agent-harness-prototype`, [Issue #35](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/issues/35) and [PR #38](https://github.com/augusto-scarvalho/universal-agent-harness-prototype/pull/38)), becoming an **independent side project** with zero required external dependencies (runs with pure Python 3.10+ stdlib).
 
 ---
 
-## 🚀 Instalação e Execução Rápida
+## 🎯 Why Graph Backlog? (vs. Flat Lists & Traditional Kanban)
 
-### Zero Dependências (Pure Python Stdlib)
-Você pode executar diretamente sem instalar nada:
+Flat lists and linear Kanban boards suffer from critical limitations in complex or AI agent-driven workflows:
+1. **Lack of blocker visibility:** It is not immediately obvious which task unblocks what.
+2. **Blind prioritization:** High-priority items can be completely blocked by forgotten low-priority dependencies.
+3. **Inability to compute execution frontier:** A developer or AI agent must guess what can actually be worked on *now* without breaking contracts.
+
+With **Graph Backlog**:
+- **Deterministic `frontier`:** Instantly computes which tasks are ready for immediate execution (all prerequisites satisfied).
+- **Blocker Analysis (`why` / `blockers`):** Explains the exact root cause why a task is blocked.
+- **Impact Radius (`impact` / `deps`):** Traces the full downstream chain (what this task unblocks) and upstream ancestors (what it depends on).
+- **Critical Path (`critical-path`):** Identifies the longest dependency bottleneck sequence in the project.
+- **Implementation Packets (`packet`):** Compiles complete task context into Markdown to guide LLM prompts or code reviews.
+- **What-If Simulation (`simulate`):** Projects which downstream tasks will be unblocked upon completing specific candidate work.
+- **Interactive Web Visualizer:** Standalone local or exportable static HTML with real-time DAG canvas, 12 curated dark/light themes, and in-browser Microsoft 365 Copilot agentic bridge.
+
+---
+
+## 🚀 Quickstart & Installation
+
+### Zero Dependencies (Pure Python Stdlib)
+You can run it directly without installing any third-party dependencies:
 ```bash
 python graph_ops.py --graph fixtures/sample-backlog.json summary
 python graph_ops.py --graph fixtures/sample-backlog.json frontier --format ids
 ```
 
-### Instalação como Pacote Python
+### Install as a Python Package
 ```bash
 pip install -e .
 ```
-Após instalado, os comandos `graph-backlog` e `graph-ops` ficam disponíveis no seu terminal.
+Once installed, the `graph-backlog` and `graph-ops` commands become globally available in your terminal.
 
 ---
 
-## ⚡ Guia Rápido de Comandos CLI
+## ⚡ CLI Command Cheat Sheet
 
-| Comando | O que responde? | Exemplo |
+| Command | What it answers | Example |
 |---|---|---|
-| `validate` | A estrutura e o DAG do grafo são válidos? | `python graph_ops.py validate` |
-| `summary` | Quantas tarefas, clusters e status existem? | `python graph_ops.py summary` |
-| `frontier` | O que está pronto para ser executado **agora**? | `python graph_ops.py frontier --format ids` |
-| `next` | Qual é a melhor tarefa factível para puxar? | `python graph_ops.py next --limit 5` |
-| `why <id>` | Por que a tarefa está pronta ou bloqueada? | `python graph_ops.py why TASK-03` |
-| `blockers <id>` | Quais pré-requisitos diretos travam `<id>`? | `python graph_ops.py blockers TASK-03` |
-| `deps <id>` | Quais são todos os pré-requisitos transitivos? | `python graph_ops.py deps TASK-03` |
-| `impact <id>` | Quais tarefas serão destravadas no futuro? | `python graph_ops.py impact TASK-01` |
-| `path <a> <b>` | Qual é o caminho de dependências de `A` até `B`? | `python graph_ops.py path TASK-01 TASK-03` |
-| `critical-path` | Qual é a cadeia mais longa do projeto? | `python graph_ops.py critical-path` |
-| `packet <id>` | Gera contexto completo em Markdown para prompts | `python graph_ops.py packet TASK-02 --format md` |
-| `simulate` | O que desbloqueia se concluirmos `<id>`? | `python graph_ops.py simulate --mode complete --complete TASK-02` |
-| `diff <other>` | O que mudou semanticamente entre 2 versões? | `python graph_ops.py diff other-graph.json` |
-| `doctor` | Relatório completo de saúde, integridade e ciclo | `python graph_ops.py doctor` |
-| `export` | Exporta para HTML interativo, JSON ou Markdown | `python graph_ops.py export --output backlog.html` |
-| `visualize` | Abre servidor web local com visualizador DAG | `python graph_ops.py visualize --port 8080` |
+| `validate` | Are the graph schema and DAG structure valid? | `python graph_ops.py validate` |
+| `summary` | How many tasks, clusters, and status counts exist? | `python graph_ops.py summary` |
+| `frontier` | What is ready to be executed **right now**? | `python graph_ops.py frontier --format ids` |
+| `next` | What is the highest-ranked feasible task to pull? | `python graph_ops.py next --limit 5` |
+| `why <id>` | Why is a task ready or blocked? | `python graph_ops.py why TASK-03` |
+| `blockers <id>` | Which direct prerequisites block `<id>`? | `python graph_ops.py blockers TASK-03` |
+| `deps <id>` | What are all transitive upstream prerequisites? | `python graph_ops.py deps TASK-03` |
+| `impact <id>` | Which tasks will be unblocked in the future? | `python graph_ops.py impact TASK-01` |
+| `path <a> <b>` | What is the dependency path from `A` to `B`? | `python graph_ops.py path TASK-01 TASK-03` |
+| `critical-path` | What is the longest bottleneck sequence? | `python graph_ops.py critical-path` |
+| `packet <id>` | Generates complete Markdown context for prompts | `python graph_ops.py packet TASK-02 --format md` |
+| `simulate` | What unblocks if we complete `<id>`? | `python graph_ops.py simulate --mode complete --complete TASK-02` |
+| `diff <other>` | What changed semantically between 2 versions? | `python graph_ops.py diff other-graph.json` |
+| `doctor` | Full health, integrity, and cycle audit report | `python graph_ops.py doctor` |
+| `export` | Exports to interactive HTML, JSON, or Markdown | `python graph_ops.py export --output backlog.html` |
+| `visualize` | Starts local web server with DAG visualizer | `python graph_ops.py visualize --port 8080` |
 
 ---
 
-## 💻 Uso como Biblioteca Python
+## 💻 Python Library Usage
 
 ```python
 from graph_backlog import WorkGraph, compute_frontier, ranked_next, generate_packet
 
-# 1. Carregar grafo
+# 1. Load work graph
 graph = WorkGraph.from_file("fixtures/sample-backlog.json")
 
-# 2. Obter itens prontos para execução
+# 2. Query actionable frontier tasks
 ready_tasks = compute_frontier(graph)
-print(f"Tarefas na fronteira: {[t['id'] for t in ready_tasks]}")
+print(f"Frontier tasks: {[t['id'] for t in ready_tasks]}")
 
-# 3. Ranqueamento com pesos determinísticos
+# 3. Deterministic multi-criteria priority ranking
 top_work = ranked_next(graph, limit=3)
-print(f"Próxima recomendada: {top_work[0]['id']} (score: {top_work[0]['score']})")
+print(f"Top recommendation: {top_work[0]['id']} (score: {top_work[0]['score']})")
 
-# 4. Gerar pacote de implementação em Markdown
+# 4. Generate Markdown implementation packet
 packet = generate_packet(graph, "TASK-02")
 from graph_backlog.packet import format_packet_markdown
 print(format_packet_markdown(packet))
@@ -88,50 +88,55 @@ print(format_packet_markdown(packet))
 
 ---
 
-## 📊 Estrutura do Repositório
+## 📊 Repository Structure
 
 ```text
 tare.tools.graph-backlog/
-├── README.md                      # Documentação geral
-├── pyproject.toml                 # Configuração de empacotamento
-├── graph_ops.py                   # Executável CLI direto (zero-config)
+├── README.md                      # General documentation
+├── pyproject.toml                 # Packaging and build configuration
+├── graph_ops.py                   # Direct zero-config CLI executable
 ├── src/
-│   └── graph_backlog/             # Pacote Python principal
-│       ├── __init__.py            # Exportações da API
-│       ├── core.py                # Modelo de dados e classes WorkGraph / Node / Edge
-│       ├── algorithms.py          # Fronteira, ciclos (Tarjan), caminhos, ranking
-│       ├── validation.py          # Validação estrutural, de esquemas e integridade
-│       ├── diff.py                # Comparação semântica e validação de mudanças
-│       ├── ledger.py              # Ledger append-only para auditoria e histórico
-│       ├── simulation.py          # Overlays de simulação ("what-if")
-│       ├── packet.py              # Compilador de pacotes de implementação
-│       ├── visualizer.py          # Exportador HTML e servidor web interativo
-│       └── cli.py                 # Parser e despachante da linha de comando
+│   └── graph_backlog/             # Core Python package
+│       ├── __init__.py            # API exports
+│       ├── core.py                # Data model (WorkGraph, Node, Edge)
+│       ├── algorithms.py          # Frontier, cycles (Tarjan SCC), paths, ranking
+│       ├── validation.py          # Structural, schema, and integrity validation
+│       ├── diff.py                # Semantic diff and mutation verification
+│       ├── ledger.py              # Append-only cryptographic audit ledger
+│       ├── simulation.py          # What-if counterfactual overlays
+│       ├── packet.py              # Implementation packet compiler
+│       ├── visualizer.py          # HTML exporter and interactive web visualizer
+│       └── cli.py                 # CLI argument parser and dispatcher
 ├── docs/
-│   ├── ARCHITECTURE.md            # Modelo conceitual e decisões de design
-│   ├── CLI_REFERENCE.md           # Referência completa de todos os subcomandos
-│   ├── QUICKSTART.md              # Tutorial passo a passo
-│   └── ONTOLOGY.md                # Taxonomia de relações e vocabulário
-├── fixtures/                      # Exemplos de grafos e fixtures de teste
-│   ├── sample-backlog.json        # Template de backlog inicial
-│   ├── work-graph-v0.5.json       # Grafo de trabalho completo
-│   └── negative-*.json            # Casos de borda para validação de erros
+│   ├── ARCHITECTURE.md            # Conceptual model and architectural decisions
+│   ├── CLI_REFERENCE.md           # Full reference of all CLI subcommands
+│   ├── QUICKSTART.md              # 5-minute step-by-step tutorial
+│   └── ONTOLOGY.md                # Relation taxonomy and vocabulary
+├── fixtures/                      # Sample work graphs and test fixtures
+│   ├── sample-backlog.json        # Core 3-node starter backlog
+│   ├── saas-backlog.json          # CloudPulse SaaS backlog (33 nodes)
+│   ├── rag-chatbot-backlog.json   # AI RAG pipeline backlog (27 nodes)
+│   ├── transmedia-book-comic-film-backlog.json # Epic transmedia saga (42 nodes)
+│   ├── work-graph-v0.5.json       # Canonical specification graph
+│   └── negative-*.json            # Edge-case error validation fixtures
 ├── visualizer/
-│   └── index.html                 # Visualizador estático interativo
-└── tests/                         # Suíte de testes automatizados (100% passing)
+│   └── index.html                 # Standalone interactive visualizer artifact
+└── tests/                         # Automated test suite (100% passing)
 ```
 
 ---
 
-## 🧪 Testes Automatizados
+## 🧪 Automated Testing
 
-Para rodar toda a suíte de testes:
+To run the complete test suite:
 ```bash
 python -m unittest discover -s tests -v
+# or with pytest
+pytest
 ```
 
 ---
 
-## 📄 Licença
+## 📄 License
 
 MIT License.
