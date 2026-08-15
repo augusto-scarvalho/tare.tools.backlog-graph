@@ -845,6 +845,15 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       <select id="clusterFilter">
         <option value="ALL">All Clusters</option>
       </select>
+      <select id="themeSelector" onchange="applyTheme(this.value)" style="font-weight:600; font-size:11px;" title="Interface & Canvas Theme">
+        <option value="signal">⚡ Signal (Default)</option>
+        <option value="dracula">🧛 Dracula</option>
+        <option value="tokyo_night">🌃 Tokyo Night</option>
+        <option value="nord">❄️ Nord Frost</option>
+        <option value="light">☀️ Solar Paper (Claro)</option>
+        <option value="monokai">🔥 Monokai Pro</option>
+        <option value="catppuccin">☕ Catppuccin Mocha</option>
+      </select>
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
       <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent);">⚡ Graph Ops (13 Ops)</button>
       <button class="action-btn" id="resetBtn" onclick="resetFilters()">Reset</button>
@@ -1032,6 +1041,339 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       });
 
       resetFilters();
+    }
+
+    /* ==========================================================================
+       SIGNAL Themes & Palettes (Signal Default, Dracula, Tokyo Night, Nord, Solar Light, Monokai, Catppuccin)
+       ========================================================================== */
+    const THEMES = {
+      signal: {
+        name: '⚡ Signal (Default)',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#0A0B08',
+          '--bg-void': '#0A0B08',
+          '--atmo-glow': '#12160C',
+          '--surface-1': '#0F1109',
+          '--surface-2': '#14170E',
+          '--surface-3': '#1B1F14',
+          '--surface-hover': '#1B1F14',
+          '--border-subtle': '#1E2216',
+          '--border': '#2B3020',
+          '--border-strong': '#3A4029',
+          '--text-primary': '#EDEEE1',
+          '--text-secondary': '#A6AA90',
+          '--text-muted': '#8B9173',
+          '--text-disabled': '#4A4E39',
+          '--accent': '#CBF23F',
+          '--accent-bg': 'rgba(203, 242, 63, 0.12)',
+          '--accent-border': 'rgba(203, 242, 63, 0.40)',
+          '--stream': '#45E0C4',
+          '--stream-bg': 'rgba(69, 224, 196, 0.12)',
+          '--stream-border': 'rgba(69, 224, 196, 0.34)',
+          '--success': '#7CCB6A',
+          '--warning': '#E8A93B',
+          '--danger': '#F2685C'
+        },
+        colors: {
+          ready: '#CBF23F',
+          blocked: '#F2685C',
+          done: '#8B9173',
+          partial: '#E8A93B',
+          simulated: '#45E0C4',
+          nodeFill: '#14170E',
+          nodeFillSelected: '#1B1F14',
+          nodeStroke: '#2B3020',
+          accent: '#CBF23F',
+          textPrimary: '#EDEEE1',
+          textSecondary: '#A6AA90'
+        }
+      },
+      dracula: {
+        name: '🧛 Dracula',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#282a36',
+          '--bg-void': '#21222c',
+          '--atmo-glow': '#1e1f29',
+          '--surface-1': '#21222c',
+          '--surface-2': '#282a36',
+          '--surface-3': '#44475a',
+          '--surface-hover': '#44475a',
+          '--border-subtle': '#383a59',
+          '--border': '#44475a',
+          '--border-strong': '#6272a4',
+          '--text-primary': '#f8f8f2',
+          '--text-secondary': '#d6acff',
+          '--text-muted': '#6272a4',
+          '--text-disabled': '#44475a',
+          '--accent': '#bd93f9',
+          '--accent-bg': 'rgba(189, 147, 249, 0.15)',
+          '--accent-border': 'rgba(189, 147, 249, 0.45)',
+          '--stream': '#8be9fd',
+          '--stream-bg': 'rgba(139, 233, 253, 0.15)',
+          '--stream-border': 'rgba(139, 233, 253, 0.40)',
+          '--success': '#50fa7b',
+          '--warning': '#ffb86c',
+          '--danger': '#ff5555'
+        },
+        colors: {
+          ready: '#50fa7b',
+          blocked: '#ff5555',
+          done: '#6272a4',
+          partial: '#ffb86c',
+          simulated: '#8be9fd',
+          nodeFill: '#21222c',
+          nodeFillSelected: '#44475a',
+          nodeStroke: '#44475a',
+          accent: '#bd93f9',
+          textPrimary: '#f8f8f2',
+          textSecondary: '#d6acff'
+        }
+      },
+      tokyo_night: {
+        name: '🌃 Tokyo Night',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#1a1b26',
+          '--bg-void': '#16161e',
+          '--atmo-glow': '#16161e',
+          '--surface-1': '#1f2335',
+          '--surface-2': '#24283b',
+          '--surface-3': '#292e42',
+          '--surface-hover': '#2f354d',
+          '--border-subtle': '#292e42',
+          '--border': '#3b4261',
+          '--border-strong': '#565f89',
+          '--text-primary': '#c0caf5',
+          '--text-secondary': '#9aa5ce',
+          '--text-muted': '#565f89',
+          '--text-disabled': '#3b4261',
+          '--accent': '#7aa2f7',
+          '--accent-bg': 'rgba(122, 162, 247, 0.15)',
+          '--accent-border': 'rgba(122, 162, 247, 0.45)',
+          '--stream': '#7dcfff',
+          '--stream-bg': 'rgba(125, 207, 255, 0.15)',
+          '--stream-border': 'rgba(125, 207, 255, 0.40)',
+          '--success': '#9ece6a',
+          '--warning': '#ff9e64',
+          '--danger': '#f7768e'
+        },
+        colors: {
+          ready: '#9ece6a',
+          blocked: '#f7768e',
+          done: '#565f89',
+          partial: '#ff9e64',
+          simulated: '#7dcfff',
+          nodeFill: '#1f2335',
+          nodeFillSelected: '#292e42',
+          nodeStroke: '#3b4261',
+          accent: '#7aa2f7',
+          textPrimary: '#c0caf5',
+          textSecondary: '#9aa5ce'
+        }
+      },
+      nord: {
+        name: '❄️ Nord Frost',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#242933',
+          '--bg-void': '#1e222a',
+          '--atmo-glow': '#1e222a',
+          '--surface-1': '#2e3440',
+          '--surface-2': '#3b4252',
+          '--surface-3': '#434c5e',
+          '--surface-hover': '#4c566a',
+          '--border-subtle': '#3b4252',
+          '--border': '#434c5e',
+          '--border-strong': '#4c566a',
+          '--text-primary': '#eceff4',
+          '--text-secondary': '#d8dee9',
+          '--text-muted': '#768299',
+          '--text-disabled': '#434c5e',
+          '--accent': '#88c0d0',
+          '--accent-bg': 'rgba(136, 192, 208, 0.15)',
+          '--accent-border': 'rgba(136, 192, 208, 0.45)',
+          '--stream': '#81a1c1',
+          '--stream-bg': 'rgba(129, 161, 193, 0.15)',
+          '--stream-border': 'rgba(129, 161, 193, 0.40)',
+          '--success': '#a3be8c',
+          '--warning': '#ebcb8b',
+          '--danger': '#bf616a'
+        },
+        colors: {
+          ready: '#a3be8c',
+          blocked: '#bf616a',
+          done: '#768299',
+          partial: '#ebcb8b',
+          simulated: '#81a1c1',
+          nodeFill: '#2e3440',
+          nodeFillSelected: '#434c5e',
+          nodeStroke: '#434c5e',
+          accent: '#88c0d0',
+          textPrimary: '#eceff4',
+          textSecondary: '#d8dee9'
+        }
+      },
+      light: {
+        name: '☀️ Solar Paper (Claro)',
+        scheme: 'light',
+        vars: {
+          '--bg-base': '#f8fafc',
+          '--bg-void': '#f1f5f9',
+          '--atmo-glow': '#e2e8f0',
+          '--surface-1': '#ffffff',
+          '--surface-2': '#f1f5f9',
+          '--surface-3': '#e2e8f0',
+          '--surface-hover': '#e2e8f0',
+          '--border-subtle': '#e2e8f0',
+          '--border': '#cbd5e1',
+          '--border-strong': '#94a3b8',
+          '--text-primary': '#0f172a',
+          '--text-secondary': '#334155',
+          '--text-muted': '#64748b',
+          '--text-disabled': '#94a3b8',
+          '--accent': '#0284c7',
+          '--accent-bg': 'rgba(2, 132, 199, 0.10)',
+          '--accent-border': 'rgba(2, 132, 199, 0.35)',
+          '--stream': '#0d9488',
+          '--stream-bg': 'rgba(13, 148, 136, 0.10)',
+          '--stream-border': 'rgba(13, 148, 136, 0.35)',
+          '--success': '#16a34a',
+          '--warning': '#d97706',
+          '--danger': '#dc2626'
+        },
+        colors: {
+          ready: '#16a34a',
+          blocked: '#dc2626',
+          done: '#94a3b8',
+          partial: '#d97706',
+          simulated: '#0d9488',
+          nodeFill: '#ffffff',
+          nodeFillSelected: '#e2e8f0',
+          nodeStroke: '#cbd5e1',
+          accent: '#0284c7',
+          textPrimary: '#0f172a',
+          textSecondary: '#334155'
+        }
+      },
+      monokai: {
+        name: '🔥 Monokai Pro',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#272822',
+          '--bg-void': '#1e1f1c',
+          '--atmo-glow': '#1e1f1c',
+          '--surface-1': '#2e2e28',
+          '--surface-2': '#383830',
+          '--surface-3': '#49483e',
+          '--surface-hover': '#49483e',
+          '--border-subtle': '#3e3d32',
+          '--border': '#49483e',
+          '--border-strong': '#75715e',
+          '--text-primary': '#f8f8f2',
+          '--text-secondary': '#e6db74',
+          '--text-muted': '#75715e',
+          '--text-disabled': '#49483e',
+          '--accent': '#a6e22e',
+          '--accent-bg': 'rgba(166, 226, 46, 0.15)',
+          '--accent-border': 'rgba(166, 226, 46, 0.45)',
+          '--stream': '#66d9ef',
+          '--stream-bg': 'rgba(102, 217, 239, 0.15)',
+          '--stream-border': 'rgba(102, 217, 239, 0.40)',
+          '--success': '#a6e22e',
+          '--warning': '#fd971f',
+          '--danger': '#f92672'
+        },
+        colors: {
+          ready: '#a6e22e',
+          blocked: '#f92672',
+          done: '#75715e',
+          partial: '#fd971f',
+          simulated: '#66d9ef',
+          nodeFill: '#2e2e28',
+          nodeFillSelected: '#49483e',
+          nodeStroke: '#49483e',
+          accent: '#a6e22e',
+          textPrimary: '#f8f8f2',
+          textSecondary: '#e6db74'
+        }
+      },
+      catppuccin: {
+        name: '☕ Catppuccin Mocha',
+        scheme: 'dark',
+        vars: {
+          '--bg-base': '#1e1e2e',
+          '--bg-void': '#181825',
+          '--atmo-glow': '#181825',
+          '--surface-1': '#181825',
+          '--surface-2': '#313244',
+          '--surface-3': '#45475a',
+          '--surface-hover': '#585b70',
+          '--border-subtle': '#313244',
+          '--border': '#45475a',
+          '--border-strong': '#6c7086',
+          '--text-primary': '#cdd6f4',
+          '--text-secondary': '#cba6f7',
+          '--text-muted': '#6c7086',
+          '--text-disabled': '#45475a',
+          '--accent': '#a6e3a1',
+          '--accent-bg': 'rgba(166, 227, 161, 0.15)',
+          '--accent-border': 'rgba(166, 227, 161, 0.45)',
+          '--stream': '#89dceb',
+          '--stream-bg': 'rgba(137, 220, 235, 0.15)',
+          '--stream-border': 'rgba(137, 220, 235, 0.40)',
+          '--success': '#a6e3a1',
+          '--warning': '#fab387',
+          '--danger': '#f38ba8'
+        },
+        colors: {
+          ready: '#a6e3a1',
+          blocked: '#f38ba8',
+          done: '#6c7086',
+          partial: '#fab387',
+          simulated: '#89dceb',
+          nodeFill: '#181825',
+          nodeFillSelected: '#313244',
+          nodeStroke: '#45475a',
+          accent: '#a6e3a1',
+          textPrimary: '#cdd6f4',
+          textSecondary: '#cba6f7'
+        }
+      }
+    };
+
+    const STORAGE_KEY_THEME = 'SIGNAL_GRAPH_THEME';
+    let currentTheme = 'signal';
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+      if (savedTheme && THEMES[savedTheme]) currentTheme = savedTheme;
+    } catch (e) {}
+
+    function applyTheme(themeId) {
+      if (!THEMES[themeId]) themeId = 'signal';
+      currentTheme = themeId;
+      const theme = THEMES[themeId];
+      const root = document.documentElement;
+      
+      Object.keys(theme.vars).forEach(varName => {
+        root.style.setProperty(varName, theme.vars[varName]);
+      });
+
+      if (theme.scheme === 'light') {
+        root.style.colorScheme = 'light';
+      } else {
+        root.style.colorScheme = 'dark';
+      }
+
+      const selector = document.getElementById('themeSelector');
+      if (selector) selector.value = themeId;
+
+      try {
+        localStorage.setItem(STORAGE_KEY_THEME, themeId);
+      } catch (e) {}
+
+      render();
     }
 
     const STORAGE_KEY_HIDE_DEMOS = 'SIGNAL_GRAPH_HIDE_DEMOS';
@@ -1813,7 +2155,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
               path.setAttribute('class', 'edge-dimmed');
             }
           } else {
-            path.setAttribute('stroke', '#2B3020');
+            const theme = THEMES[currentTheme] || THEMES.signal;
+            path.setAttribute('stroke', theme.colors.nodeStroke);
             path.setAttribute('stroke-width', '1.5');
           }
 
@@ -1864,28 +2207,29 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           g.style.cursor = 'grabbing';
         });
 
+        const theme = THEMES[currentTheme] || THEMES.signal;
         const st = getStatus(n);
         const ready = isNodeReady(n);
         
-        let statusColor = '#F2685C'; // Blocked (Danger)
-        if (st === 'DONE') statusColor = '#8B9173'; // Done (Muted)
-        else if (st === 'PARTIAL') statusColor = '#E8A93B'; // Partial (Warning)
-        else if (ready) statusColor = '#CBF23F'; // Ready (Lime Accent)
+        let statusColor = theme.colors.blocked;
+        if (st === 'DONE') statusColor = theme.colors.done;
+        else if (st === 'PARTIAL') statusColor = theme.colors.partial;
+        else if (ready) statusColor = theme.colors.ready;
         
         if (simulatedDoneSet.has(n.id)) {
-          statusColor = '#45E0C4'; // Simulated (Teal Stream)
+          statusColor = theme.colors.simulated;
         }
 
-        let strokeColor = '#2B3020';
+        let strokeColor = theme.colors.nodeStroke;
         let strokeWidth = '1';
 
         const isChain = activeCustomPath ? activeCustomPath.nodes.has(n.id) : upstream.nodes.has(n.id);
 
         if (n.id === selectedNodeId) {
-          strokeColor = '#CBF23F';
+          strokeColor = theme.colors.accent;
           strokeWidth = '2.5';
         } else if (isChain) {
-          strokeColor = '#CBF23F';
+          strokeColor = theme.colors.accent;
           strokeWidth = '2';
         }
 
@@ -1893,14 +2237,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         rect.setAttribute('width', '160');
         rect.setAttribute('height', '48');
         rect.setAttribute('rx', '6');
-        rect.setAttribute('fill', n.id === selectedNodeId ? '#1B1F14' : '#14170E');
+        rect.setAttribute('fill', n.id === selectedNodeId ? theme.colors.nodeFillSelected : theme.colors.nodeFill);
         rect.setAttribute('stroke', strokeColor);
         rect.setAttribute('stroke-width', strokeWidth);
         
         if (n.id === selectedNodeId) {
-          rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(203, 242, 63, 0.45))');
+          rect.setAttribute('filter', `drop-shadow(0 0 8px ${theme.vars['--accent-border']})`);
         } else if (isChain) {
-          rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(203, 242, 63, 0.3))');
+          rect.setAttribute('filter', `drop-shadow(0 0 5px ${theme.vars['--accent-bg']})`);
         }
 
         g.appendChild(rect);
@@ -1922,7 +2266,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         const idText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         idText.setAttribute('x', '26');
         idText.setAttribute('y', '19');
-        idText.setAttribute('fill', '#EDEEE1');
+        idText.setAttribute('fill', theme.colors.textPrimary);
         idText.setAttribute('font-size', '11');
         idText.setAttribute('font-weight', 'bold');
         idText.setAttribute('font-family', '"IBM Plex Mono", ui-monospace, monospace');
@@ -1932,7 +2276,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         titleText.setAttribute('x', '12');
         titleText.setAttribute('y', '37');
-        titleText.setAttribute('fill', '#A6AA90');
+        titleText.setAttribute('fill', theme.colors.textSecondary);
         titleText.setAttribute('font-size', '10');
         titleText.setAttribute('font-family', '"IBM Plex Mono", ui-monospace, monospace');
         const trunc = (n.title || '').length > 18 ? (n.title || '').slice(0, 16) + '...' : (n.title || '');
@@ -2676,7 +3020,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     document.getElementById('statusFilter').addEventListener('change', render);
     document.getElementById('clusterFilter').addEventListener('change', render);
 
-    // Initialize project selector and active graph
+    // Initialize theme, project selector, and active graph
+    applyTheme(currentTheme);
     populateProjectSelector('__ACTIVE__');
     loadGraph(BUILTIN_PROJECTS.active);
   </script>

@@ -262,6 +262,27 @@ class VisualizerE2ETests(unittest.TestCase):
             storage_val = page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_HIDE_DEMOS')")
             self.assertEqual(storage_val, "false")
 
+            # 16.6 Test Theme Engine Switching & LocalStorage Persistence
+            self.assertEqual(page.locator("#themeSelector").input_value(), "signal")
+            
+            # Switch to Dracula
+            page.select_option("#themeSelector", "dracula")
+            dracula_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")
+            self.assertEqual(dracula_bg, "#282a36")
+            self.assertEqual(page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_THEME')"), "dracula")
+            
+            # Switch to Solar Paper (Light)
+            page.select_option("#themeSelector", "light")
+            light_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")
+            self.assertEqual(light_bg, "#f8fafc")
+            self.assertEqual(page.evaluate("() => document.documentElement.style.colorScheme"), "light")
+            
+            # Switch back to Signal Canonical Default
+            page.select_option("#themeSelector", "signal")
+            signal_bg = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--bg-base').trim()")
+            self.assertEqual(signal_bg, "#0A0B08")
+            self.assertEqual(page.evaluate("() => localStorage.getItem('SIGNAL_GRAPH_THEME')"), "signal")
+
             # 17. Test ⚡ Graph Ops Station Modal & DAG Navigation
             page.click("#opsModalBtn")
             self.assertTrue(page.locator("#opsModalBackdrop").is_visible())
