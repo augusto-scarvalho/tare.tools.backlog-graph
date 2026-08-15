@@ -2580,13 +2580,17 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       updateViewportTransform();
     }, { passive: false });
 
-    // Press Escape to deselect current node, clear active pulse path, and close modals
+    // Press Escape to deselect current node, clear active pulse path (e.g. critical path), and close modals
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || e.key === 'Esc') {
         const modal = document.getElementById('opsModalBackdrop');
         if (modal && modal.classList.contains('active')) {
           closeOpsModal();
         } else {
+          showCriticalPath = false;
+          activeCustomPath = null;
+          const cpBtn = document.getElementById('criticalPathBtn');
+          if (cpBtn) cpBtn.className = 'action-btn';
           deselectNode();
         }
       }

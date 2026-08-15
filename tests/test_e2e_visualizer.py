@@ -193,10 +193,15 @@ class VisualizerE2ETests(unittest.TestCase):
             self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
             self.assertEqual(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"), "edge-pulse-upstream")
             
-            # 14. Test ESC Key Deselect
+            # 14. Test ESC Key Deselect & Clearing Active Paths (e.g. Critical Path)
+            page.click("#criticalPathBtn")
+            self.assertIn("active", page.locator("#criticalPathBtn").get_attribute("class"))
+            self.assertEqual(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"), "edge-pulse-upstream")
+            
+            # Press ESC: must clear critical path, reset button, and deselect
             page.keyboard.press("Escape")
             self.assertEqual(page.locator("#inspId").text_content(), "Select a task")
-            # Assert edges return to default (no pulse class)
+            self.assertNotIn("active", page.locator("#criticalPathBtn").get_attribute("class"))
             self.assertIsNone(page.locator("#dagEdge_TASK-01_TASK-02").get_attribute("class"))
             self.assertIsNone(page.locator("#dagEdge_TASK-02_TASK-03").get_attribute("class"))
 
