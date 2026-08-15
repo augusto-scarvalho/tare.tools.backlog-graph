@@ -289,8 +289,10 @@ def reconcile(graph: WorkGraph) -> dict[str, Any]:
         "note": "This proposes/reports reconciliation only. Canonical single-writer remains outside Graph Ops."
     }
 
-def doctor_check(graph: WorkGraph, version: str = "0.2.0") -> dict[str, Any]:
+def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> dict[str, Any]:
     """Run comprehensive health checks across validation, evidence, reconciliation, and cycle detection."""
+    if isinstance(graph, dict):
+        graph = WorkGraph(graph)
     ev = verify_evidence(graph)
     rec = reconcile(graph)
     cycles = find_cycles_scc(graph)
