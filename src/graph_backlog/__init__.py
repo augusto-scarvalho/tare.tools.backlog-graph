@@ -30,7 +30,8 @@ from .adapters import (
     CsvAdapter,
     GitHubIssuesAdapter,
     LinearAdapter,
-    GitLabAdapter
+    GitLabAdapter,
+    JiraAdapter
 )
 
 __version__ = "0.2.0"
@@ -67,5 +68,6 @@ __all__ = [
     "GitHubIssuesAdapter",
     "LinearAdapter",
     "GitLabAdapter",
+    "JiraAdapter",
     "__version__",
 ]

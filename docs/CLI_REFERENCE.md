@@ -183,9 +183,22 @@ glab issue list --output json | python graph_ops.py import-gitlab --out work-gra
 
 ---
 
-### 20. `import-md`
+### 20. `import-jira`
+Imports issues from Jira CSV export or Jira Cloud/Server REST API JSON payloads, mapping status categories, priorities, components, and outward/inward `issuelinks` (e.g. `Blocks`, `is blocked by`, `Depends`).
+```bash
+# From Jira CSV export:
+python graph_ops.py import-jira jira-export.csv --out work-graph.json
+
+# From Jira REST API / JSON search payload:
+python graph_ops.py import-jira jira-search.json --type json --out work-graph.json
+```
+
+---
+
+### 21. `import-md`
 Imports tasks and dependency relations from structured Markdown tasklists (`backlog.md`).
 ```bash
 python graph_ops.py import-md backlog.md --out work-graph.json
 ```
+
 

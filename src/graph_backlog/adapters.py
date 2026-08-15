@@ -813,3 +813,330 @@ class GitLabAdapter:
             "edges": edges
         }
 
+
+class JiraAdapter:
+    """Import work graphs from Jira CSV export or Jira REST API JSON payloads."""
+    
+    @staticmethod
+    def _map_priority(val: Any) -> str:
+        s = str(val or "").strip().lower()
+        if s in ("highest", "blocker", "critical", "p0", "urgent", "1"):
+            return "P0"
+        elif s in ("high", "major", "p1", "2"):
+            return "P1"
+        elif s in ("medium", "moderate", "normal", "p2", "3"):
+            return "P2"
+        elif s in ("low", "lowest", "minor", "trivial", "p3", "4", "5"):
+            return "P3"
+        return "P1"
+
+    @staticmethod
+    def _map_status(status_name: str, category_key: str = "") -> tuple[str, bool]:
+        name_l = status_name.strip().lower()
+        cat_l = category_key.strip().lower()
+        if cat_l in ("done", "complete") or name_l in ("done", "closed", "resolved", "completed", "verified", "accepted"):
+            return ("DONE", True)
+        if name_l in ("cancelled", "canceled", "won't do", "duplicate", "rejected", "superseded", "declined"):
+            return ("SUPERSEDED", False)
+        if cat_l in ("indeterminate", "in_progress") or name_l in ("in progress", "in review", "in development", "testing", "under review"):
+            return ("PARTIAL", False)
+        return ("NOT_DONE", False)
+
+    @staticmethod
+    def from_csv(csv_text: str, default_cluster: str = "general") -> dict[str, Any]:
+        reader = csv.DictReader(io.StringIO(csv_text.strip()))
+        nodes = []
+        edges = []
+        node_ids = set()
+        pending_edges = []
+        
+        for row in reader:
+            task_id = (row.get("Issue key") or row.get("Key") or row.get("Issue id") or row.get("ID") or "").strip()
+            if not task_id:
+                continue
+            node_ids.add(task_id)
+            title = (row.get("Summary") or row.get("Title") or f"Issue {task_id}").strip()
+            desc = (row.get("Description") or "").strip()
+            status_raw = (row.get("Status") or "To Do").strip()
+            status_val, is_done = JiraAdapter._map_status(status_raw)
+            
+            prio_raw = row.get("Priority") or "Medium"
+            priority = JiraAdapter._map_priority(prio_raw)
+            
+            cluster = (row.get("Project name") or row.get("Project key") or row.get("Component/s") or row.get("Components") or default_cluster).strip().lower() or default_cluster
+            if "," in cluster:
+                cluster = cluster.split(",")[0].strip()
+                
+            labels_raw = (row.get("Labels") or "").strip()
+            tags = [t.strip() for t in labels_raw.split(",") if t.strip()]
+            
+            for col_name, col_val in row.items():
+                if not col_name or not col_val:
+                    continue
+                col_lower = col_name.lower()
+                val_items = [v.strip() for v in re.split(r"[,;\s]+", col_val) if v.strip()]
+                
+                if "blocks" in col_lower:
+                    if "outward" in col_lower:
+                        for target_id in val_items:
+                            pending_edges.append((task_id, target_id))
+                    elif "inward" in col_lower:
+                        for source_id in val_items:
+                            pending_edges.append((source_id, task_id))
+                elif "is blocked by" in col_lower or "blocked by" in col_lower:
+                    for source_id in val_items:
+                        pending_edges.append((source_id, task_id))
+                elif "depends" in col_lower:
+                    if "outward" in col_lower or "depends on" in col_lower:
+                        for source_id in val_items:
+                            pending_edges.append((source_id, task_id))
+                    elif "inward" in col_lower:
+                        for target_id in val_items:
+                            pending_edges.append((task_id, target_id))
+                elif "issue links" in col_lower or "link" in col_lower:
+                    for match in re.finditer(r"(?:is blocked by|depends on)\s+([A-Za-z0-9_\-]+)", col_val, re.IGNORECASE):
+                        pending_edges.append((match.group(1).strip(), task_id))
+                    for match in re.finditer(r"(?:blocks|unlocks)\s+([A-Za-z0-9_\-]+)", col_val, re.IGNORECASE):
+                        pending_edges.append((task_id, match.group(1).strip()))
+
+            for match in re.finditer(r"(?:depends\s+on|blocked\s+by)\s*[:]?\s*([A-Za-z0-9_\-,\s]+)", desc, re.IGNORECASE):
+                for dep in re.split(r"[,;\s]+", match.group(1)):
+                    if dep.strip():
+                        pending_edges.append((dep.strip(), task_id))
+                        
+            for match in re.finditer(r"(?:blocks|unlocks)\s*[:]?\s*([A-Za-z0-9_\-,\s]+)", desc, re.IGNORECASE):
+                for target in re.split(r"[,;\s]+", match.group(1)):
+                    if target.strip():
+                        pending_edges.append((task_id, target.strip()))
+
+            node = {
+                "id": task_id,
+                "title": title,
+                "kind": "task",
+                "cluster": cluster,
+                "horizon": "H1",
+                "work_status": "COMMITTED" if status_val != "DONE" else "PROPOSED",
+                "admission_state": "ADMITTED",
+                "epistemic_status": "CERTAIN",
+                "bounded_contexts": [cluster],
+                "priority": priority,
+                "criticality": "HIGH" if priority == "P0" else "MEDIUM",
+                "authority_required": "none",
+                "evidence_required": [],
+                "confidence": {"score": 1.0},
+                "summary": desc[:200].replace("\r", " ").replace("\n", " ").strip() or title,
+                "exit_criteria": [f"Resolve Jira Issue {task_id}"],
+                "source_refs": [],
+                "source_details": [],
+                "provenance": [{"source": "jira", "id": task_id}],
+                "source_claim_ids": [],
+                "unlock_score": 1,
+                "tags": tags,
+                "metrics": {},
+                "notes": [],
+                "items": [],
+                "canonical_system": "jira",
+                "canonical_id": task_id,
+                "canonical_revision": "r1",
+                "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "projection_run_id": "import-jira",
+                "staleness_state": "FRESH",
+                "readiness": {"operational_identity_required": False},
+                "completion": {
+                    "status": status_val,
+                    "dod_satisfied": is_done,
+                    "evidence_grade": "A" if is_done else None,
+                    "materialization_scope": "jira"
+                }
+            }
+            nodes.append(node)
+            
+        seen_edges = set()
+        for src, dst in pending_edges:
+            k = (src, dst)
+            if k not in seen_edges and src in node_ids and dst in node_ids and src != dst:
+                seen_edges.add(k)
+                edges.append({
+                    "from": src,
+                    "to": dst,
+                    "type": "UNLOCKS",
+                    "semantic": True,
+                    "confidence": {"score": 1.0},
+                    "notes": ["Imported from Jira issue link"],
+                    "requirements": {},
+                    "source_details": [],
+                    "source_refs": []
+                })
+                
+        return {
+            "meta": {
+                "schema": "work-graph-poc/0.5",
+                "title": "Jira Work Graph Backlog",
+                "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "snapshot": "jira-import"
+            },
+            "sources": {},
+            "nodes": nodes,
+            "edges": edges
+        }
+
+    @staticmethod
+    def from_json(json_data: list[dict[str, Any]] | dict[str, Any], default_cluster: str = "general") -> dict[str, Any]:
+        if isinstance(json_data, dict):
+            if "issues" in json_data:
+                json_data = json_data["issues"]
+            elif "values" in json_data:
+                json_data = json_data["values"]
+            else:
+                json_data = [json_data]
+                
+        nodes = []
+        edges = []
+        node_ids = set()
+        pending_edges = []
+        
+        for item in json_data:
+            task_id = (item.get("key") or item.get("id") or "").strip()
+            if not task_id:
+                continue
+            task_id = str(task_id).strip()
+            node_ids.add(task_id)
+            
+            fields = item.get("fields") if isinstance(item.get("fields"), dict) else item
+            title = (fields.get("summary") or item.get("title") or f"Issue {task_id}").strip()
+            
+            desc_raw = fields.get("description") or ""
+            if isinstance(desc_raw, dict):
+                desc = json.dumps(desc_raw)
+            else:
+                desc = str(desc_raw).strip()
+                
+            status_obj = fields.get("status") or {}
+            if isinstance(status_obj, dict):
+                st_name = status_obj.get("name", "")
+                cat_key = status_obj.get("statusCategory", {}).get("key", "")
+            else:
+                st_name = str(status_obj)
+                cat_key = ""
+            status_val, is_done = JiraAdapter._map_status(st_name, cat_key)
+            
+            prio_obj = fields.get("priority") or {}
+            prio_name = prio_obj.get("name") if isinstance(prio_obj, dict) else str(prio_obj)
+            priority = JiraAdapter._map_priority(prio_name)
+            
+            proj_obj = fields.get("project") or {}
+            cluster = (proj_obj.get("name") or proj_obj.get("key") if isinstance(proj_obj, dict) else str(proj_obj or default_cluster)).strip().lower() or default_cluster
+            
+            comps = fields.get("components") or []
+            if isinstance(comps, list) and comps:
+                first_c = comps[0].get("name") if isinstance(comps[0], dict) else str(comps[0])
+                if first_c:
+                    cluster = first_c.strip().lower()
+                    
+            labels = fields.get("labels") or []
+            tags = [str(t).strip() for t in labels if str(t).strip()]
+            
+            issuelinks = fields.get("issuelinks") or []
+            for link in issuelinks:
+                link_type = link.get("type", {})
+                t_name = link_type.get("name", "").lower()
+                inward_desc = link_type.get("inward", "").lower()
+                outward_desc = link_type.get("outward", "").lower()
+                
+                out_issue = link.get("outwardIssue") or {}
+                out_key = out_issue.get("key")
+                if out_key:
+                    if "block" in outward_desc or "unlock" in outward_desc or t_name in ("blocks", "dependency"):
+                        pending_edges.append((task_id, str(out_key).strip()))
+                    elif "depend" in outward_desc or "required" in outward_desc:
+                        pending_edges.append((str(out_key).strip(), task_id))
+                        
+                in_issue = link.get("inwardIssue") or {}
+                in_key = in_issue.get("key")
+                if in_key:
+                    if "block" in inward_desc or "depend" in inward_desc or "require" in inward_desc or t_name in ("blocks", "dependency"):
+                        pending_edges.append((str(in_key).strip(), task_id))
+                    elif "unlock" in inward_desc:
+                        pending_edges.append((task_id, str(in_key).strip()))
+                        
+            for match in re.finditer(r"(?:depends\s+on|blocked\s+by)\s*[:]?\s*([A-Za-z0-9_\-,\s]+)", desc, re.IGNORECASE):
+                for dep in re.split(r"[,;\s]+", match.group(1)):
+                    if dep.strip():
+                        pending_edges.append((dep.strip(), task_id))
+                        
+            for match in re.finditer(r"(?:blocks|unlocks)\s*[:]?\s*([A-Za-z0-9_\-,\s]+)", desc, re.IGNORECASE):
+                for target in re.split(r"[,;\s]+", match.group(1)):
+                    if target.strip():
+                        pending_edges.append((task_id, target.strip()))
+                        
+            node = {
+                "id": task_id,
+                "title": title,
+                "kind": "task",
+                "cluster": cluster,
+                "horizon": "H1",
+                "work_status": "COMMITTED" if status_val != "DONE" else "PROPOSED",
+                "admission_state": "ADMITTED",
+                "epistemic_status": "CERTAIN",
+                "bounded_contexts": [cluster],
+                "priority": priority,
+                "criticality": "HIGH" if priority == "P0" else "MEDIUM",
+                "authority_required": "none",
+                "evidence_required": [],
+                "confidence": {"score": 1.0},
+                "summary": desc[:200].replace("\r", " ").replace("\n", " ").strip() or title,
+                "exit_criteria": [f"Resolve Jira Issue {task_id}"],
+                "source_refs": [],
+                "source_details": [],
+                "provenance": [{"source": "jira", "id": task_id}],
+                "source_claim_ids": [],
+                "unlock_score": 1,
+                "tags": tags,
+                "metrics": {},
+                "notes": [],
+                "items": [],
+                "canonical_system": "jira",
+                "canonical_id": task_id,
+                "canonical_revision": "r1",
+                "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "projection_run_id": "import-jira",
+                "staleness_state": "FRESH",
+                "readiness": {"operational_identity_required": False},
+                "completion": {
+                    "status": status_val,
+                    "dod_satisfied": is_done,
+                    "evidence_grade": "A" if is_done else None,
+                    "materialization_scope": "jira"
+                }
+            }
+            nodes.append(node)
+            
+        seen_edges = set()
+        for src, dst in pending_edges:
+            k = (src, dst)
+            if k not in seen_edges and src in node_ids and dst in node_ids and src != dst:
+                seen_edges.add(k)
+                edges.append({
+                    "from": src,
+                    "to": dst,
+                    "type": "UNLOCKS",
+                    "semantic": True,
+                    "confidence": {"score": 1.0},
+                    "notes": ["Imported from Jira JSON issuelinks"],
+                    "requirements": {},
+                    "source_details": [],
+                    "source_refs": []
+                })
+                
+        return {
+            "meta": {
+                "schema": "work-graph-poc/0.5",
+                "title": "Jira Work Graph Backlog",
+                "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "snapshot": "jira-json-import"
+            },
+            "sources": {},
+            "nodes": nodes,
+            "edges": edges
+        }
+

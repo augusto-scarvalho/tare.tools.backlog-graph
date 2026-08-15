@@ -202,6 +202,12 @@ def build_parser() -> argparse.ArgumentParser:
     imd.add_argument("--default-cluster", default="general", help="Default cluster group")
     imd.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
 
+    ijira = sp.add_parser("import-jira", help="Import graph from Jira CSV or JSON export file or piped stdin")
+    ijira.add_argument("file", nargs="?", help="Path to Jira CSV or JSON (reads stdin if omitted)")
+    ijira.add_argument("--type", choices=["csv", "json"], default="csv", help="Input format (default: csv)")
+    ijira.add_argument("--default-cluster", default="general", help="Default cluster group")
+    ijira.add_argument("--out", "-o", help="Destination JSON graph file (prints to stdout if omitted)")
+
     srv = sp.add_parser("visualize")
     srv.add_argument("--port", type=int, default=8080)
     srv.add_argument("--no-browser", action="store_true")
@@ -290,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(normalize_format_argv(sys.argv[1:] if argv is None else argv))
     try:
-        if args.cmd in ("import-github", "import-linear", "import-gitlab", "import-md"):
+        if args.cmd in ("import-github", "import-linear", "import-gitlab", "import-md", "import-jira"):
             if getattr(args, "file", None) and args.file != "-":
                 with open(args.file, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -320,6 +326,13 @@ def main(argv: list[str] | None = None) -> int:
                     id_prefix=args.prefix,
                     default_cluster=args.default_cluster
                 )
+            elif args.cmd == "import-jira":
+                from .adapters import JiraAdapter
+                if args.type == "json" or content.strip().startswith(("[", "{")):
+                    parsed_json = json.loads(content)
+                    graph_dict = JiraAdapter.from_json(parsed_json, default_cluster=args.default_cluster)
+                else:
+                    graph_dict = JiraAdapter.from_csv(content, default_cluster=args.default_cluster)
             elif args.cmd == "import-md":
                 from .adapters import MarkdownAdapter
                 graph_dict = MarkdownAdapter.from_markdown(

@@ -64,6 +64,7 @@ Once installed, the `graph-backlog` and `graph-ops` commands become globally ava
 | `import-github` | Ingests GitHub Issues JSON / piped stdin | `gh issue list --json ... \| python graph_ops.py import-github` |
 | `import-linear` | Ingests Linear CSV or JSON export payloads | `python graph_ops.py import-linear export.csv` |
 | `import-gitlab` | Ingests GitLab Issues JSON / piped stdin | `glab issue list --output json \| python graph_ops.py import-gitlab` |
+| `import-jira` | Ingests Jira CSV export or REST API JSON | `python graph_ops.py import-jira jira-export.csv` |
 | `import-md` | Ingests Markdown tasklists with `(depends: ...)` | `python graph_ops.py import-md backlog.md` |
 
 ---
