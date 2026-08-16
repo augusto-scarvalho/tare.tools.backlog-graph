@@ -36,3 +36,6 @@ output/
 # Relay/audit/planning artifacts are operational evidence, not source.
 .relay/
 
+# Active operational graph instances
+work-graph.json
+

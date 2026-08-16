@@ -289,6 +289,151 @@ def reconcile(graph: WorkGraph) -> dict[str, Any]:
         "note": "This proposes/reports reconciliation only. Canonical single-writer remains outside Graph Ops."
     }
 
+def diagnose_graph(raw: dict[str, Any] | WorkGraph) -> dict[str, Any]:
+    """Perform deep diagnostics and anomaly linting over graph topology."""
+    from collections import defaultdict, deque
+    if isinstance(raw, WorkGraph):
+        nodes = {n["id"]: n for n in raw.nodes}
+        edges = raw.edges
+    else:
+        nodes = {n["id"]: n for n in raw.get("nodes", []) if isinstance(n, dict) and "id" in n}
+        edges = raw.get("edges", [])
+
+    causal_types = {
+        'UNLOCKS', 'DEPENDS_ON', 'UNBLOCKS', 'PRECEDES', 'ENABLES',
+        'LINEAGE_TO', 'PROVIDES_EVIDENCE_SEAMS_FOR'
+    }
+    horizon_ranks = {'H0': 0, 'H1': 1, 'H2': 2, 'H3': 3, 'H4': 4}
+    priority_ranks = {'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3}
+
+    anomalies: dict[str, Any] = {
+        "summary": {},
+        "mixed_semantic_cycles": [],
+        "horizon_inversions": [],
+        "causal_monotonicity_violations": [],
+        "priority_inversions": [],
+        "target_terminus_violations": [],
+        "orphan_islands": [],
+        "transitive_redundancies": []
+    }
+
+    causal_adj = defaultdict(list)
+    all_adj = defaultdict(list)
+    all_in = defaultdict(list)
+    edge_types = {}
+
+    for e in edges:
+        src, dst = e.get("from"), e.get("to")
+        rel = e.get("type", "UNLOCKS")
+        if src in nodes and dst in nodes:
+            all_adj[src].append(dst)
+            all_in[dst].append(src)
+            edge_types[(src, dst)] = rel
+            if rel in causal_types:
+                causal_adj[src].append(dst)
+
+    # Check mixed semantic cycles
+    visited, rec_stack = set(), set()
+    cycle_paths = []
+
+    def dfs(node: str, path: list[str]) -> None:
+        visited.add(node)
+        rec_stack.add(node)
+        for neighbor in all_adj[node]:
+            if neighbor not in visited:
+                dfs(neighbor, path + [neighbor])
+            elif neighbor in rec_stack:
+                idx = path.index(neighbor) if neighbor in path else 0
+                c = path[idx:] + [neighbor]
+                rels = [edge_types.get((c[i], c[i+1]), "UNKNOWN") for i in range(len(c)-1)]
+                has_non_causal = any(r not in causal_types for r in rels)
+                cycle_paths.append({"cycle": c, "edge_types": rels, "is_semantic_mixed_cycle": has_non_causal})
+        rec_stack.remove(node)
+
+    for n in nodes:
+        if n not in visited:
+            dfs(n, [n])
+
+    anomalies["mixed_semantic_cycles"] = [c for c in cycle_paths if c["is_semantic_mixed_cycle"]]
+
+    for e in edges:
+        src, dst = e.get("from"), e.get("to")
+        rel = e.get("type", "UNLOCKS")
+        if src not in nodes or dst not in nodes or rel not in causal_types:
+            continue
+        n_src, n_dst = nodes[src], nodes[dst]
+        h_src = horizon_ranks.get(n_src.get("horizon", "H1"), 1)
+        h_dst = horizon_ranks.get(n_dst.get("horizon", "H1"), 1)
+        if h_src > h_dst:
+            anomalies["horizon_inversions"].append({
+                "from": src, "from_horizon": n_src.get("horizon"),
+                "to": dst, "to_horizon": n_dst.get("horizon"),
+                "type": rel
+            })
+        p_src = priority_ranks.get(n_src.get("priority", "P2"), 2)
+        p_dst = priority_ranks.get(n_dst.get("priority", "P2"), 2)
+        if p_src > p_dst + 1:
+            anomalies["priority_inversions"].append({
+                "blocker_id": src, "blocker_priority": n_src.get("priority"),
+                "blocked_id": dst, "blocked_priority": n_dst.get("priority"),
+                "type": rel
+            })
+        s_src = (n_src.get("completion") or {}).get("status")
+        s_dst = (n_dst.get("completion") or {}).get("status")
+        if s_dst == "DONE" and s_src != "DONE":
+            anomalies["causal_monotonicity_violations"].append({
+                "prerequisite_id": src, "prerequisite_status": s_src,
+                "dependent_id": dst, "dependent_status": s_dst,
+                "type": rel
+            })
+
+    for nid, n in nodes.items():
+        if n.get("kind") == "target" and n.get("horizon") == "H4":
+            out_causal = [dst for dst in causal_adj[nid]]
+            if out_causal:
+                anomalies["target_terminus_violations"].append({
+                    "target_id": nid,
+                    "outgoing_causal_edges": out_causal
+                })
+        if len(all_in[nid]) == 0 and len(all_adj[nid]) == 0:
+            anomalies["orphan_islands"].append({
+                "id": nid, "title": n.get("title"), "cluster": n.get("cluster")
+            })
+
+    for u in nodes:
+        for v in causal_adj[u]:
+            visited_bfs = {u}
+            q = deque([(w, 1) for w in causal_adj[u] if w != v])
+            visited_bfs.update(w for w, _ in q)
+            has_alt = False
+            while q:
+                curr, dist = q.popleft()
+                if curr == v:
+                    has_alt = True
+                    break
+                for nxt in causal_adj[curr]:
+                    if nxt not in visited_bfs:
+                        visited_bfs.add(nxt)
+                        q.append((nxt, dist + 1))
+            if has_alt:
+                anomalies["transitive_redundancies"].append({
+                    "direct_from": u, "direct_to": v
+                })
+
+    anomalies["summary"] = {
+        "total_nodes": len(nodes),
+        "total_edges": len(edges),
+        "mixed_semantic_cycles_count": len(anomalies["mixed_semantic_cycles"]),
+        "horizon_inversions_count": len(anomalies["horizon_inversions"]),
+        "causal_monotonicity_violations_count": len(anomalies["causal_monotonicity_violations"]),
+        "priority_inversions_count": len(anomalies["priority_inversions"]),
+        "target_terminus_violations_count": len(anomalies["target_terminus_violations"]),
+        "orphan_islands_count": len(anomalies["orphan_islands"]),
+        "transitive_redundancies_count": len(anomalies["transitive_redundancies"]),
+        "health_status": "CLEAN" if all(len(v) == 0 for k, v in anomalies.items() if k != "summary") else "ANOMALIES_DETECTED"
+    }
+    return anomalies
+
 def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> dict[str, Any]:
     """Run comprehensive health checks across validation, evidence, reconciliation, and cycle detection."""
     if isinstance(graph, dict):
@@ -296,10 +441,11 @@ def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> d
     ev = verify_evidence(graph)
     rec = reconcile(graph)
     cycles = find_cycles_scc(graph)
+    diag = diagnose_graph(graph)
     
     if cycles or ev["status"] == "FAIL":
         status = "FAIL"
-    elif ev["coverage"] == 1.0 and rec["operational_divergence_count"] == 0:
+    elif ev["coverage"] == 1.0 and rec["operational_divergence_count"] == 0 and diag["summary"]["health_status"] == "CLEAN":
         status = "PASS"
     else:
         status = "PASS_SHADOW_WITH_GAPS"
@@ -310,5 +456,7 @@ def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> d
         "blocking_cycles": cycles,
         "evidence_verification": ev,
         "reconcile": rec,
+        "diagnostics_summary": diag["summary"],
         "graph_ops_version": version
     }
+

@@ -24,7 +24,8 @@ from .validation import (
     validate_work_graph,
     verify_evidence,
     reconcile,
-    doctor_check
+    doctor_check,
+    diagnose_graph
 )
 from .diff import semantic_diff, validate_change
 from .packet import generate_packet, format_packet_markdown
@@ -48,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = p.add_subparsers(dest="cmd", required=True)
 
     # Core inspection & health
-    for name in ("validate", "summary", "cycles", "reconcile", "verify-evidence", "doctor", "history", "coverage", "critical-path"):
+    for name in ("validate", "summary", "cycles", "reconcile", "verify-evidence", "doctor", "history", "coverage", "critical-path", "diagnostics", "lint"):
         sp.add_parser(name)
 
     # Query
@@ -466,6 +467,8 @@ def main(argv: list[str] | None = None) -> int:
             obj = verify_evidence(graph)
         elif args.cmd in ("critical-path",):
             obj = critical_path(graph)
+        elif args.cmd in ("diagnostics", "lint"):
+            obj = diagnose_graph(raw)
         elif args.cmd == "simulate":
             if args.mode == "complete" or args.complete:
                 obj = simulate_completions(graph, args.complete or [], args.profile)

@@ -17,10 +17,42 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   <meta name="agentic-protocol" content="tare.tools/graph-backlog/v1">
   <meta name="agentic-runtime" content="window.tareGraph">
   <meta name="copilot-instructions" content="Interactive Directed Acyclic Work Graph Backlog. Query the global window.tareGraph runtime or read #signal-agentic-manifest for full topological details, ready tasks, and critical path bottlenecks.">
-  <title>tare.tools — Graph Backlog (SIGNAL Mission Control)</title>
+  <title>tare.tools - Graph Backlog (SIGNAL Mission Control)</title>
   <style>
+    
+    /* Sleek Vector Micro-Glyph System */
+    .glyph {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      vertical-align: -2px;
+      stroke: currentColor;
+      fill: none;
+      flex-shrink: 0;
+      margin-right: 5px;
+    }
+    .glyph-only {
+      margin-right: 0;
+    }
+    .glyph-sm {
+      width: 12px;
+      height: 12px;
+      vertical-align: -1px;
+      margin-right: 4px;
+    }
+    .glyph-lg {
+      width: 16px;
+      height: 16px;
+      vertical-align: -3px;
+    }
+    .glyph-accent { stroke: var(--accent); }
+    .glyph-success { stroke: var(--success); }
+    .glyph-warning { stroke: var(--warning); }
+    .glyph-danger { stroke: var(--danger); }
+    .glyph-stream { stroke: var(--stream); }
+
     /* ==========================================================================
-       SIGNAL Design Tokens — Canonical UI Law (warm-black + lime-phosphor)
+       SIGNAL Design Tokens - Canonical UI Law (warm-black + lime-phosphor)
        ========================================================================== */
     :root {
       color-scheme: dark;
@@ -703,6 +735,38 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       background: var(--surface-hover);
     }
 
+    
+    /* Sleek Vector Micro-Glyph System */
+    .glyph {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      vertical-align: -2px;
+      stroke: currentColor;
+      fill: none;
+      flex-shrink: 0;
+      margin-right: 5px;
+    }
+    .glyph-only {
+      margin-right: 0;
+    }
+    .glyph-sm {
+      width: 12px;
+      height: 12px;
+      vertical-align: -1px;
+      margin-right: 4px;
+    }
+    .glyph-lg {
+      width: 16px;
+      height: 16px;
+      vertical-align: -3px;
+    }
+    .glyph-accent { stroke: var(--accent); }
+    .glyph-success { stroke: var(--success); }
+    .glyph-warning { stroke: var(--warning); }
+    .glyph-danger { stroke: var(--danger); }
+    .glyph-stream { stroke: var(--stream); }
+
     /* ==========================================================================
        SIGNAL Graph Ops Modal & Diagnostic Center (All 13 Research Operations)
        ========================================================================== */
@@ -886,6 +950,31 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   </style>
 </head>
 <body class="atmo">
+  <!-- Embedded Vector Micro-Glyph Sprite Library -->
+  <svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <g id="glyph-terminal"><polyline points="4 6 7 8 4 10" stroke="currentColor" fill="none" stroke-width="1.5"/><line x1="9" y1="10" x2="12" y2="10" stroke="currentColor" stroke-width="1.5"/></g>
+      <g id="glyph-folder"><path d="M2 4a1 1 0 0 1 1-1h3.5l1.5 2H13a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4z" stroke="currentColor" fill="none" stroke-width="1.4"/></g>
+      <g id="glyph-cpu"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.4"/></g>
+      <g id="glyph-ops"><circle cx="5" cy="5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.3"/><line x1="7" y1="5" x2="14" y2="5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="1.8" stroke="currentColor" fill="none" stroke-width="1.3"/><line x1="2" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.3"/></g>
+      <g id="glyph-ready"><circle cx="8" cy="8" r="3" fill="currentColor"/><circle cx="8" cy="8" r="6" stroke="currentColor" fill="none" stroke-width="1.2" stroke-dasharray="2 1.5"/></g>
+      <g id="glyph-done"><circle cx="8" cy="8" r="6.5" stroke="currentColor" fill="none" stroke-width="1.4"/><polyline points="5 8 7 10 11 6" stroke="currentColor" fill="none" stroke-width="1.6"/></g>
+      <g id="glyph-blocked"><circle cx="8" cy="8" r="6.5" stroke="currentColor" fill="none" stroke-width="1.4"/><line x1="4.5" y1="11.5" x2="11.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/></g>
+      <g id="glyph-partial"><circle cx="8" cy="8" r="6.5" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M8 8V3.5A4.5 4.5 0 0 1 12.5 8z" fill="currentColor"/></g>
+      <g id="glyph-critical"><polygon points="8 2.5 14 13.5 2 13.5" stroke="currentColor" fill="none" stroke-width="1.4"/><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor"/></g>
+      <g id="glyph-doctor"><polyline points="2 8 5 8 7 3.5 9 12.5 11 8 14 8" stroke="currentColor" fill="none" stroke-width="1.5"/></g>
+      <g id="glyph-queue"><line x1="3" y1="4" x2="13" y2="4" stroke="currentColor" stroke-width="1.4"/><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.4"/><line x1="3" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.4"/></g>
+      <g id="glyph-diff"><circle cx="4.5" cy="4.5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.4"/><circle cx="11.5" cy="11.5" r="1.8" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M4.5 6.5v5a2 2 0 0 0 2 2h3" stroke="currentColor" fill="none" stroke-width="1.4"/></g>
+      <g id="glyph-ledger"><rect x="3.5" y="6.5" width="9" height="7" rx="1.5" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M5.5 6.5V4.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" fill="none" stroke-width="1.4"/></g>
+      <g id="glyph-packet"><path d="M2.5 4.5L8 1.5l5.5 3v7l-5.5 3-5.5-3v-7z" stroke="currentColor" fill="none" stroke-width="1.3"/><path d="M2.5 4.5L8 7.5l5.5-3M8 7.5v7" stroke="currentColor" fill="none" stroke-width="1.3"/></g>
+      <g id="glyph-export"><path d="M8 2v8M4.5 7.5L8 11l3.5-3.5M2.5 13.5h11" stroke="currentColor" fill="none" stroke-width="1.4"/></g>
+      <g id="glyph-arrow-up"><line x1="8" y1="12" x2="8" y2="4" stroke="currentColor" stroke-width="1.6"/><polyline points="4.5 7.5 8 4 11.5 7.5" stroke="currentColor" fill="none" stroke-width="1.6"/></g>
+      <g id="glyph-arrow-down"><line x1="8" y1="4" x2="8" y2="12" stroke="currentColor" stroke-width="1.6"/><polyline points="4.5 8.5 8 12 11.5 8.5" stroke="currentColor" fill="none" stroke-width="1.6"/></g>
+      <g id="glyph-search"><circle cx="7" cy="7" r="4.5" stroke="currentColor" fill="none" stroke-width="1.4"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5"/></g>
+      <g id="glyph-copy"><rect x="5.5" y="5.5" width="7" height="7" rx="1" stroke="currentColor" fill="none" stroke-width="1.3"/><path d="M3.5 10.5h-1a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1" stroke="currentColor" fill="none" stroke-width="1.3"/></g>
+      <g id="glyph-cross"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.6"/></g>
+    </defs>
+  </svg>
   <!-- Agentic AI Discovery Manifest & Live State for Microsoft 365 Copilot & LLM Runtimes -->
   <script id="signal-agentic-manifest" type="application/json" data-agentic-protocol="tare.tools/graph-backlog/v1"></script>
   <section id="agenticCopilotTrail" class="sr-only" aria-label="AI Agent Inspection Trail" data-agentic-role="graph-backlog-summary"></section>
@@ -899,21 +988,21 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       </div>
 
       <select id="themeSelector" onchange="applyTheme(this.value)" style="font-weight:600; font-size:11px;" title="Interface & Canvas Theme">
-        <optgroup label="🌙 Dark Themes">
-          <option value="signal">⚡ Signal (Default)</option>
-          <option value="dracula">🧛 Dracula</option>
-          <option value="tokyo_night">🌃 Tokyo Night</option>
-          <option value="nord">❄️ Nord Frost</option>
-          <option value="monokai">🔥 Monokai Pro</option>
-          <option value="catppuccin">☕ Catppuccin Mocha</option>
+        <optgroup label="Dark Themes">
+          <option value="signal">Signal (Default)</option>
+          <option value="dracula">Dracula</option>
+          <option value="tokyo_night">Tokyo Night</option>
+          <option value="nord">Nord Frost</option>
+          <option value="monokai">Monokai Pro</option>
+          <option value="catppuccin">Catppuccin Mocha</option>
         </optgroup>
-        <optgroup label="☀️ Light Themes">
-          <option value="light">☀️ Solar Paper (Light)</option>
-          <option value="solarized_light">📜 Solarized Light</option>
-          <option value="github_light">🐙 GitHub Light</option>
-          <option value="nord_light">🏔️ Nord Snow Storm</option>
-          <option value="catppuccin_latte">🥛 Catppuccin Latte</option>
-          <option value="gruvbox_light">📻 Gruvbox Light</option>
+        <optgroup label="Light Themes">
+          <option value="light">Solar Paper (Light)</option>
+          <option value="solarized_light">Solarized Light</option>
+          <option value="github_light">GitHub Light</option>
+          <option value="nord_light">Nord Snow Storm</option>
+          <option value="catppuccin_latte">Catppuccin Latte</option>
+          <option value="gruvbox_light">Gruvbox Light</option>
         </optgroup>
       </select>
     </div>
@@ -922,15 +1011,15 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="header-center">
       <div class="project-selector-group">
         <select id="projectSelector" onchange="switchProject(this.value)" style="font-weight:700; color:var(--accent); border-color:var(--accent-border); max-width:240px;">
-          <option value="__ACTIVE__">📁 Active Project</option>
-          <option value="transmedia">🎬 Demo: Epic Transmedia (42 tasks: Book ➔ Comic ➔ Film)</option>
-          <option value="saas">🏢 Demo: CloudPulse SaaS (33 tasks)</option>
-          <option value="rag">🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
-          <option value="sample">🧪 Demo: Core Sample (3 tasks)</option>
-          <option value="__UPLOAD__">📂 Open Local JSON File...</option>
+          <option value="__ACTIVE__">Canonical Work Graph</option>
+          <option value="transmedia">Demo: Transmedia Storyverse (42 tasks)</option>
+          <option value="saas">Demo: CloudPulse SaaS (33 tasks)</option>
+          <option value="rag">Demo: OmniAgent AI RAG (27 tasks)</option>
+          <option value="sample">Demo: Core Sample (3 tasks)</option>
+          <option value="__UPLOAD__">Open Local JSON File...</option>
         </select>
         <button class="action-btn" id="toggleDemosBtn" onclick="toggleHideDemos()" title="Toggle visibility of built-in demo projects (persisted in localStorage)" style="padding:6px 8px;">
-          👁️
+          Demos
         </button>
         <input type="file" id="fileUploadInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
       </div>
@@ -940,7 +1029,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="header-right">
       <select id="statusFilter">
         <option value="ALL">All Statuses</option>
-        <option value="FRONTIER">⚡ Ready Frontier (Actionable)</option>
+        <option value="FRONTIER">Ready Frontier (Actionable)</option>
         <option value="NOT_DONE">NOT_DONE</option>
         <option value="PARTIAL">PARTIAL</option>
         <option value="DONE">DONE</option>
@@ -970,9 +1059,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <div class="subnav-right">
-      <button class="action-btn" id="copilotBridgeBtn" onclick="openOpsModal('copilot')" style="border-color:rgba(38, 139, 210, 0.45); color:var(--accent); font-weight:700;">🤖 Copilot Bridge</button>
+      <button class="action-btn" id="copilotBridgeBtn" onclick="openOpsModal('copilot')" style="border-color:rgba(38, 139, 210, 0.45); color:var(--accent); font-weight:700;"><svg class="glyph glyph-accent" viewBox="0 0 16 16"><use href="#glyph-cpu"></use></svg>Copilot Bridge</button>
       <button class="action-btn" id="criticalPathBtn" onclick="toggleCriticalPath()">Critical Path</button>
-      <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent); font-weight:700;">⚡ Graph Ops (13 Ops)</button>
+      <button class="action-btn" id="opsModalBtn" onclick="openOpsModal('doctor')" style="border-color:var(--accent-border); color:var(--accent); font-weight:700;"><svg class="glyph glyph-accent" viewBox="0 0 16 16"><use href="#glyph-ops"></use></svg>Graph Ops (13 Ops)</button>
       <div class="nav-divider"></div>
       <div class="esc-hint" style="margin-left:0;">
         Press <span class="kbd-pill">Esc</span> to deselect / clear active paths
@@ -1025,17 +1114,13 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       <div class="section-block">
         <div class="section-label">Transitive Closure Tools (Op 6)</div>
         <div class="closure-btn-group">
-          <button class="action-btn" id="traceAncestorsBtn" onclick="highlightUpstreamClosure()" style="justify-content:center;">
-            ⬆️ Upstream Blockers
-          </button>
-          <button class="action-btn" id="traceDescendantsBtn" onclick="highlightDownstreamClosure()" style="justify-content:center;">
-            ⬇️ Downstream Impact
-          </button>
+          <button class="action-btn" id="traceAncestorsBtn" onclick="highlightUpstreamClosure()" style="justify-content:center;"><svg class="glyph" viewBox="0 0 16 16"><use href="#glyph-arrow-up"></use></svg>Upstream Blockers</button>
+          <button class="action-btn" id="traceDescendantsBtn" onclick="highlightDownstreamClosure()" style="justify-content:center;"><svg class="glyph" viewBox="0 0 16 16"><use href="#glyph-arrow-down"></use></svg>Downstream Impact</button>
         </div>
       </div>
 
       <div class="section-block">
-        <div class="section-label">Simulation (What-If Contrafactual — Op 7)</div>
+        <div class="section-label">Simulation (What-If Contrafactual - Op 7)</div>
         <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; color:var(--text-secondary);">
           <input type="checkbox" id="simToggle" onchange="toggleSimulateCurrent()">
           Simulate this task as DONE (evaluate unlocked frontier)
@@ -1062,9 +1147,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         <div id="inspDownstream" style="display:flex; flex-direction:column; gap:4px;">None</div>
       </div>
 
-      <button class="action-btn" id="copyPacketBtn" onclick="openOpsModal('agent')" style="justify-content:center; margin-top:8px;">
-        🤖 Open Agent Implementation Packet (Op 11)
-      </button>
+      <button class="action-btn" id="copyPacketBtn" onclick="openOpsModal('agent')" style="justify-content:center; margin-top:8px;"><svg class="glyph" viewBox="0 0 16 16"><use href="#glyph-packet"></use></svg>Open Agent Packet (Op 11)</button>
     </div>
   </div>
 
@@ -1072,17 +1155,17 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="modal-backdrop" id="opsModalBackdrop" onclick="handleBackdropClick(event)">
     <div class="ops-modal">
       <div class="modal-header">
-        <div class="modal-title">⚡ Graph Operations & Research Mission Control (13 Ops)</div>
+        <div class="modal-title"><svg class="glyph glyph-accent glyph-lg" viewBox="0 0 16 16"><use href="#glyph-ops"></use></svg>Graph Operations & Research Mission Control (13 Ops)</div>
         <button class="modal-close-btn" onclick="closeOpsModal()">✕</button>
       </div>
       <div class="modal-nav">
-        <button class="modal-nav-btn active" id="modalTabDoctor" onclick="switchOpsTab('doctor')">🔍 Doctor & Integrity (Op 1, 8, 12)</button>
-        <button class="modal-nav-btn" id="modalTabRanked" onclick="switchOpsTab('ranked')">⚡ Queue & Paths (Op 2, 3, 4, 5)</button>
-        <button class="modal-nav-btn" id="modalTabDiff" onclick="switchOpsTab('diff')">🔄 Semantic Diff (Op 9)</button>
-        <button class="modal-nav-btn" id="modalTabLedger" onclick="switchOpsTab('ledger')">🔒 Crypto Ledger (Op 10)</button>
-        <button class="modal-nav-btn" id="modalTabAgent" onclick="switchOpsTab('agent')">🤖 Agent Packet (Op 11)</button>
-        <button class="modal-nav-btn" id="modalTabCopilot" onclick="switchOpsTab('copilot')">🧠 Copilot & AI Bridge</button>
-        <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')">💾 Universal Export (Op 13)</button>
+        <button class="modal-nav-btn active" id="modalTabDoctor" onclick="switchOpsTab('doctor')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-doctor"></use></svg>Doctor & Integrity (Op 1, 8, 12)</button>
+        <button class="modal-nav-btn" id="modalTabRanked" onclick="switchOpsTab('ranked')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-queue"></use></svg>Queue & Paths (Op 2, 3, 4, 5)</button>
+        <button class="modal-nav-btn" id="modalTabDiff" onclick="switchOpsTab('diff')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-diff"></use></svg>Semantic Diff (Op 9)</button>
+        <button class="modal-nav-btn" id="modalTabLedger" onclick="switchOpsTab('ledger')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-ledger"></use></svg>Crypto Ledger (Op 10)</button>
+        <button class="modal-nav-btn" id="modalTabAgent" onclick="switchOpsTab('agent')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-packet"></use></svg>Agent Packet (Op 11)</button>
+        <button class="modal-nav-btn" id="modalTabCopilot" onclick="switchOpsTab('copilot')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-cpu"></use></svg>Copilot & AI Bridge</button>
+        <button class="modal-nav-btn" id="modalTabExport" onclick="switchOpsTab('export')"><svg class="glyph glyph-sm" viewBox="0 0 16 16"><use href="#glyph-export"></use></svg>Universal Export (Op 13)</button>
       </div>
       <div class="modal-body" id="opsModalContent"></div>
     </div>
@@ -1090,7 +1173,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
   <footer>
     <div class="stat-metric">Total: <span id="statTotal">0</span></div>
-    <div class="stat-metric metric-ready">⚡ Actionable Frontier: <span id="statReady">0</span></div>
+    <div class="stat-metric metric-ready"><svg class="glyph glyph-accent" viewBox="0 0 16 16"><use href="#glyph-ready"></use></svg>Actionable Frontier: <span id="statReady">0</span></div>
     <div class="stat-metric">Done: <span id="statDone">0</span></div>
     <div class="stat-metric">Edges: <span id="statEdges">0</span></div>
     <div class="esc-hint"><span>Press</span> <kbd class="kbd-pill">Esc</kbd> <span>to deselect node & path</span></div>
@@ -1104,6 +1187,11 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       rag: __RAG_JSON_PLACEHOLDER__,
       sample: __SAMPLE_JSON_PLACEHOLDER__
     };
+
+    
+    function glyph(id, extraClass = '') {
+      return `<svg class="glyph ${extraClass}" viewBox="0 0 16 16" aria-hidden="true"><use href="#glyph-${id}"></use></svg>`;
+    }
 
     let RAW_GRAPH = BUILTIN_PROJECTS.active;
     let nodes = RAW_GRAPH.nodes || [];
@@ -1164,12 +1252,15 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       resetFilters();
     }
 
+    
+
+
     /* ==========================================================================
        SIGNAL Themes & Palettes (Signal Default, Dracula, Tokyo Night, Nord, Solar Light, Monokai, Catppuccin)
        ========================================================================== */
     const THEMES = {
       signal: {
-        name: '⚡ Signal (Default)',
+        name: 'Signal (Default)',
         scheme: 'dark',
         vars: {
           '--bg-base': '#0A0B08',
@@ -1211,7 +1302,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       dracula: {
-        name: '🧛 Dracula',
+        name: 'Dracula',
         scheme: 'dark',
         vars: {
           '--bg-base': '#282a36',
@@ -1253,7 +1344,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       tokyo_night: {
-        name: '🌃 Tokyo Night',
+        name: 'Tokyo Night',
         scheme: 'dark',
         vars: {
           '--bg-base': '#1a1b26',
@@ -1295,7 +1386,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       nord: {
-        name: '❄️ Nord Frost',
+        name: 'Nord Frost',
         scheme: 'dark',
         vars: {
           '--bg-base': '#242933',
@@ -1337,7 +1428,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       light: {
-        name: '☀️ Solar Paper (Light)',
+        name: 'Solar Paper (Light)',
         scheme: 'light',
         vars: {
           '--bg-base': '#f8fafc',
@@ -1379,7 +1470,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       monokai: {
-        name: '🔥 Monokai Pro',
+        name: 'Monokai Pro',
         scheme: 'dark',
         vars: {
           '--bg-base': '#272822',
@@ -1421,7 +1512,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       catppuccin: {
-        name: '☕ Catppuccin Mocha',
+        name: 'Catppuccin Mocha',
         scheme: 'dark',
         vars: {
           '--bg-base': '#1e1e2e',
@@ -1463,7 +1554,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       solarized_light: {
-        name: '📜 Solarized Light',
+        name: 'Solarized Light',
         scheme: 'light',
         vars: {
           '--bg-base': '#fdf6e3',
@@ -1505,7 +1596,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       github_light: {
-        name: '🐙 GitHub Light',
+        name: 'GitHub Light',
         scheme: 'light',
         vars: {
           '--bg-base': '#ffffff',
@@ -1547,7 +1638,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       nord_light: {
-        name: '🏔️ Nord Snow Storm',
+        name: 'Nord Snow Storm',
         scheme: 'light',
         vars: {
           '--bg-base': '#eceff4',
@@ -1589,7 +1680,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       catppuccin_latte: {
-        name: '🥛 Catppuccin Latte',
+        name: 'Catppuccin Latte',
         scheme: 'light',
         vars: {
           '--bg-base': '#eff1f5',
@@ -1631,7 +1722,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         }
       },
       gruvbox_light: {
-        name: '📻 Gruvbox Light',
+        name: 'Gruvbox Light',
         scheme: 'light',
         vars: {
           '--bg-base': '#fbf1c7',
@@ -1720,20 +1811,20 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       if (!selector) return;
 
       currentProjectKey = currentVal;
-      let html = `<option value="__ACTIVE__" ${currentVal === '__ACTIVE__' ? 'selected' : ''}>📁 Active Project</option>`;
+      let html = `<option value="__ACTIVE__" ${currentVal === '__ACTIVE__' ? 'selected' : ''}>Canonical Work Graph</option>`;
 
       if (!hideDemos) {
         html += `
-          <option value="transmedia" ${currentVal === 'transmedia' ? 'selected' : ''}>🎬 Demo: Epic Transmedia (42 tasks)</option>
-          <option value="saas" ${currentVal === 'saas' ? 'selected' : ''}>🏢 Demo: CloudPulse SaaS (33 tasks)</option>
-          <option value="rag" ${currentVal === 'rag' ? 'selected' : ''}>🤖 Demo: OmniAgent AI RAG (27 tasks)</option>
-          <option value="sample" ${currentVal === 'sample' ? 'selected' : ''}>🧪 Demo: Core Sample (3 tasks)</option>
+          <option value="transmedia" ${currentVal === 'transmedia' ? 'selected' : ''}> Demo: Epic Transmedia (42 tasks)</option>
+          <option value="saas" ${currentVal === 'saas' ? 'selected' : ''}>Demo: CloudPulse SaaS (33 tasks)</option>
+          <option value="rag" ${currentVal === 'rag' ? 'selected' : ''}>Demo: OmniAgent AI RAG (27 tasks)</option>
+          <option value="sample" ${currentVal === 'sample' ? 'selected' : ''}>Demo: Core Sample (3 tasks)</option>
         `;
       }
 
       html += `
-        <option value="__UPLOAD__">📂 Open Local JSON File...</option>
-        <option value="__TOGGLE_DEMOS__">${hideDemos ? '👁️ Show Demo Backlogs' : '🚫 Hide Demo Backlogs'}</option>
+        <option value="__UPLOAD__">Open Local JSON File...</option>
+        <option value="__TOGGLE_DEMOS__">${hideDemos ? 'Demos Show Demo Backlogs' : ' Hide Demo Backlogs'}</option>
       `;
 
       selector.innerHTML = html;
@@ -1741,7 +1832,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       const toggleBtn = document.getElementById('toggleDemosBtn');
       if (toggleBtn) {
         toggleBtn.className = `action-btn ${hideDemos ? '' : 'active'}`;
-        toggleBtn.textContent = hideDemos ? '👁️‍🗨️' : '👁️';
+        toggleBtn.textContent = hideDemos ? 'Demos‍️' : 'Demos';
         toggleBtn.title = hideDemos ? 'Show Built-in Demo Projects (Currently Hidden)' : 'Hide Built-in Demo Projects (Currently Visible)';
       }
     }
@@ -1794,7 +1885,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           const selector = document.getElementById('projectSelector');
           const opt = document.createElement('option');
           opt.value = '__CUSTOM_LOADED__';
-          opt.textContent = `📄 File: ${file.name}`;
+          opt.textContent = `[file] ${file.name}`;
           opt.selected = true;
           selector.appendChild(opt);
 
@@ -1821,6 +1912,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       }
       return true;
     }
+
+    
+
 
     /* ==========================================================================
        Recursive Transitive Closures: Upstream (Ancestors) & Downstream (Descendants)
@@ -1945,7 +2039,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       } else if (ready) {
         statusClass = 'status-ready';
         pillClass = 'pill-ready';
-        pillLabel = '⚡ READY';
+        pillLabel = `${glyph('ready', 'glyph-sm')} READY`;
       }
 
       if (simulatedDoneSet.has(n.id)) {
@@ -1977,7 +2071,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       let criticalPill = '';
       if (showCriticalPath && activeCustomPath && activeCustomPath.nodes.has(n.id)) {
-        criticalPill = '<span class="signal-pill" style="background:rgba(232, 169, 59, 0.18); color:var(--warning); border-color:rgba(232, 169, 59, 0.45);">🔥 CRITICAL PATH</span>';
+        criticalPill = '<span class="signal-pill" style="background:rgba(232, 169, 59, 0.18); color:var(--warning); border-color:rgba(232, 169, 59, 0.45);">CRITICAL PATH</span>';
       }
 
       card.innerHTML = `
@@ -2004,10 +2098,10 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       // 4 Classic Kanban Lanes
       const lanes = [
-        { id: 'BLOCKED', title: '🚫 Blocked Backlog', class: 'lane-blocked', filter: n => getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' && getStatus(n) !== 'PARTIAL' && !isNodeReady(n) },
-        { id: 'READY', title: '⚡ Ready Frontier', class: 'lane-ready', filter: n => isNodeReady(n) && getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' },
-        { id: 'PARTIAL', title: '⏳ In Progress / Partial', class: 'lane-partial', filter: n => getStatus(n) === 'PARTIAL' },
-        { id: 'DONE', title: '🟢 Done / Shipped', class: 'lane-done', filter: n => getStatus(n) === 'DONE' }
+        { id: 'BLOCKED', title: `${glyph('blocked', 'glyph-danger')} Blocked Backlog`, class: 'lane-blocked', filter: n => getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' && getStatus(n) !== 'PARTIAL' && !isNodeReady(n) },
+        { id: 'READY', title: `${glyph('ready', 'glyph-accent')} Ready Frontier`, class: 'lane-ready', filter: n => isNodeReady(n) && getStatus(n) !== 'DONE' && getStatus(n) !== 'SUPERSEDED' },
+        { id: 'PARTIAL', title: `${glyph('partial', 'glyph-warning')} In Progress / Partial`, class: 'lane-partial', filter: n => getStatus(n) === 'PARTIAL' },
+        { id: 'DONE', title: `${glyph('done', 'glyph-success')} Done / Shipped`, class: 'lane-done', filter: n => getStatus(n) === 'DONE' }
       ];
 
       lanes.forEach(lane => {
@@ -2109,7 +2203,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       const ready = isNodeReady(n);
       document.getElementById('inspState').innerHTML = `
         <strong>Status:</strong> ${st}<br>
-        <strong>Feasibility:</strong> ${ready ? '<span style="color:var(--accent);font-weight:700;">⚡ READY (Actionable Frontier)</span>' : '<span style="color:var(--danger);font-weight:700;">BLOCKED</span>'}<br>
+        <strong>Feasibility:</strong> ${ready ? '<span style="color:var(--accent);font-weight:700;">READY (Actionable Frontier)</span>' : '<span style="color:var(--danger);font-weight:700;">BLOCKED</span>'}<br>
         <strong>Cluster:</strong> ${n.cluster || 'general'} | <strong>Priority:</strong> ${n.priority || 'P1'} | <strong>Horizon:</strong> ${n.horizon || 'H1'}
       `;
 
@@ -2314,6 +2408,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       }
     }
 
+    
+
+
     /* ==========================================================================
        SVG DAG Engine with Filtering, Auto-Layout, Pan/Zoom & Node Drag & Drop
        ========================================================================== */
@@ -2324,8 +2421,14 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       visibleList.forEach(n => { inDegree[n.id] = 0; adj[n.id] = []; });
       
       const vSet = new Set(visibleList.map(n => n.id));
+      const causalTypes = new Set([
+        'UNLOCKS', 'DEPENDS_ON', 'UNBLOCKS', 'PRECEDES', 'ENABLES',
+        'LINEAGE_TO', 'PROVIDES_EVIDENCE_SEAMS_FOR'
+      ]);
+
       edges.forEach(e => {
-        if (vSet.has(e.from) && vSet.has(e.to)) {
+        const rel = e.type || 'UNLOCKS';
+        if (causalTypes.has(rel) && vSet.has(e.from) && vSet.has(e.to)) {
           inDegree[e.to]++;
           adj[e.from].push(e.to);
         }
@@ -2343,6 +2446,19 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           if (inDegree[v] === 0) queue.push(v);
         });
       }
+
+      // Find max level computed from topological chain
+      let maxLvl = 0;
+      visibleList.forEach(n => {
+        if (levels[n.id] > maxLvl) maxLvl = levels[n.id];
+      });
+
+      // Horizon fallback anchor: ensure H4 / North Star target nodes stay at the rightmost terminus
+      visibleList.forEach(n => {
+        if (n.id === 'north-star' || (n.horizon === 'H4' && n.kind === 'target')) {
+          levels[n.id] = Math.max(levels[n.id], maxLvl > 0 ? maxLvl : 15);
+        }
+      });
 
       const byLevel = {};
       visibleList.forEach(n => {
@@ -2621,6 +2737,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       updateViewportTransform();
     }
 
+    
+
+
     /* ==========================================================================
        SIGNAL Deterministic Graph Operations & Diagnostic Suite (All 13 Ops)
        ========================================================================== */
@@ -2822,7 +2941,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       container.innerHTML = `
         <div class="report-card ${isHealthy ? 'pass' : 'fail'}">
           <div style="font-size:13px; font-weight:700; color:${isHealthy ? 'var(--accent)' : 'var(--danger)'};">
-            ${isHealthy ? '✅ GRAPH TOPOLOGY & INTEGRITY HEALTHY (Deterministic Pass)' : '❌ INTEGRITY ERRORS DETECTED'}
+            ${isHealthy ? ' GRAPH TOPOLOGY & INTEGRITY HEALTHY (Deterministic Pass)' : ' INTEGRITY ERRORS DETECTED'}
           </div>
           <div style="font-size:12px; color:var(--text-secondary);">
             Tarjan SCC Cycles: <strong>${sccs.length}</strong> | Dangling Edges: <strong>${dangling.length}</strong> | Vertices: <strong>${nodes.length}</strong> | Edges: <strong>${edges.length}</strong> | Density: <strong>${density}</strong>
@@ -2833,15 +2952,15 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           <div class="section-label">Topological Partition Summary (Op 2, 8)</div>
           <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:4px;">
             <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
-              <div style="font-size:10px; color:var(--text-muted);">⚡ ACTIONABLE FRONTIER</div>
+              <div style="font-size:10px; color:var(--text-muted);">ACTIONABLE FRONTIER</div>
               <div style="font-size:18px; font-weight:700; color:var(--accent);">${readyNodes.length}</div>
             </div>
             <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
-              <div style="font-size:10px; color:var(--text-muted);">🟢 COMPLETED / SHIPPED</div>
+              <div style="font-size:10px; color:var(--text-muted);">COMPLETED / SHIPPED</div>
               <div style="font-size:18px; font-weight:700; color:var(--text-muted);">${doneNodes.length}</div>
             </div>
             <div style="background:var(--surface-1); padding:8px; border-radius:4px; border:1px solid var(--border-subtle); cursor:pointer;" onclick="closeOpsModal(); switchView('kanban');">
-              <div style="font-size:10px; color:var(--text-muted);">🚫 BLOCKED BACKLOG</div>
+              <div style="font-size:10px; color:var(--text-muted);">BLOCKED BACKLOG</div>
               <div style="font-size:18px; font-weight:700; color:var(--danger);">${blockedNodes.length}</div>
             </div>
           </div>
@@ -2849,13 +2968,13 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <div class="report-card">
-            <div class="section-label">📊 Highest Fan-In (Blocker Bottlenecks — Op 12)</div>
+            <div class="section-label"> Highest Fan-In (Blocker Bottlenecks - Op 12)</div>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
               ${maxIn.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px; cursor:pointer;" onclick="focusNodeOnDag('${n.id}')"><span>${n.id}: ${(n.title || '').slice(0, 20)}</span><strong style="color:var(--danger);">${inDeg[n.id]} prereqs</strong></div>`).join('')}
             </div>
           </div>
           <div class="report-card">
-            <div class="section-label">📊 Highest Fan-Out (Key Enablers — Op 12)</div>
+            <div class="section-label"> Highest Fan-Out (Key Enablers - Op 12)</div>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
               ${maxOut.map(n => `<div style="display:flex; justify-content:space-between; font-size:11px; cursor:pointer;" onclick="focusNodeOnDag('${n.id}')"><span>${n.id}: ${(n.title || '').slice(0, 20)}</span><strong style="color:var(--accent);">${outDeg[n.id]} unlocks</strong></div>`).join('')}
             </div>
@@ -2894,17 +3013,17 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         return { node: n, score: total, parts: { pw, cw, hw, uw } };
       }).sort((a, b) => b.score - a.score);
 
-      const nodeOptions = nodes.map(n => `<option value="${n.id}">${n.id} — ${(n.title || '').slice(0, 24)}</option>`).join('');
+      const nodeOptions = nodes.map(n => `<option value="${n.id}">${n.id} - ${(n.title || '').slice(0, 24)}</option>`).join('');
 
       container.innerHTML = `
         <div class="report-card">
-          <div class="section-label">⚡ Multi-Criteria Priority Queue (Op 3: Ranked Next Frontier)</div>
+          <div class="section-label"> Multi-Criteria Priority Queue (Op 3: Ranked Next Frontier)</div>
           <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
             ${scored.length === 0 ? '<div style="color:var(--text-muted); font-size:12px;">No actionable tasks on the frontier.</div>' : ''}
             ${scored.slice(0, 5).map((item, idx) => `
               <div class="report-card pass" style="cursor:pointer; padding:8px 12px;" onclick="focusNodeOnDag('${item.node.id}')">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span style="font-weight:700; color:var(--accent);">#${idx + 1} — ${item.node.id}: ${item.node.title}</span>
+                  <span style="font-weight:700; color:var(--accent);">#${idx + 1} - ${item.node.id}: ${item.node.title}</span>
                   <span class="signal-pill pill-ready" style="font-size:11px;">Score: ${item.score} ➔ Focus</span>
                 </div>
                 <div style="display:flex; gap:6px; font-size:10px; color:var(--text-muted); margin-top:2px;">
@@ -2918,7 +3037,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
 
         <div class="report-card">
-          <div class="section-label">🧭 Shortest Dependency Path Finder (Op 4: BFS Reachability)</div>
+          <div class="section-label"> Shortest Dependency Path Finder (Op 4: BFS Reachability)</div>
           <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
             <select id="pathStartSelect" style="flex:1;">${nodeOptions}</select>
             <span style="color:var(--accent); font-weight:700;">➔</span>
@@ -2982,12 +3101,12 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       if (foundPath) {
         box.innerHTML = `
           <div class="report-card pass" style="padding:10px;">
-            <div style="font-weight:700; color:var(--accent);">✅ Path Found (${foundPath.length - 1} hops):</div>
+            <div style="font-weight:700; color:var(--accent);"> Path Found (${foundPath.length - 1} hops):</div>
             <div style="font-size:12px; font-family:var(--font-mono); margin: 6px 0; color:var(--text-primary);">
               ${foundPath.join(' ➔ ')}
             </div>
             <button class="action-btn" id="traceOnDagBtn" style="width:fit-content; background:var(--accent); color:#0A0B08; font-weight:700;">
-              ⚡ Trace & Highlight on DAG Canvas
+              Trace & Highlight on DAG Canvas
             </button>
           </div>
         `;
@@ -3009,6 +3128,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         box.innerHTML = `<div class="report-card warn" style="font-size:12px;">No directed dependency path exists from <strong>${start}</strong> to <strong>${end}</strong>.</div>`;
       }
     }
+
+    
+
 
     /* ==========================================================================
        Op 9: Semantic Diff Visualizer
@@ -3046,7 +3168,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
               type: 'add',
               path: `frontier.actionable[id=${n.id}]`,
               oldVal: 'BLOCKED',
-              newVal: '⚡ UNLOCKED TO ACTIONABLE FRONTIER'
+              newVal: 'UNLOCKED TO ACTIONABLE FRONTIER'
             });
           }
         });
@@ -3054,7 +3176,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       container.innerHTML = `
         <div class="report-card">
-          <div class="section-label">🔄 Semantic Diff Engine (Op 9)</div>
+          <div class="section-label">${glyph("diff")} Semantic Diff Engine (Op 9)</div>
           <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
             Deep semantic structural diff comparing graph snapshots, live transitions, and What-If contrafactual overlays:
           </div>
@@ -3084,6 +3206,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       `;
     }
 
+    
+
+
     /* ==========================================================================
        Op 10: Cryptographic Audit Ledger
        ========================================================================== */
@@ -3111,8 +3236,8 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       container.innerHTML = `
         <div class="report-card ${chainValid ? 'pass' : 'fail'}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-weight:700; color:var(--accent);">🔒 Tamper-Evident Merkle Hash Chain (Op 10)</div>
-            <span class="signal-pill pill-ready">🔒 Verified SHA-256 Chain (${ledgerEvents.length} Blocks)</span>
+            <div style="font-weight:700; color:var(--accent);">${glyph("ledger", "glyph-accent")} Tamper-Evident Merkle Hash Chain (Op 10)</div>
+            <span class="signal-pill pill-ready">${glyph("ledger", "glyph-sm")} Verified SHA-256 Chain (${ledgerEvents.length} Blocks)</span>
           </div>
           <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
             Cryptographically sealed event ledger guaranteeing non-repudiation, tamper detection, and git-aligned state auditability.
@@ -3123,7 +3248,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           ${ledgerEvents.map(ev => `
             <div class="ledger-block">
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:700; color:var(--accent);">Block #${ev.index} — ${ev.event_type}</span>
+                <span style="font-weight:700; color:var(--accent);">Block #${ev.index} - ${ev.event_type}</span>
                 <span style="color:var(--text-muted); font-size:10px;">${ev.timestamp} by <strong>${ev.actor}</strong></span>
               </div>
               <div class="ledger-hash">Hash: ${ev.event_hash}</div>
@@ -3134,6 +3259,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
       `;
     }
+
+    
+
 
     /* ==========================================================================
        Op 11: Agent Implementation Packet Generator
@@ -3156,13 +3284,13 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
 
       container.innerHTML = `
         <div class="report-card">
-          <div class="section-label">🤖 Autonomous Agent Implementation Packet Generator (Op 11)</div>
+          <div class="section-label">${glyph("packet")} Autonomous Agent Implementation Packet Generator (Op 11)</div>
           <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
             <select id="agentTaskSelect" style="flex:1;" onchange="selectNode(this.value); switchOpsTab('agent');">
               ${nodeOptions}
             </select>
             <button class="action-btn" onclick="copyAgentPacketContent()" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border);">
-              📋 Copy Prompt for LLM Agent
+              Copy Prompt for LLM Agent
             </button>
           </div>
         </div>
@@ -3177,9 +3305,12 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     function copyAgentPacketContent() {
       const text = document.getElementById('agentPacketText').value;
       navigator.clipboard.writeText(text).then(() => {
-        alert('✅ Agent Implementation Packet copied to clipboard!');
+        alert('[OK] Agent Implementation Packet copied to clipboard!');
       });
     }
+
+    
+
 
     /* ==========================================================================
        Microsoft 365 Copilot & Agentic Discovery Bridge (In-Browser Runtime API)
@@ -3194,7 +3325,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
       container.innerHTML = `
         <div class="report-card pass">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:700; color:var(--accent);">🤖 Microsoft 365 Copilot & In-Browser AI Bridge (Agentic Runtime)</span>
+            <span style="font-weight:700; color:var(--accent);">${glyph("cpu", "glyph-accent")} Microsoft 365 Copilot & In-Browser AI Bridge (Agentic Runtime)</span>
             <span class="signal-pill pill-ready">Global API: window.tareGraph</span>
           </div>
           <div style="font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.5;">
@@ -3205,19 +3336,19 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
           <!-- 1-Click Copilot Context Prompt -->
           <div class="report-card" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="section-label">📋 1-Click Copilot Context Prompt</div>
+            <div class="section-label">${glyph("copy")} 1-Click Copilot Context Prompt</div>
             <div style="font-size:11px; color:var(--text-secondary);">
               Ready-to-paste system prompt summarizing the active project, ready frontier, and bottleneck paths for Microsoft 365 Copilot:
             </div>
             <textarea id="copilotContextText" style="flex:1; min-height:160px; background:var(--surface-1); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:4px; padding:8px; font-family:var(--font-mono); font-size:11px; resize:vertical;" readonly>${contextPrompt}</textarea>
             <button class="action-btn" onclick="copyCopilotPrompt()" style="background:var(--accent-bg); color:var(--accent); border-color:var(--accent-border); justify-content:center;">
-              📋 Copy Context Prompt for Copilot
+              Copy Context Prompt for Copilot
             </button>
           </div>
 
           <!-- Ephemeral Script Runner & Sandbox -->
           <div class="report-card" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="section-label">⚡ Ephemeral Script Runner (Test Copilot Methods)</div>
+            <div class="section-label">${glyph("terminal")} Ephemeral Script Runner (Test Copilot Methods)</div>
             <div style="font-size:11px; color:var(--text-secondary);">
               Click any method to execute it live against <code>window.tareGraph</code>:
             </div>
@@ -3235,7 +3366,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
 
         <div class="report-card">
-          <div class="section-label">🔍 Live In-DOM Agentic Manifest (<code>#signal-agentic-manifest</code>)</div>
+          <div class="section-label">${glyph("search")} Live In-DOM Agentic Manifest (<code>#signal-agentic-manifest</code>)</div>
           <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">
             Embedded directly in HTML as <code>&lt;script id="signal-agentic-manifest" type="application/json"&gt;</code> for headless DOM parsers and Copilot page context readers:
           </div>
@@ -3267,7 +3398,7 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
     function copyCopilotPrompt() {
       const text = document.getElementById('copilotContextText').value;
       navigator.clipboard.writeText(text).then(() => {
-        alert('✅ Copilot Context Prompt copied to clipboard!');
+        alert('[OK] Copilot Context Prompt copied to clipboard!');
       });
     }
 
@@ -3333,6 +3464,9 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
         trailEl.textContent = `PROJECT: ${manifestData.project.title} | TASKS: ${nodes.length} | READY FRONTIER: ${readyNodes.map(n => n.id).join(', ')} | CRITICAL PATH: ${cp.path.join(' -> ')} | RUNTIME: window.tareGraph`;
       }
     }
+
+    
+
 
     /* ==========================================================================
        Global Window Agentic API Runtime (window.tareGraph & window.__SIGNAL_AGENT_API__)
@@ -3481,16 +3615,16 @@ SIGNAL_HTML_TEMPLATE = """<!DOCTYPE html>
           </div>
           <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
             <button class="action-btn" onclick="downloadArtifact('json')" style="justify-content:center; padding:10px;">
-              💾 JSON Graph
+              ${glyph("export")} JSON Graph
             </button>
             <button class="action-btn" onclick="downloadArtifact('mermaid')" style="justify-content:center; padding:10px;">
-              📊 Mermaid Flowchart
+              ${glyph("export")} Mermaid Flowchart
             </button>
             <button class="action-btn" onclick="downloadArtifact('md')" style="justify-content:center; padding:10px;">
-              📝 Markdown Spec
+              ${glyph("export")} Markdown Spec
             </button>
             <button class="action-btn" onclick="downloadArtifact('csv')" style="justify-content:center; padding:10px;">
-              📑 CSV Table
+              ${glyph("export")} CSV Table
             </button>
           </div>
         </div>
