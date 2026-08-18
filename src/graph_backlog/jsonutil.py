@@ -98,6 +98,8 @@ def to_markdown(obj: Any) -> str:
         return "```json\n" + json.dumps(stable_dict(obj), ensure_ascii=False, indent=2) + "\n```"
     return str(obj)
 
+ATOMIC_MAGIC_HEADER = "/* TARE_ATOMIC_TEMP_V1 */\n"
+
 def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
     """Safely write text to file atomically using a temporary file with symlink guards and fsync."""
     raw_p = Path(path)
@@ -151,29 +153,6 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
             except OSError:
                 pass
 
-def is_pid_alive(pid: int) -> bool:
-    """Verify whether a process with given PID is actively running (handling cross-user permissions correctly)."""
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
-        if handle == 0:
-            err = ctypes.GetLastError()
-            # ERROR_ACCESS_DENIED (5) means the process is alive but runs under another account/elevation
-            return err == 5
-        ctypes.windll.kernel32.CloseHandle(handle)
-        return True
-    else:
-        try:
-            os.kill(pid, 0)
-            return True
-        except PermissionError:
-            # Process exists and is alive, but owned by another user (EPERM)
-            return True
-        except (OSError, ProcessLookupError):
-            return False
-
 def get_machine_id() -> str:
     """Unique machine and hardware node identity to prevent hostname collision across machines."""
     return f"{socket.gethostname()}_{uuid.getnode()}"
@@ -181,10 +160,9 @@ def get_machine_id() -> str:
 @contextlib.contextmanager
 def graph_lock(
     path: Path | str,
-    timeout: float = 5.0,
-    stale_age_s: float = 30.0
+    timeout: float = 5.0
 ) -> Generator[dict[str, Any], None, None]:
-    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and collision-proof machine ID."""
+    """Acquire a strictly exclusive, atomic lockfile without hazardous automated theft (fail-closed)."""
     raw_target = Path(path)
     if raw_target.is_symlink():
         raise UsageError(f"Refusing to lock a symlink target: {raw_target}")
@@ -215,35 +193,12 @@ def graph_lock(
             acquired = True
             break
         except FileExistsError:
-            try:
-                mtime = os.path.getmtime(str(lock_file))
-                if (time.time() - mtime) > stale_age_s:
-                    try:
-                        raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                        parsed = json.loads(raw) if raw.strip() else {}
-                        owner_pid = parsed.get("pid", 0)
-                        owner_machine = parsed.get("machine_id", "")
-                        owner_host = parsed.get("host", "")
-                        
-                        # STRICT SAFETY: ONLY break stale lock if owner is confirmed dead on the SAME hardware machine
-                        is_same_machine = (owner_machine == current_machine) or (owner_host == socket.gethostname() and not owner_machine)
-                        if is_same_machine and owner_pid > 0:
-                            if not is_pid_alive(owner_pid):
-                                try:
-                                    check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                                    if check_raw == raw:
-                                        os.unlink(str(lock_file))
-                                except OSError:
-                                    pass
-                    except (json.JSONDecodeError, OSError, ValueError):
-                        # Malformed/corrupted lockfile older than stale_age_s
-                        pass
-            except OSError:
-                pass
             time.sleep(0.05)
 
     if not acquired:
-        raise LockTimeoutError(f"Could not acquire exclusive lock on '{target}' after {timeout:.1f}s (held by {lock_file})")
+        raise LockTimeoutError(
+            f"Could not acquire exclusive lock on '{target}' after {timeout:.1f}s (held by {lock_file})"
+        )
 
     try:
         yield lock_data
@@ -252,6 +207,7 @@ def graph_lock(
             try:
                 raw = lock_file.read_text(encoding="utf-8", errors="ignore")
                 parsed = json.loads(raw) if raw.strip() else {}
+                # Strictly only unlink if we own this exact lease token
                 if parsed.get("lease_token") == lease_token:
                     os.unlink(str(lock_file))
             except Exception:

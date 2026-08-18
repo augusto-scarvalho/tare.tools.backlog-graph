@@ -55,8 +55,9 @@ class TestNorthStarLockAndCanonicalHash:
             assert "Could not acquire exclusive lock" in str(exc.value)
 
     def test_graph_lock_stale_reclaim(self, tmp_path: Path):
+        from graph_backlog.validation import doctor_recover
         graph_file = tmp_path / "work-graph.json"
-        graph_file.write_text("{}", encoding="utf-8")
+        graph_file.write_text('{"schema_version": "1.0.0", "nodes": [], "edges": []}', encoding="utf-8")
         lock_file = tmp_path / ".work-graph.json.lock"
 
         # Create simulated stale lock from 100 seconds ago on current host with dead PID
@@ -65,10 +66,14 @@ class TestNorthStarLockAndCanonicalHash:
         past_time = time.time() - 100
         os.utime(str(lock_file), (past_time, past_time))
 
-        # Acquisition should safely reclaim the stale lock (>30s)
-        with graph_lock(graph_file, timeout=1.0, stale_age_s=30.0) as lock_info:
-            assert lock_info["pid"] == os.getpid()
+        # Automatic acquisition must fail closed (raise LockTimeoutError) to eliminate TOCTOU races
+        with pytest.raises(LockTimeoutError):
+            with graph_lock(graph_file, timeout=0.2):
+                pass
 
+        # Operator recovery with force_unlock explicitly frees the abandoned lock
+        rec = doctor_recover(graph_file, force_unlock=True)
+        assert rec["status"] in ("RECOVERED", "STABLE")
         assert not lock_file.exists()
 
     def test_revision_hash_omits_revision_field(self):
@@ -315,7 +320,7 @@ class TestDoctorRecoveryAndSchemaMigration:
 
         # Must NOT steal or delete remote machine lock
         with pytest.raises(LockTimeoutError):
-            with graph_lock(graph_file, timeout=0.2, stale_age_s=30.0):
+            with graph_lock(graph_file, timeout=0.2):
                 pass
 
         assert lock_file.exists(), "Remote lock must remain intact and never be deleted automatically"

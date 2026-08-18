@@ -540,7 +540,12 @@ def migrate_v05_to_v10(raw: dict[str, Any]) -> dict[str, Any]:
     migrated["revision"] = compute_revision_hash(migrated)
     return migrated
 
-def doctor_recover(graph_path: str | Path, stale_tmp_age_s: float = 60.0) -> dict[str, Any]:
+def doctor_recover(
+    graph_path: str | Path,
+    stale_tmp_age_s: float = 60.0,
+    force_unlock: bool = False,
+    clean_tmp: bool = True
+) -> dict[str, Any]:
     """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
     import time
     from pathlib import Path
@@ -554,18 +559,28 @@ def doctor_recover(graph_path: str | Path, stale_tmp_age_s: float = 60.0) -> dic
 
     target = raw_p.resolve(strict=False)
     parent = target.parent
+    lock_file = parent / f".{target.name}.lock"
     recovered_items = []
-    
+
+    # Operator intervention: force removal of an abandoned lock
+    if force_unlock and lock_file.exists():
+        try:
+            lock_file.unlink()
+            recovered_items.append("force_unlocked_stale_lock")
+        except OSError:
+            pass
+
     with graph_lock(target, timeout=5.0):
         # 1. Clean up only verified stale .tmp files from aborted writes (> stale_tmp_age_s)
-        now = time.time()
-        for tmp in parent.glob(f".{target.name}.tmp_*"):
-            try:
-                if (now - tmp.stat().st_mtime) > stale_tmp_age_s:
-                    tmp.unlink()
-                    recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
-            except OSError:
-                pass
+        if clean_tmp:
+            now = time.time()
+            for tmp in parent.glob(f".{target.name}.tmp_*"):
+                try:
+                    if tmp.is_file() and not tmp.is_symlink() and (now - tmp.stat().st_mtime) > stale_tmp_age_s:
+                        tmp.unlink()
+                        recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
+                except OSError:
+                    pass
                     
         # 2. Re-read and stabilize state
         raw = load_json(target)
