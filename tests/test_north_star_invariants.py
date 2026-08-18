@@ -55,6 +55,7 @@ class TestNorthStarLockAndCanonicalHash:
             assert "Could not acquire exclusive lock" in str(exc.value)
 
     def test_graph_lock_stale_reclaim(self, tmp_path: Path):
+        from graph_backlog.validation import doctor_recover
         from graph_backlog.jsonutil import get_machine_id
         graph_file = tmp_path / "work-graph.json"
         graph_file.write_text('{"schema_version": "1.0.0", "nodes": [], "edges": []}', encoding="utf-8")
@@ -66,10 +67,14 @@ class TestNorthStarLockAndCanonicalHash:
         past_time = time.time() - 100
         os.utime(str(lock_file), (past_time, past_time))
 
-        # Automatic acquisition safely reclaims the local dead PID lock (>30s)
-        with graph_lock(graph_file, timeout=1.0, stale_age_s=30.0) as lock_info:
-            assert lock_info["pid"] == os.getpid()
+        # Automatic acquisition must strictly fail closed (raise LockTimeoutError) to eliminate TOCTOU races
+        with pytest.raises(LockTimeoutError):
+            with graph_lock(graph_file, timeout=0.2):
+                pass
 
+        # Explicit operator recovery with force_unlock safely clears the dead PID lock on local machine
+        rec = doctor_recover(graph_file, force_unlock=True)
+        assert rec["status"] in ("RECOVERED", "STABLE")
         assert not lock_file.exists()
 
     def test_revision_hash_omits_revision_field(self):

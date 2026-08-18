@@ -114,7 +114,6 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
     if path.exists() and not overwrite:
         raise UsageError(f"File already exists (overwrite=False): {path}")
     
-    # Isolated private atomic write scratch directory to unequivocally namespace temp writes
     scratch_dir = parent / f".{path.name}.atomic_scratch"
     assert_no_symlinks_in_path(scratch_dir)
     scratch_dir.mkdir(parents=True, exist_ok=True)
@@ -161,8 +160,7 @@ def is_pid_alive(pid: int) -> bool:
         handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
         if handle == 0:
             err = ctypes.GetLastError()
-            # ERROR_ACCESS_DENIED (5) means the process is alive but runs under another account/elevation
-            return err == 5
+            return err == 5  # ERROR_ACCESS_DENIED (5) means process is alive under another account
         ctypes.windll.kernel32.CloseHandle(handle)
         return True
     else:
@@ -170,8 +168,7 @@ def is_pid_alive(pid: int) -> bool:
             os.kill(pid, 0)
             return True
         except PermissionError:
-            # Process exists and is alive, but owned by another user (EPERM)
-            return True
+            return True  # EPERM means process is alive
         except (OSError, ProcessLookupError):
             return False
 
@@ -182,22 +179,23 @@ def get_machine_id() -> str:
 @contextlib.contextmanager
 def graph_lock(
     path: Path | str,
-    timeout: float = 5.0,
-    stale_age_s: float = 30.0
+    timeout: float = 5.0
 ) -> Generator[dict[str, Any], None, None]:
-    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and verified local stale recovery."""
+    """
+    Acquire a strictly exclusive, atomic lockfile (BG-08) using O_CREAT | O_EXCL.
+    Zero automated stale stealing during concurrency to eliminate all TOCTOU double-ownership hazards.
+    """
     assert_no_symlinks_in_path(path)
     target = Path(path).resolve(strict=False)
     target.parent.mkdir(parents=True, exist_ok=True)
     lock_file = target.parent / f".{target.name}.lock"
     start_mono = time.monotonic()
     lease_token = str(uuid.uuid4())
-    current_machine = get_machine_id()
     acquired = False
     lock_data = {
         "pid": os.getpid(),
         "host": socket.gethostname(),
-        "machine_id": current_machine,
+        "machine_id": get_machine_id(),
         "acquired_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "lease_token": lease_token,
         "target_file": str(target)
@@ -213,28 +211,6 @@ def graph_lock(
             acquired = True
             break
         except FileExistsError:
-            try:
-                mtime = os.path.getmtime(str(lock_file))
-                if (time.time() - mtime) > stale_age_s:
-                    try:
-                        raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                        parsed = json.loads(raw) if raw.strip() else {}
-                        owner_pid = parsed.get("pid", 0)
-                        owner_machine = parsed.get("machine_id", "")
-                        
-                        # STRICT: ONLY break stale lock if owner is verified on SAME hardware machine and PID is DEAD
-                        if owner_machine == current_machine and owner_pid > 0:
-                            if not is_pid_alive(owner_pid):
-                                try:
-                                    check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                                    if check_raw == raw:
-                                        os.unlink(str(lock_file))
-                                except OSError:
-                                    pass
-                    except (json.JSONDecodeError, OSError, ValueError):
-                        pass
-            except OSError:
-                pass
             time.sleep(0.05)
 
     if not acquired:
