@@ -141,9 +141,15 @@ def structural_errors(
             err("STALENESS_ENUM", f"{p}.staleness_state", f"invalid staleness {n.get('staleness_state')!r}")
             
         if isinstance(sources, dict):
-            for ref in n.get("source_refs", []) if isinstance(n.get("source_refs"), list) else []:
-                if ref not in sources:
-                    err("INVALID_SOURCE_REF", f"{p}.source_refs", f"unknown source ref {ref!r}")
+            srefs = n.get("source_refs")
+            if isinstance(srefs, list):
+                for j, ref in enumerate(srefs):
+                    if not isinstance(ref, str):
+                        err("SOURCE_REF_TYPE", f"{p}.source_refs[{j}]", f"source_ref must be string, got {type(ref).__name__}")
+                    elif ref not in sources:
+                        err("INVALID_SOURCE_REF", f"{p}.source_refs[{j}]", f"unknown source ref {ref!r}")
+            elif srefs is not None:
+                err("SOURCE_REFS_TYPE", f"{p}.source_refs", "source_refs must be array")
                     
     for nid, cnt in Counter(node_ids).items():
         if cnt > 1:
@@ -190,12 +196,14 @@ def structural_errors(
             err("EDGE_SEMANTIC", f"{p}.semantic", "must be boolean")
         if not isinstance(e.get("source_refs"), list):
             err("EDGE_SOURCE_REFS", f"{p}.source_refs", "must be array")
+        elif isinstance(sources, dict):
+            for j, ref in enumerate(e.get("source_refs", [])):
+                if not isinstance(ref, str):
+                    err("EDGE_SOURCE_REF_TYPE", f"{p}.source_refs[{j}]", f"source_ref must be string, got {type(ref).__name__}")
+                elif ref not in sources:
+                    err("EDGE_SOURCE_REF", f"{p}.source_refs[{j}]", f"unknown source ref {ref!r}")
         if not isinstance(e.get("source_details"), list):
             err("EDGE_SOURCE_DETAILS", f"{p}.source_details", "must be array")
-        if isinstance(sources, dict):
-            for ref in e.get("source_refs", []) if isinstance(e.get("source_refs"), list) else []:
-                if ref not in sources:
-                    err("EDGE_SOURCE_REF", f"{p}.source_refs", f"unknown source ref {ref!r}")
         if not isinstance(e.get("notes"), list):
             err("EDGE_NOTES", f"{p}.notes", "must be array")
         if not isinstance(e.get("confidence"), dict):
@@ -582,16 +590,18 @@ def doctor_recover(
             pass
 
     with graph_lock(target, timeout=5.0):
-        # 1. Clean up only proven stale .tmp files from aborted writes (> stale_tmp_age_s)
+        # 1. Clean up only proven stale temp chunks inside the dedicated atomic scratch directory (> stale_tmp_age_s)
         if clean_tmp:
-            now = time.time()
-            for tmp in parent.glob(f".{target.name}.tmp_*"):
-                try:
-                    if tmp.is_file() and not tmp.is_symlink() and (now - tmp.stat().st_mtime) > stale_tmp_age_s:
-                        tmp.unlink()
-                        recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
-                except OSError:
-                    pass
+            scratch_dir = parent / f".{target.name}.atomic_scratch"
+            if scratch_dir.exists() and scratch_dir.is_dir() and not scratch_dir.is_symlink():
+                now = time.time()
+                for tmp in scratch_dir.glob("atomic_chunk_*.tmp"):
+                    try:
+                        if tmp.is_file() and not tmp.is_symlink() and (now - tmp.stat().st_mtime) > stale_tmp_age_s:
+                            tmp.unlink()
+                            recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
+                    except OSError:
+                        pass
                     
         # 2. Re-read and stabilize state
         raw = load_json(target)

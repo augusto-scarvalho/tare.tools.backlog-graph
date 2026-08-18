@@ -273,15 +273,17 @@ class TestDoctorRecoveryAndSchemaMigration:
         }
         graph_file.write_text(canonical_json(base_raw), encoding="utf-8")
 
-        # Simulate orphaned .tmp file from crashed write (>60s ago)
-        stale_tmp = tmp_path / ".work-graph.json.tmp_999"
+        # Simulate orphaned .tmp chunk in isolated atomic scratch dir from crashed write (>60s ago)
+        scratch_dir = tmp_path / ".work-graph.json.atomic_scratch"
+        scratch_dir.mkdir(parents=True, exist_ok=True)
+        stale_tmp = scratch_dir / "atomic_chunk_999.tmp"
         stale_tmp.write_text("crash artifact", encoding="utf-8")
         past = time.time() - 100
         os.utime(str(stale_tmp), (past, past))
 
         res = doctor_recover(graph_file)
         assert res["status"] in ("RECOVERED", "STABLE")
-        assert not stale_tmp.exists(), "Doctor recover must remove orphaned tmp artifacts"
+        assert not stale_tmp.exists(), "Doctor recover must remove orphaned tmp artifacts from scratch dir"
         assert res["revision"] is not None
 
     def test_doctor_check_detects_invalid_graph(self):
@@ -320,3 +322,26 @@ class TestDoctorRecoveryAndSchemaMigration:
                 pass
 
         assert lock_file.exists(), "Remote lock must remain intact and never be deleted automatically"
+
+    def test_structural_errors_non_scalar_source_refs(self):
+        from graph_backlog.validation import structural_errors
+        bad_graph = {
+            "schema_version": "1.0.0",
+            "sources": {"SRC-1": {"kind": "SPEC", "title": "Spec 1", "recoverability": "RECOVERABLE_REFERENCE", "locator": "spec.md"}},
+            "nodes": [
+                {
+                    "id": "T1", "title": "Task 1", "kind": "task", "cluster": "core", "horizon": "now",
+                    "work_status": "planned", "admission_state": "admitted", "epistemic_status": "known",
+                    "bounded_contexts": ["core"], "priority": "P0", "criticality": "high",
+                    "authority_required": False, "evidence_required": False, "confidence": {},
+                    "summary": "Sum", "exit_criteria": [], "source_refs": [{}], "source_details": [],
+                    "provenance": {}, "source_claim_ids": [], "unlock_score": 1.0, "tags": [], "metrics": {},
+                    "notes": [], "items": [], "canonical_system": "sys", "canonical_id": "c1",
+                    "canonical_revision": "r1", "observed_at": "2026-01-01", "projection_run_id": "run1",
+                    "staleness_state": "FRESH", "readiness": {}, "completion": {"status": "NOT_DONE", "dod_satisfied": False}
+                }
+            ],
+            "edges": []
+        }
+        errs = structural_errors(bad_graph)
+        assert any(e["code"] == "SOURCE_REF_TYPE" for e in errs)

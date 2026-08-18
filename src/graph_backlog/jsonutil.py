@@ -106,7 +106,7 @@ def to_markdown(obj: Any) -> str:
     return str(obj)
 
 def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
-    """Safely write text to file atomically using a temporary file with symlink guards and fsync."""
+    """Safely write text to file atomically using an isolated scratch directory with symlink guards and fsync."""
     assert_no_symlinks_in_path(path)
     path = Path(path).resolve(strict=False)
     parent = path.parent
@@ -114,7 +114,12 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
     if path.exists() and not overwrite:
         raise UsageError(f"File already exists (overwrite=False): {path}")
     
-    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.tmp_", dir=str(parent))
+    # Isolated private atomic write scratch directory to unequivocally namespace temp writes
+    scratch_dir = parent / f".{path.name}.atomic_scratch"
+    assert_no_symlinks_in_path(scratch_dir)
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    
+    fd, tmp = tempfile.mkstemp(prefix="atomic_chunk_", suffix=".tmp", dir=str(scratch_dir))
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
