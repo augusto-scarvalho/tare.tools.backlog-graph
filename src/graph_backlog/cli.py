@@ -32,13 +32,13 @@ from .packet import generate_packet, format_packet_markdown
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
 
-VERSION = "0.2.0"
+VERSION = "1.0.0"
 PASS, VALIDATION_FAIL, RUNTIME_ERROR = 0, 1, 2
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="graph-backlog",
-        description="tare.tools DAG-based Work Graph Backlog tool & engine"
+        prog="backlog",
+        description="tare.tools DAG-based Work Graph Backlog tool & execution engine"
     )
     p.add_argument("--graph", default="work-graph.json", help="Path to work-graph.json")
     p.add_argument("--policy", help="Path to graph-ops-policy.json")
@@ -49,8 +49,11 @@ def build_parser() -> argparse.ArgumentParser:
     sp = p.add_subparsers(dest="cmd", required=True)
 
     # Core inspection & health
-    for name in ("validate", "summary", "cycles", "reconcile", "verify-evidence", "doctor", "history", "coverage", "critical-path", "diagnostics", "lint"):
+    for name in ("validate", "summary", "cycles", "reconcile", "verify-evidence", "history", "coverage", "critical-path", "diagnostics", "lint"):
         sp.add_parser(name)
+
+    doc_p = sp.add_parser("doctor", help="Inspect graph health or recover from crashes")
+    doc_p.add_argument("--recover", action="store_true", help="Perform crash recovery and stabilize graph revision hash (BG-07)")
 
     # Query
     q = sp.add_parser("query")
@@ -172,6 +175,21 @@ def build_parser() -> argparse.ArgumentParser:
     cn.add_argument("--evidence", help="Evidence statement / test log summary")
     cn.add_argument("--grade", default="B", help="Evidence grade (A, B, C, D)")
     cn.add_argument("--save", action="store_true", help="Save changes to graph file directly")
+
+    # Land & CAS (BG-05)
+    ld = sp.add_parser("land", help="Atomically land a train and mark tasks as DONE under CAS check")
+    ld.add_argument("--train", required=True, help="Train ID")
+    ld.add_argument("--tasks", required=True, nargs="+", help="Task ID(s) landed in this train")
+    ld.add_argument("--expect-rev", help="Expected CAS revision hash")
+    ld.add_argument("--evidence", help="Evidence summary / test log proof")
+    ld.add_argument("--save", action="store_true", default=True, help="Save changes directly (default: True)")
+
+    # Supersede (BG-04)
+    ss = sp.add_parser("supersede", help="Formally supersede a task with another active successor")
+    ss.add_argument("id", help="Task ID to mark SUPERSEDED")
+    ss.add_argument("--by", required=True, help="Successor task ID that supersedes this task")
+    ss.add_argument("--reason", help="Reason for superseding")
+    ss.add_argument("--save", action="store_true", default=True, help="Save changes directly (default: True)")
 
     # Mutation testing
     mt = sp.add_parser("mutation-test")
@@ -504,7 +522,11 @@ def main(argv: list[str] | None = None) -> int:
                 }
             }
         elif args.cmd == "doctor":
-            obj = doctor_check(graph, VERSION)
+            if getattr(args, "recover", False):
+                from .validation import doctor_recover
+                obj = doctor_recover(args.graph)
+            else:
+                obj = doctor_check(graph, VERSION)
         elif args.cmd == "intake":
             obj = handle_intake(graph, args)
         elif args.cmd == "export":
@@ -536,32 +558,81 @@ def main(argv: list[str] | None = None) -> int:
                 obj = {"exported": args.output, "format": "graphml", "nodes": len(graph.nodes)}
         elif args.cmd == "add-node":
             from .mutations import add_node_to_graph
-            new_graph_dict = add_node_to_graph(
-                graph,
-                node_id=args.id,
-                title=args.title,
-                cluster=args.cluster,
-                priority=args.priority,
-                horizon=args.horizon,
-                criticality=args.criticality,
-                summary=args.summary,
-                depends_on=args.depends_on,
-                tags=args.tag
-            )
-            if args.save:
-                atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
-            obj = {"status": "PASS", "action": "added_node", "node_id": args.id, "saved": bool(args.save)}
+            from .jsonutil import graph_lock
+            with graph_lock(args.graph):
+                new_graph_dict = add_node_to_graph(
+                    graph,
+                    node_id=args.id,
+                    title=args.title,
+                    cluster=args.cluster,
+                    priority=args.priority,
+                    horizon=args.horizon,
+                    criticality=args.criticality,
+                    summary=args.summary,
+                    depends_on=args.depends_on,
+                    tags=args.tag
+                )
+                if args.save:
+                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {"status": "PASS", "action": "added_node", "node_id": args.id, "saved": bool(args.save), "revision": new_graph_dict.get("revision")}
         elif args.cmd == "complete-node":
             from .mutations import complete_node_in_graph
-            new_graph_dict = complete_node_in_graph(
-                graph,
-                node_id=args.id,
-                evidence_summary=args.evidence,
-                evidence_grade=args.grade
-            )
-            if args.save:
-                atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
-            obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save)}
+            from .jsonutil import graph_lock
+            with graph_lock(args.graph):
+                new_graph_dict = complete_node_in_graph(
+                    graph,
+                    node_id=args.id,
+                    evidence_summary=args.evidence,
+                    evidence_grade=args.grade
+                )
+                if args.save:
+                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save), "revision": new_graph_dict.get("revision")}
+        elif args.cmd == "land":
+            from .mutations import land_train_tasks
+            from .jsonutil import graph_lock
+            with graph_lock(args.graph):
+                raw = load_json(args.graph)
+                locked_wg = WorkGraph(raw, policy=pol, taxonomy=tax)
+                new_graph_dict = land_train_tasks(
+                    locked_wg,
+                    train_id=args.train,
+                    task_ids=args.tasks,
+                    evidence_summary=args.evidence,
+                    expected_rev=args.expect_rev
+                )
+                if args.save:
+                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {
+                "status": "PASS",
+                "action": "landed_train",
+                "train_id": args.train,
+                "task_ids": args.tasks,
+                "new_revision": new_graph_dict.get("revision"),
+                "saved": bool(args.save)
+            }
+        elif args.cmd == "supersede":
+            from .mutations import supersede_node_in_graph
+            from .jsonutil import graph_lock
+            with graph_lock(args.graph):
+                raw = load_json(args.graph)
+                locked_wg = WorkGraph(raw, policy=pol, taxonomy=tax)
+                new_graph_dict = supersede_node_in_graph(
+                    locked_wg,
+                    node_id=args.id,
+                    superseded_by_id=args.by,
+                    reason=args.reason
+                )
+                if args.save:
+                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            obj = {
+                "status": "PASS",
+                "action": "superseded_node",
+                "node_id": args.id,
+                "superseded_by": args.by,
+                "new_revision": new_graph_dict.get("revision"),
+                "saved": bool(args.save)
+            }
         elif args.cmd == "mutation-test":
             from .mutation_testing import MutationEngine
             tests = args.test_module or ["tests.test_algorithms", "tests.test_validation", "tests.test_graph_ops"]

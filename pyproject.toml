@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tare-tools-graph-backlog"
-version = "0.2.0"
-description = "Deterministic DAG-based work graph backlog, dependency analyzer, and implementation packet engine."
+name = "tare-tools-backlog-graph"
+version = "1.0.0"
+description = "Deterministic Directed Acyclic Graph (DAG) Backlog Engine, multi-theme visualizer, and implementation packet generator for human developers and autonomous AI agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "Augusto Carvalho", email = "augusto-scarvalho@users.noreply.github.com" }
+    { name = "Augusto Carvalho", email = "augusto.s.carvalho@gmail.com" }
 ]
 keywords = [
     "dag",
@@ -20,10 +20,11 @@ keywords = [
     "project-management",
     "ai-agents",
     "planning",
+    "topological-sort",
     "tare-tools"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
     "License :: OSI Approved :: Apache Software License",
@@ -41,6 +42,7 @@ dev = [
 ]
 
 [project.scripts]
+backlog = "graph_backlog.cli:main"
 graph-backlog = "graph_backlog.cli:main"
 graph-ops = "graph_backlog.cli:main"
 
@@ -48,7 +50,7 @@ graph-ops = "graph_backlog.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-graph_backlog = ["data/*"]
+graph_backlog = ["data/*", "contracts/**/*", "contracts/**/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

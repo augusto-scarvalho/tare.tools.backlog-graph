@@ -6,6 +6,14 @@ from typing import Any
 
 from .core import WorkGraph, EVIDENCE_ORDER, normalize_key
 
+PRIORITY_WEIGHTS: dict[str, int] = {
+    "P0": 0,
+    "P1": 1,
+    "P2": 2,
+    "P3": 3,
+    "P4": 4
+}
+
 def readiness(graph: WorkGraph, node: dict[str, Any], profile: str = "planning") -> dict[str, Any]:
     """Compute deterministic readiness of a node under the specified profile ('planning' or 'operational')."""
     node_id = node.get("id", "")
@@ -73,13 +81,41 @@ def unresolved_prereqs(graph: WorkGraph, node_id: str, profile: str = "planning"
             })
     return sorted(out, key=lambda x: (x["completion"], x["id"]))
 
+def downstream_critical_depth(graph: WorkGraph, node_id: str, memo: dict[str, int] | None = None) -> int:
+    """Compute the longest downstream chain depth unlocked by this node."""
+    if memo is None:
+        memo = {}
+    if node_id in memo:
+        return memo[node_id]
+        
+    downstream = graph.block_out.get(node_id, [])
+    if not downstream:
+        memo[node_id] = 0
+        return 0
+        
+    max_d = 0
+    for _, dst in downstream:
+        if dst in graph.by_id:
+            d = 1 + downstream_critical_depth(graph, dst, memo)
+            if d > max_d:
+                max_d = d
+    memo[node_id] = max_d
+    return max_d
+
+def frontier_sort_key(graph: WorkGraph, node: dict[str, Any]) -> tuple[int, int, str]:
+    """Canonical total order tuple: Priority (P0 > P1 > P2) -> -CriticalPathDepth -> Lexicographical ID (BG-03)."""
+    p_str = str(node.get("priority", "P2")).strip().upper()
+    p_weight = PRIORITY_WEIGHTS.get(p_str, 99)
+    depth = downstream_critical_depth(graph, node.get("id", ""))
+    return (p_weight, -depth, str(node.get("id", "")))
+
 def compute_frontier(
     graph: WorkGraph,
     profile: str = "planning",
     include_partial: bool = True,
     all_active: bool = False
 ) -> list[dict[str, Any]]:
-    """Compute the dependency-feasible frontier (ready actionable items)."""
+    """Compute the dependency-feasible frontier with deterministic total ordering (BG-03)."""
     out = []
     for n in graph.nodes:
         if not isinstance(n, dict) or "id" not in n:
@@ -92,7 +128,7 @@ def compute_frontier(
                 out.append(n)
         elif rd["ready"]:
             out.append(n)
-    return sorted(out, key=lambda x: x["id"])
+    return sorted(out, key=lambda x: frontier_sort_key(graph, x))
 
 def find_cycles_scc(graph: WorkGraph) -> list[list[str]]:
     """Find all blocking cycles (strongly connected components with size > 1 or self-loops) using Tarjan's algorithm."""
@@ -163,7 +199,7 @@ def score_breakdown(graph: WorkGraph, node: dict[str, Any]) -> dict[str, Any]:
     return {"parts": parts, "score": sum(parts.values())}
 
 def ranked_next(graph: WorkGraph, profile: str = "planning", limit: int = 10) -> list[dict[str, Any]]:
-    """Rank the feasible frontier using deterministic policy weights."""
+    """Rank the feasible frontier using canonical total ordering and policy breakdown."""
     rows = []
     for n in compute_frontier(graph, profile):
         sc = score_breakdown(graph, n)
@@ -171,12 +207,14 @@ def ranked_next(graph: WorkGraph, profile: str = "planning", limit: int = 10) ->
             "id": n["id"],
             "title": n.get("title", ""),
             "cluster": n.get("cluster", ""),
+            "priority": n.get("priority", "P2"),
+            "critical_depth": downstream_critical_depth(graph, n["id"]),
             "score": sc["score"],
             "score_parts": sc["parts"],
             "profile": profile,
             "authority_granted_by_graph": False
         })
-    return sorted(rows, key=lambda x: (-x["score"], x["id"]))[:limit]
+    return rows[:limit]
 
 def downstream_reach(graph: WorkGraph, start_id: str, blocking_only: bool = True) -> list[dict[str, Any]]:
     """Find all nodes that depend downstream on start_id."""

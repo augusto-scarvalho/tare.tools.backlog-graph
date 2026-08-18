@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from collections import Counter
 from typing import Any
 
@@ -19,7 +20,7 @@ def structural_errors(
     if not isinstance(raw, dict):
         return [{"code": "ROOT_TYPE", "path": "$", "message": "root must be object"}]
         
-    allowed_root = {"meta", "sources", "nodes", "edges"}
+    allowed_root = {"meta", "sources", "nodes", "edges", "revision", "schema_version"}
     for k in raw:
         if k not in allowed_root:
             err("UNKNOWN_ROOT_FIELD", f"$.{k}", "unknown root field")
@@ -78,6 +79,7 @@ def structural_errors(
         "projection_run_id", "staleness_state", "readiness", "completion"
     }
     
+    optional_node = {"spec_ref", "superseded_by", "superseded_at", "supersession_reason"}
     for i, n in enumerate(nodes):
         p = f"$.nodes[{i}]"
         if not isinstance(n, dict):
@@ -85,7 +87,7 @@ def structural_errors(
             continue
             
         missing = sorted(required_node - set(n))
-        unknown = sorted(set(n) - required_node)
+        unknown = sorted(set(n) - required_node - optional_node)
         for k in missing:
             err("NODE_REQUIRED", f"{p}.{k}", "missing required field")
         for k in unknown:
@@ -442,7 +444,7 @@ def diagnose_graph(raw: dict[str, Any] | WorkGraph) -> dict[str, Any]:
     }
     return anomalies
 
-def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> dict[str, Any]:
+def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "1.0.0") -> dict[str, Any]:
     """Run comprehensive health checks across validation, evidence, reconciliation, and cycle detection."""
     if isinstance(graph, dict):
         graph = WorkGraph(graph)
@@ -467,4 +469,66 @@ def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "0.2.0") -> d
         "diagnostics_summary": diag["summary"],
         "graph_ops_version": version
     }
+
+def migrate_v05_to_v10(raw: dict[str, Any]) -> dict[str, Any]:
+    """Deterministically migrate a legacy v0.5 graph to schema v1.0.0 (BG-09)."""
+    import copy
+    from .jsonutil import compute_revision_hash
+    migrated = copy.deepcopy(raw)
+    
+    migrated["schema_version"] = "1.0.0"
+    if "meta" not in migrated or not isinstance(migrated["meta"], dict):
+        migrated["meta"] = {}
+    migrated["meta"]["schema"] = "tare.tools/work-graph/1.0"
+    
+    for n in migrated.get("nodes", []):
+        if not isinstance(n.get("completion"), dict):
+            n["completion"] = {
+                "status": "NOT_DONE",
+                "dod_satisfied": False,
+                "evidence_grade": None,
+                "materialization_scope": "local"
+            }
+        elif "dod_satisfied" not in n["completion"]:
+            n["completion"]["dod_satisfied"] = (n["completion"].get("status") == "DONE")
+            
+    migrated["revision"] = compute_revision_hash(migrated)
+    return migrated
+
+def doctor_recover(graph_path: str | Path) -> dict[str, Any]:
+    """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
+    from pathlib import Path
+    from .jsonutil import load_json, atomic_write, graph_lock, compute_revision_hash, stable_dict
+    
+    target = Path(graph_path).resolve(strict=False)
+    parent = target.parent
+    recovered_items = []
+    
+    # 1. Clean up dangling .tmp files from aborted writes
+    for tmp in parent.glob(f".{target.name}.*"):
+        if not tmp.name.endswith(".lock"):
+            try:
+                tmp.unlink()
+                recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
+            except OSError:
+                pass
+                
+    # 2. Acquire lock and stabilize state
+    with graph_lock(target, timeout=5.0):
+        raw = load_json(target)
+        migrated = migrate_v05_to_v10(raw) if raw.get("schema_version") != "1.0.0" else raw
+        expected_hash = compute_revision_hash(migrated)
+        if migrated.get("revision") != expected_hash:
+            migrated["revision"] = expected_hash
+            recovered_items.append("recalculated_canonical_revision_hash")
+            
+        atomic_write(target, json.dumps(stable_dict(migrated), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+        
+    return {
+        "status": "RECOVERED" if recovered_items else "STABLE",
+        "target": str(target),
+        "recovered_actions": recovered_items,
+        "revision": migrated.get("revision")
+    }
+
 
