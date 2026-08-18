@@ -204,12 +204,20 @@ def graph_lock(
     while (time.monotonic() - start_mono) < timeout:
         try:
             fd = os.open(str(lock_file), os.O_CREAT | os.O_EXCL | os.O_RDWR)
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(json.dumps(lock_data, ensure_ascii=False, indent=2))
-                f.flush()
-                os.fsync(f.fileno())
-            acquired = True
-            break
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.write(json.dumps(lock_data, ensure_ascii=False, indent=2))
+                    f.flush()
+                    os.fsync(f.fileno())
+                acquired = True
+                break
+            except Exception:
+                # Guaranteed cleanup: never leave an uninitialized/empty lockfile behind on write error
+                try:
+                    os.unlink(str(lock_file))
+                except OSError:
+                    pass
+                raise
         except FileExistsError:
             time.sleep(0.05)
 
