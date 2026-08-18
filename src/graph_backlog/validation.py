@@ -446,12 +446,35 @@ def diagnose_graph(raw: dict[str, Any] | WorkGraph) -> dict[str, Any]:
 
 def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "1.0.0") -> dict[str, Any]:
     """Run comprehensive health checks across validation, evidence, reconciliation, and cycle detection."""
+    from .core import load_default_policy, load_default_taxonomy
+    
     if isinstance(graph, dict):
-        graph = WorkGraph(graph)
-    ev = verify_evidence(graph)
-    rec = reconcile(graph)
-    cycles = find_cycles_scc(graph)
-    diag = diagnose_graph(graph)
+        raw_dict = graph
+        pol = load_default_policy()
+        tax = load_default_taxonomy()
+    else:
+        raw_dict = graph.to_dict()
+        pol = graph.policy
+        tax = graph.taxonomy
+
+    val = validate_work_graph(raw_dict, pol, tax)
+    if val["status"] != "PASS":
+        return {
+            "status": "FAIL",
+            "validation": "FAIL",
+            "validation_errors": val.get("errors", []),
+            "blocking_cycles": [],
+            "evidence_verification": {"status": "FAIL", "coverage": 0.0},
+            "reconcile": {"status": "FAIL", "operational_divergence_count": 0},
+            "diagnostics_summary": {"health_status": "INVALID_SCHEMA"},
+            "graph_ops_version": version
+        }
+
+    wg = graph if isinstance(graph, WorkGraph) else WorkGraph(raw_dict, policy=pol, taxonomy=tax)
+    ev = verify_evidence(wg)
+    rec = reconcile(wg)
+    cycles = find_cycles_scc(wg)
+    diag = diagnose_graph(wg)
     
     if cycles or ev["status"] == "FAIL":
         status = "FAIL"
@@ -463,6 +486,7 @@ def doctor_check(graph: WorkGraph | dict[str, Any], version: str = "1.0.0") -> d
     return {
         "status": status,
         "validation": "PASS",
+        "validation_errors": [],
         "blocking_cycles": cycles,
         "evidence_verification": ev,
         "reconcile": rec,

@@ -99,16 +99,24 @@ def to_markdown(obj: Any) -> str:
     return str(obj)
 
 def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
-    """Safely write text to file atomically using a temporary file with fsync and Windows transient retry."""
-    path = Path(path).resolve(strict=False)
+    """Safely write text to file atomically using a temporary file with symlink guards and fsync."""
+    raw_p = Path(path)
+    
+    # 1. Strict anti-symlink checks BEFORE resolving
+    if raw_p.is_symlink():
+        raise UsageError(f"Refusing to write to a symlink: {raw_p}")
+    if raw_p.parent.is_symlink():
+        raise UsageError(f"Refusing to write inside a symlink directory: {raw_p.parent}")
+
+    path = raw_p.resolve(strict=False)
     parent = path.parent
     if parent.is_symlink():
-        raise UsageError("Refusing symlink parent directory")
+        raise UsageError(f"Refusing symlink parent directory: {parent}")
     parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not overwrite:
         raise UsageError(f"File already exists (overwrite=False): {path}")
     if path.is_symlink():
-        raise UsageError("Refusing to overwrite a symlink")
+        raise UsageError(f"Refusing to overwrite a symlink: {path}")
     
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.tmp_", dir=str(parent))
     try:
@@ -166,22 +174,32 @@ def is_pid_alive(pid: int) -> bool:
         except (OSError, ProcessLookupError):
             return False
 
+def get_machine_id() -> str:
+    """Unique machine and hardware node identity to prevent hostname collision across machines."""
+    return f"{socket.gethostname()}_{uuid.getnode()}"
+
 @contextlib.contextmanager
 def graph_lock(
     path: Path | str,
     timeout: float = 5.0,
     stale_age_s: float = 30.0
 ) -> Generator[dict[str, Any], None, None]:
-    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and live-PID checking."""
-    target = Path(path).resolve(strict=False)
+    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and collision-proof machine ID."""
+    raw_target = Path(path)
+    if raw_target.is_symlink():
+        raise UsageError(f"Refusing to lock a symlink target: {raw_target}")
+
+    target = raw_target.resolve(strict=False)
     target.parent.mkdir(parents=True, exist_ok=True)
     lock_file = target.parent / f".{target.name}.lock"
     start_mono = time.monotonic()
     lease_token = str(uuid.uuid4())
+    current_machine = get_machine_id()
     acquired = False
     lock_data = {
         "pid": os.getpid(),
         "host": socket.gethostname(),
+        "machine_id": current_machine,
         "acquired_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "lease_token": lease_token,
         "target_file": str(target)
@@ -200,22 +218,26 @@ def graph_lock(
             try:
                 mtime = os.path.getmtime(str(lock_file))
                 if (time.time() - mtime) > stale_age_s:
-                    raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                    parsed = json.loads(raw) if raw.strip() else {}
-                    owner_pid = parsed.get("pid", 0)
-                    owner_host = parsed.get("host", "")
-                    
-                    # STRICT SAFETY: ONLY break stale lock if owner is confirmed dead on the SAME local host
-                    # NEVER steal locks from remote hosts or unconfirmed PIDs!
-                    if owner_host == socket.gethostname() and owner_pid > 0:
-                        if not is_pid_alive(owner_pid):
-                            try:
-                                # Re-check ownership before unlinking to prevent TOCTOU
-                                check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
-                                if check_raw == raw:
-                                    os.unlink(str(lock_file))
-                            except OSError:
-                                pass
+                    try:
+                        raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                        parsed = json.loads(raw) if raw.strip() else {}
+                        owner_pid = parsed.get("pid", 0)
+                        owner_machine = parsed.get("machine_id", "")
+                        owner_host = parsed.get("host", "")
+                        
+                        # STRICT SAFETY: ONLY break stale lock if owner is confirmed dead on the SAME hardware machine
+                        is_same_machine = (owner_machine == current_machine) or (owner_host == socket.gethostname() and not owner_machine)
+                        if is_same_machine and owner_pid > 0:
+                            if not is_pid_alive(owner_pid):
+                                try:
+                                    check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                                    if check_raw == raw:
+                                        os.unlink(str(lock_file))
+                                except OSError:
+                                    pass
+                    except (json.JSONDecodeError, OSError, ValueError):
+                        # Malformed/corrupted lockfile older than stale_age_s
+                        pass
             except OSError:
                 pass
             time.sleep(0.05)

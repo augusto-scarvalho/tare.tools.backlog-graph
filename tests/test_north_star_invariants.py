@@ -282,3 +282,40 @@ class TestDoctorRecoveryAndSchemaMigration:
         assert res["status"] in ("RECOVERED", "STABLE")
         assert not stale_tmp.exists(), "Doctor recover must remove orphaned tmp artifacts"
         assert res["revision"] is not None
+
+    def test_doctor_check_detects_invalid_graph(self):
+        from graph_backlog.validation import doctor_check
+        # Missing id and invalid status
+        invalid_raw = {
+            "schema_version": "1.0.0",
+            "nodes": [{"title": "No ID"}],
+            "edges": []
+        }
+        res = doctor_check(invalid_raw)
+        assert res["status"] == "FAIL"
+        assert res["validation"] == "FAIL"
+        assert len(res["validation_errors"]) > 0
+
+    def test_graph_lock_remote_machine_is_never_stolen(self, tmp_path: Path):
+        from graph_backlog.jsonutil import graph_lock, LockTimeoutError
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_text("{}", encoding="utf-8")
+        lock_file = tmp_path / ".work-graph.json.lock"
+
+        # Stale lock from remote machine (>100s ago)
+        remote_stale_data = {
+            "pid": 1234,
+            "host": "remote-server",
+            "machine_id": "remote-server_999888777",
+            "lease_token": "remote-lease"
+        }
+        lock_file.write_text(json.dumps(remote_stale_data), encoding="utf-8")
+        past_time = time.time() - 200
+        os.utime(str(lock_file), (past_time, past_time))
+
+        # Must NOT steal or delete remote machine lock
+        with pytest.raises(LockTimeoutError):
+            with graph_lock(graph_file, timeout=0.2, stale_age_s=30.0):
+                pass
+
+        assert lock_file.exists(), "Remote lock must remain intact and never be deleted automatically"
