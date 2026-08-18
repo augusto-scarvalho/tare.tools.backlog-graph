@@ -549,20 +549,26 @@ def doctor_recover(
     """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
     import time
     from pathlib import Path
-    from .jsonutil import load_json, atomic_write, graph_lock, compute_revision_hash, stable_dict, UsageError
+    from .jsonutil import (
+        load_json,
+        atomic_write,
+        graph_lock,
+        compute_revision_hash,
+        stable_dict,
+        UsageError,
+        assert_no_symlinks_in_path,
+        get_machine_id,
+        is_pid_alive
+    )
     
-    raw_p = Path(graph_path)
-    if raw_p.is_symlink():
-        raise UsageError(f"Refusing to recover a symlink target: {raw_p}")
-    if raw_p.parent.is_symlink():
-        raise UsageError(f"Refusing to recover inside a symlink directory: {raw_p.parent}")
-
-    target = raw_p.resolve(strict=False)
+    assert_no_symlinks_in_path(graph_path)
+    target = Path(graph_path).resolve(strict=False)
     parent = target.parent
     lock_file = parent / f".{target.name}.lock"
+    current_machine = get_machine_id()
     recovered_items = []
 
-    # Operator intervention: force removal of an abandoned lock
+    # Operator intervention: safe force removal of an abandoned lock on local machine
     if force_unlock and lock_file.exists():
         try:
             lock_file.unlink()

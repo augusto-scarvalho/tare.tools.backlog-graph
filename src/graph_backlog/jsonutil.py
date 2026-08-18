@@ -28,6 +28,15 @@ class RevisionMismatchError(UsageError):
     """Raised when a CAS operation detects a divergent graph revision."""
     pass
 
+ATOMIC_MAGIC_HEADER = "/* TARE_ATOMIC_TEMP_V1 */\n"
+
+def assert_no_symlinks_in_path(p: Path | str) -> None:
+    """Validate that no component of the path (target or any ancestor) is a symlink."""
+    curr = Path(p).absolute()
+    for component in [curr] + list(curr.parents):
+        if component.is_symlink():
+            raise UsageError(f"Security Violation: Refusing symlink in path component: '{component}'")
+
 def stable_dict(v: Any, exclude_keys: tuple[str, ...] = ()) -> Any:
     """Recursively sort dictionary keys for deterministic serialization, optionally omitting excluded keys."""
     if isinstance(v, dict):
@@ -98,27 +107,14 @@ def to_markdown(obj: Any) -> str:
         return "```json\n" + json.dumps(stable_dict(obj), ensure_ascii=False, indent=2) + "\n```"
     return str(obj)
 
-ATOMIC_MAGIC_HEADER = "/* TARE_ATOMIC_TEMP_V1 */\n"
-
 def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
     """Safely write text to file atomically using a temporary file with symlink guards and fsync."""
-    raw_p = Path(path)
-    
-    # 1. Strict anti-symlink checks BEFORE resolving
-    if raw_p.is_symlink():
-        raise UsageError(f"Refusing to write to a symlink: {raw_p}")
-    if raw_p.parent.is_symlink():
-        raise UsageError(f"Refusing to write inside a symlink directory: {raw_p.parent}")
-
-    path = raw_p.resolve(strict=False)
+    assert_no_symlinks_in_path(path)
+    path = Path(path).resolve(strict=False)
     parent = path.parent
-    if parent.is_symlink():
-        raise UsageError(f"Refusing symlink parent directory: {parent}")
     parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not overwrite:
         raise UsageError(f"File already exists (overwrite=False): {path}")
-    if path.is_symlink():
-        raise UsageError(f"Refusing to overwrite a symlink: {path}")
     
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.tmp_", dir=str(parent))
     try:
@@ -153,6 +149,29 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
             except OSError:
                 pass
 
+def is_pid_alive(pid: int) -> bool:
+    """Verify whether a process with given PID is actively running (handling cross-user permissions correctly)."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if handle == 0:
+            err = ctypes.GetLastError()
+            # ERROR_ACCESS_DENIED (5) means the process is alive but runs under another account/elevation
+            return err == 5
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+    else:
+        try:
+            os.kill(pid, 0)
+            return True
+        except PermissionError:
+            # Process exists and is alive, but owned by another user (EPERM)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
 def get_machine_id() -> str:
     """Unique machine and hardware node identity to prevent hostname collision across machines."""
     return f"{socket.gethostname()}_{uuid.getnode()}"
@@ -160,14 +179,12 @@ def get_machine_id() -> str:
 @contextlib.contextmanager
 def graph_lock(
     path: Path | str,
-    timeout: float = 5.0
+    timeout: float = 5.0,
+    stale_age_s: float = 30.0
 ) -> Generator[dict[str, Any], None, None]:
-    """Acquire a strictly exclusive, atomic lockfile without hazardous automated theft (fail-closed)."""
-    raw_target = Path(path)
-    if raw_target.is_symlink():
-        raise UsageError(f"Refusing to lock a symlink target: {raw_target}")
-
-    target = raw_target.resolve(strict=False)
+    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and verified local stale recovery."""
+    assert_no_symlinks_in_path(path)
+    target = Path(path).resolve(strict=False)
     target.parent.mkdir(parents=True, exist_ok=True)
     lock_file = target.parent / f".{target.name}.lock"
     start_mono = time.monotonic()
@@ -193,6 +210,28 @@ def graph_lock(
             acquired = True
             break
         except FileExistsError:
+            try:
+                mtime = os.path.getmtime(str(lock_file))
+                if (time.time() - mtime) > stale_age_s:
+                    try:
+                        raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                        parsed = json.loads(raw) if raw.strip() else {}
+                        owner_pid = parsed.get("pid", 0)
+                        owner_machine = parsed.get("machine_id", "")
+                        
+                        # STRICT: ONLY break stale lock if owner is verified on SAME hardware machine and PID is DEAD
+                        if owner_machine == current_machine and owner_pid > 0:
+                            if not is_pid_alive(owner_pid):
+                                try:
+                                    check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                                    if check_raw == raw:
+                                        os.unlink(str(lock_file))
+                                except OSError:
+                                    pass
+                    except (json.JSONDecodeError, OSError, ValueError):
+                        pass
+            except OSError:
+                pass
             time.sleep(0.05)
 
     if not acquired:
@@ -207,7 +246,6 @@ def graph_lock(
             try:
                 raw = lock_file.read_text(encoding="utf-8", errors="ignore")
                 parsed = json.loads(raw) if raw.strip() else {}
-                # Strictly only unlink if we own this exact lease token
                 if parsed.get("lease_token") == lease_token:
                     os.unlink(str(lock_file))
             except Exception:
