@@ -171,12 +171,21 @@ def structural_errors(
             err("EDGE_UNKNOWN", f"{p}.{k}", "unknown edge field")
             
         a, b, t = e.get("from"), e.get("to"), e.get("type")
-        if a not in node_set:
+        if not isinstance(a, str):
+            err("EDGE_FIELD_TYPE", f"{p}.from", f"from must be string, got {type(a).__name__}")
+        elif a not in node_set:
             err("EDGE_SOURCE", f"{p}.from", f"missing node {a!r}")
-        if b not in node_set:
+            
+        if not isinstance(b, str):
+            err("EDGE_FIELD_TYPE", f"{p}.to", f"to must be string, got {type(b).__name__}")
+        elif b not in node_set:
             err("EDGE_TARGET", f"{p}.to", f"missing node {b!r}")
-        if t not in rels:
+            
+        if not isinstance(t, str):
+            err("EDGE_FIELD_TYPE", f"{p}.type", f"type must be string, got {type(t).__name__}")
+        elif t not in rels:
             err("RELATION_TAXONOMY", f"{p}.type", f"relation {t!r} has no taxonomy")
+
         if not isinstance(e.get("semantic"), bool):
             err("EDGE_SEMANTIC", f"{p}.semantic", "must be boolean")
         if not isinstance(e.get("source_refs"), list):
@@ -194,7 +203,8 @@ def structural_errors(
         if not isinstance(e.get("requirements"), dict):
             err("EDGE_REQUIREMENTS", f"{p}.requirements", "must be object")
             
-        edge_keys.append((a, b, t, bool(e.get("semantic", True))))
+        if isinstance(a, str) and isinstance(b, str) and isinstance(t, str):
+            edge_keys.append((a, b, t, bool(e.get("semantic", True))))
         
     for ek, cnt in Counter(edge_keys).items():
         if cnt > 1:
@@ -207,12 +217,23 @@ def validate_work_graph(
     policy: dict[str, Any] | None = None,
     taxonomy: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Perform full validation of a work graph JSON (structural + DAG cycle detection)."""
+    """Perform full validation of a work graph JSON (structural + revision + DAG cycle detection)."""
     from .core import load_default_policy, load_default_taxonomy
+    from .jsonutil import compute_revision_hash
     policy = policy or load_default_policy()
     taxonomy = taxonomy or load_default_taxonomy()
     
     errors = structural_errors(raw, taxonomy, policy.get("graph_schema"))
+
+    # Revision Integrity Check
+    if "revision" in raw and isinstance(raw["revision"], str):
+        expected_rev = compute_revision_hash(raw)
+        if raw["revision"] != expected_rev:
+            errors.append({
+                "code": "REVISION_MISMATCH",
+                "path": "$.revision",
+                "message": f"Graph revision '{raw['revision']}' does not match content hash '{expected_rev}'"
+            })
     if errors:
         return {
             "status": "FAIL",
@@ -523,9 +544,15 @@ def doctor_recover(graph_path: str | Path, stale_tmp_age_s: float = 60.0) -> dic
     """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
     import time
     from pathlib import Path
-    from .jsonutil import load_json, atomic_write, graph_lock, compute_revision_hash, stable_dict
+    from .jsonutil import load_json, atomic_write, graph_lock, compute_revision_hash, stable_dict, UsageError
     
-    target = Path(graph_path).resolve(strict=False)
+    raw_p = Path(graph_path)
+    if raw_p.is_symlink():
+        raise UsageError(f"Refusing to recover a symlink target: {raw_p}")
+    if raw_p.parent.is_symlink():
+        raise UsageError(f"Refusing to recover inside a symlink directory: {raw_p.parent}")
+
+    target = raw_p.resolve(strict=False)
     parent = target.parent
     recovered_items = []
     
