@@ -81,25 +81,30 @@ def unresolved_prereqs(graph: WorkGraph, node_id: str, profile: str = "planning"
             })
     return sorted(out, key=lambda x: (x["completion"], x["id"]))
 
-def downstream_critical_depth(graph: WorkGraph, node_id: str, memo: dict[str, int] | None = None) -> int:
-    """Compute the longest downstream chain depth unlocked by this node."""
-    if memo is None:
-        memo = {}
-    if node_id in memo:
-        return memo[node_id]
-        
-    downstream = graph.block_out.get(node_id, [])
-    if not downstream:
-        memo[node_id] = 0
+def downstream_critical_depth(graph: WorkGraph, node_id: str) -> int:
+    """Compute the longest downstream chain depth unlocked by this node using safe iterative DAG traversal."""
+    if node_id not in graph.by_id:
         return 0
         
+    q = deque([(node_id, 0)])
+    visited_depth: dict[str, int] = {node_id: 0}
     max_d = 0
-    for _, dst in downstream:
-        if dst in graph.by_id:
-            d = 1 + downstream_critical_depth(graph, dst, memo)
-            if d > max_d:
-                max_d = d
-    memo[node_id] = max_d
+    node_limit = len(graph.by_id)
+
+    while q:
+        curr, depth = q.popleft()
+        if depth > max_d:
+            max_d = depth
+            
+        for _, dst in graph.block_out.get(curr, []):
+            if dst in graph.by_id:
+                next_d = depth + 1
+                if dst not in visited_depth or next_d > visited_depth[dst]:
+                    visited_depth[dst] = next_d
+                    # Cycle guard: depth cannot exceed number of nodes
+                    if next_d <= node_limit:
+                        q.append((dst, next_d))
+                        
     return max_d
 
 def frontier_sort_key(graph: WorkGraph, node: dict[str, Any]) -> tuple[int, int, str]:
@@ -139,41 +144,45 @@ def find_cycles_scc(graph: WorkGraph) -> list[list[str]]:
     lowlink: dict[str, int] = {}
     comps: list[list[str]] = []
     
-    sys.setrecursionlimit(max(1000, len(graph.nodes) * 4))
-    
-    def strongconnect(v: str) -> None:
-        nonlocal idx
-        indices[v] = lowlink[v] = idx
-        idx += 1
-        stack.append(v)
-        on_stack.add(v)
+    old_limit = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(max(1000, len(graph.nodes) * 4))
         
-        for _, w in graph.block_out.get(v, []):
-            if w not in graph.by_id:
-                continue
-            if w not in indices:
-                strongconnect(w)
-                lowlink[v] = min(lowlink[v], lowlink[w])
-            elif w in on_stack:
-                lowlink[v] = min(lowlink[v], indices[w])
-                
-        if lowlink[v] == indices[v]:
-            comp = []
-            while True:
-                w = stack.pop()
-                on_stack.remove(w)
-                comp.append(w)
-                if w == v:
-                    break
-            self_loop = (len(comp) == 1 and any(w2 == comp[0] for _, w2 in graph.block_out.get(comp[0], [])))
-            if len(comp) > 1 or self_loop:
-                comps.append(sorted(comp))
-                
-    for node_id in sorted(graph.by_id):
-        if node_id not in indices:
-            strongconnect(node_id)
+        def strongconnect(v: str) -> None:
+            nonlocal idx
+            indices[v] = lowlink[v] = idx
+            idx += 1
+            stack.append(v)
+            on_stack.add(v)
             
-    return sorted(comps)
+            for _, w in graph.block_out.get(v, []):
+                if w not in graph.by_id:
+                    continue
+                if w not in indices:
+                    strongconnect(w)
+                    lowlink[v] = min(lowlink[v], lowlink[w])
+                elif w in on_stack:
+                    lowlink[v] = min(lowlink[v], indices[w])
+                    
+            if lowlink[v] == indices[v]:
+                comp = []
+                while True:
+                    w = stack.pop()
+                    on_stack.remove(w)
+                    comp.append(w)
+                    if w == v:
+                        break
+                self_loop = (len(comp) == 1 and any(w2 == comp[0] for _, w2 in graph.block_out.get(comp[0], [])))
+                if len(comp) > 1 or self_loop:
+                    comps.append(sorted(comp))
+                    
+        for node_id in sorted(graph.by_id):
+            if node_id not in indices:
+                strongconnect(node_id)
+                
+        return sorted(comps)
+    finally:
+        sys.setrecursionlimit(old_limit)
 
 def score_breakdown(graph: WorkGraph, node: dict[str, Any]) -> dict[str, Any]:
     """Calculate deterministic ranking score and component breakdown for a node."""

@@ -557,11 +557,11 @@ def main(argv: list[str] | None = None) -> int:
                 atomic_write(args.output, GraphMLAdapter.to_graphml(graph), overwrite=True)
                 obj = {"exported": args.output, "format": "graphml", "nodes": len(graph.nodes)}
         elif args.cmd == "add-node":
-            from .mutations import add_node_to_graph
-            from .jsonutil import graph_lock
-            with graph_lock(args.graph):
-                new_graph_dict = add_node_to_graph(
-                    graph,
+            from .mutations import add_node_to_graph, execute_graph_transaction
+            new_graph_dict = execute_graph_transaction(
+                args.graph,
+                lambda wg: add_node_to_graph(
+                    wg,
                     node_id=args.id,
                     title=args.title,
                     cluster=args.cluster,
@@ -571,38 +571,43 @@ def main(argv: list[str] | None = None) -> int:
                     summary=args.summary,
                     depends_on=args.depends_on,
                     tags=args.tag
-                )
-                if args.save:
-                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+                ),
+                policy=pol,
+                taxonomy=tax,
+                save=bool(args.save)
+            )
             obj = {"status": "PASS", "action": "added_node", "node_id": args.id, "saved": bool(args.save), "revision": new_graph_dict.get("revision")}
         elif args.cmd == "complete-node":
-            from .mutations import complete_node_in_graph
-            from .jsonutil import graph_lock
-            with graph_lock(args.graph):
-                new_graph_dict = complete_node_in_graph(
-                    graph,
+            from .mutations import complete_node_in_graph, execute_graph_transaction
+            new_graph_dict = execute_graph_transaction(
+                args.graph,
+                lambda wg: complete_node_in_graph(
+                    wg,
                     node_id=args.id,
                     evidence_summary=args.evidence,
                     evidence_grade=args.grade
-                )
-                if args.save:
-                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+                ),
+                policy=pol,
+                taxonomy=tax,
+                save=bool(args.save)
+            )
             obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save), "revision": new_graph_dict.get("revision")}
         elif args.cmd == "land":
-            from .mutations import land_train_tasks
-            from .jsonutil import graph_lock
-            with graph_lock(args.graph):
-                raw = load_json(args.graph)
-                locked_wg = WorkGraph(raw, policy=pol, taxonomy=tax)
-                new_graph_dict = land_train_tasks(
-                    locked_wg,
+            from .mutations import land_train_tasks, execute_graph_transaction
+            new_graph_dict = execute_graph_transaction(
+                args.graph,
+                lambda wg: land_train_tasks(
+                    wg,
                     train_id=args.train,
                     task_ids=args.tasks,
                     evidence_summary=args.evidence,
                     expected_rev=args.expect_rev
-                )
-                if args.save:
-                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+                ),
+                expected_rev=args.expect_rev,
+                policy=pol,
+                taxonomy=tax,
+                save=bool(args.save)
+            )
             obj = {
                 "status": "PASS",
                 "action": "landed_train",
@@ -612,19 +617,19 @@ def main(argv: list[str] | None = None) -> int:
                 "saved": bool(args.save)
             }
         elif args.cmd == "supersede":
-            from .mutations import supersede_node_in_graph
-            from .jsonutil import graph_lock
-            with graph_lock(args.graph):
-                raw = load_json(args.graph)
-                locked_wg = WorkGraph(raw, policy=pol, taxonomy=tax)
-                new_graph_dict = supersede_node_in_graph(
-                    locked_wg,
+            from .mutations import supersede_node_in_graph, execute_graph_transaction
+            new_graph_dict = execute_graph_transaction(
+                args.graph,
+                lambda wg: supersede_node_in_graph(
+                    wg,
                     node_id=args.id,
                     superseded_by_id=args.by,
                     reason=args.reason
-                )
-                if args.save:
-                    atomic_write(args.graph, json.dumps(stable_dict(new_graph_dict), ensure_ascii=False, indent=2) + "\n", overwrite=True)
+                ),
+                policy=pol,
+                taxonomy=tax,
+                save=bool(args.save)
+            )
             obj = {
                 "status": "PASS",
                 "action": "superseded_node",

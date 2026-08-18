@@ -495,8 +495,9 @@ def migrate_v05_to_v10(raw: dict[str, Any]) -> dict[str, Any]:
     migrated["revision"] = compute_revision_hash(migrated)
     return migrated
 
-def doctor_recover(graph_path: str | Path) -> dict[str, Any]:
+def doctor_recover(graph_path: str | Path, stale_tmp_age_s: float = 60.0) -> dict[str, Any]:
     """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
+    import time
     from pathlib import Path
     from .jsonutil import load_json, atomic_write, graph_lock, compute_revision_hash, stable_dict
     
@@ -504,17 +505,19 @@ def doctor_recover(graph_path: str | Path) -> dict[str, Any]:
     parent = target.parent
     recovered_items = []
     
-    # 1. Clean up dangling .tmp files from aborted writes
-    for tmp in parent.glob(f".{target.name}.*"):
-        if not tmp.name.endswith(".lock"):
-            try:
-                tmp.unlink()
-                recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
-            except OSError:
-                pass
-                
-    # 2. Acquire lock and stabilize state
     with graph_lock(target, timeout=5.0):
+        # 1. Clean up only verified stale .tmp files from aborted writes (> stale_tmp_age_s)
+        now = time.time()
+        for tmp in parent.glob(f".{target.name}.*"):
+            if not tmp.name.endswith(".lock"):
+                try:
+                    if (now - tmp.stat().st_mtime) > stale_tmp_age_s:
+                        tmp.unlink()
+                        recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
+                except OSError:
+                    pass
+                    
+        # 2. Re-read and stabilize state
         raw = load_json(target)
         migrated = migrate_v05_to_v10(raw) if raw.get("schema_version") != "1.0.0" else raw
         expected_hash = compute_revision_hash(migrated)

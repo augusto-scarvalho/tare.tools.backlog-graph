@@ -1,5 +1,6 @@
 from __future__ import annotations
 import contextlib
+import ctypes
 import hashlib
 import json
 import os
@@ -36,7 +37,7 @@ def stable_dict(v: Any, exclude_keys: tuple[str, ...] = ()) -> Any:
     return v
 
 def canonical_json(v: Any, exclude_keys: tuple[str, ...] = ()) -> str:
-    """Return deterministically sorted compact JSON string (RFC 8785 / JCS compatible)."""
+    """Return deterministically sorted compact JSON string."""
     return json.dumps(stable_dict(v, exclude_keys=exclude_keys), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 def sha256_canonical(v: Any, exclude_keys: tuple[str, ...] = ()) -> str:
@@ -97,8 +98,8 @@ def to_markdown(obj: Any) -> str:
         return "```json\n" + json.dumps(stable_dict(obj), ensure_ascii=False, indent=2) + "\n```"
     return str(obj)
 
-def atomic_write(path: Path | str, text: str, overwrite: bool = False) -> None:
-    """Safely write text to file atomically using a temporary file with fsync."""
+def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
+    """Safely write text to file atomically using a temporary file with fsync and Windows transient retry."""
     path = Path(path).resolve(strict=False)
     parent = path.parent
     if parent.is_symlink():
@@ -115,7 +116,28 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = False) -> None:
             f.write(text)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp, path)
+            
+        # Retry loop for transient Windows file-locks during os.replace
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            try:
+                os.replace(tmp, path)
+                break
+            except (PermissionError, OSError):
+                if attempt == max_attempts - 1:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
+                
+        # POSIX directory sync
+        if hasattr(os, "O_DIRECTORY"):
+            try:
+                dir_fd = os.open(str(parent), os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+            except OSError:
+                pass
     finally:
         if os.path.exists(tmp):
             try:
@@ -123,12 +145,35 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = False) -> None:
             except OSError:
                 pass
 
+def is_pid_alive(pid: int) -> bool:
+    """Verify whether a process with given PID is actively running."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if handle == 0:
+            return False
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+    else:
+        try:
+            os.kill(pid, 0)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
 @contextlib.contextmanager
-def graph_lock(path: Path | str, timeout: float = 5.0, stale_age_s: float = 30.0) -> Generator[dict[str, Any], None, None]:
-    """Acquire an exclusive lockfile on the target work-graph (.work-graph.json.lock) (BG-01, BG-07)."""
+def graph_lock(
+    path: Path | str,
+    timeout: float = 5.0,
+    stale_age_s: float = 30.0
+) -> Generator[dict[str, Any], None, None]:
+    """Acquire an exclusive lockfile on the target work-graph with monotonic timeouts and live-PID checking."""
     target = Path(path).resolve(strict=False)
+    target.parent.mkdir(parents=True, exist_ok=True)
     lock_file = target.parent / f".{target.name}.lock"
-    start_time = time.time()
+    start_mono = time.monotonic()
     lease_token = str(uuid.uuid4())
     acquired = False
     lock_data = {
@@ -139,7 +184,7 @@ def graph_lock(path: Path | str, timeout: float = 5.0, stale_age_s: float = 30.0
         "target_file": str(target)
     }
 
-    while time.time() - start_time < timeout:
+    while (time.monotonic() - start_mono) < timeout:
         try:
             fd = os.open(str(lock_file), os.O_CREAT | os.O_EXCL | os.O_RDWR)
             with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -149,34 +194,45 @@ def graph_lock(path: Path | str, timeout: float = 5.0, stale_age_s: float = 30.0
             acquired = True
             break
         except FileExistsError:
-            # Check for stale lockfile (> stale_age_s)
+            # Check for stale lockfile (> stale_age_s AND dead PID or non-local host)
             try:
                 mtime = os.path.getmtime(str(lock_file))
-                if time.time() - mtime > stale_age_s:
-                    # Broken process left stale lock
-                    try:
-                        os.unlink(str(lock_file))
-                    except OSError:
-                        pass
+                if (time.time() - mtime) > stale_age_s:
+                    raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                    parsed = json.loads(raw) if raw.strip() else {}
+                    owner_pid = parsed.get("pid", 0)
+                    owner_host = parsed.get("host", "")
+                    
+                    # Only break stale lock if owner PID is dead on this machine or lock is truly abandoned
+                    if owner_host == socket.gethostname():
+                        if not is_pid_alive(owner_pid):
+                            try:
+                                os.unlink(str(lock_file))
+                            except OSError:
+                                pass
+                    else:
+                        # Remote host stale lock
+                        try:
+                            os.unlink(str(lock_file))
+                        except OSError:
+                            pass
             except OSError:
                 pass
             time.sleep(0.05)
 
     if not acquired:
-        raise LockTimeoutError(f"Could not acquire exclusive lock on '{target}' after {timeout:.1f}s (locked by {lock_file})")
+        raise LockTimeoutError(f"Could not acquire exclusive lock on '{target}' after {timeout:.1f}s (held by {lock_file})")
 
     try:
         yield lock_data
     finally:
         if acquired and lock_file.exists():
             try:
-                # Only delete if we own this lease
+                # STRICT: Only delete if lease_token matches our exact ownership!
                 raw = lock_file.read_text(encoding="utf-8", errors="ignore")
                 parsed = json.loads(raw) if raw.strip() else {}
                 if parsed.get("lease_token") == lease_token:
                     os.unlink(str(lock_file))
             except Exception:
-                try:
-                    os.unlink(str(lock_file))
-                except OSError:
-                    pass
+                # Do NOT blindly unlink in error case if we cannot verify ownership
+                pass

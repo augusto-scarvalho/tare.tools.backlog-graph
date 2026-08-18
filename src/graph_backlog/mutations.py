@@ -1,12 +1,67 @@
 from __future__ import annotations
 import copy
 from datetime import datetime, timezone
-from typing import Any
+from pathlib import Path
+from typing import Any, Callable
 
-from .core import WorkGraph
-from .jsonutil import UsageError, RevisionMismatchError, compute_revision_hash
+from .core import WorkGraph, load_default_policy, load_default_taxonomy
+from .jsonutil import (
+    UsageError,
+    RevisionMismatchError,
+    compute_revision_hash,
+    load_json,
+    atomic_write,
+    graph_lock,
+    canonical_json,
+    stable_dict
+)
 from .validation import validate_work_graph
 from .algorithms import find_cycles_scc
+
+def execute_graph_transaction(
+    graph_path: str | Path,
+    mutation_fn: Callable[[WorkGraph], dict[str, Any]],
+    expected_rev: str | None = None,
+    policy: dict[str, Any] | None = None,
+    taxonomy: dict[str, Any] | None = None,
+    save: bool = True
+) -> dict[str, Any]:
+    """Execute an end-to-end atomic mutation transaction enclosed completely within an exclusive lock."""
+    target = Path(graph_path).resolve(strict=False)
+    pol = policy or load_default_policy()
+    tax = taxonomy or load_default_taxonomy()
+
+    with graph_lock(target):
+        # 1. Reload freshly from disk inside critical section
+        raw = load_json(target)
+        disk_hash = compute_revision_hash(raw)
+
+        # 2. Check CAS revision
+        if expected_rev and expected_rev != disk_hash:
+            raise RevisionMismatchError(
+                f"CAS conflict: expected revision '{expected_rev}', but disk revision is '{disk_hash}'"
+            )
+
+        # 3. Instantiate WorkGraph
+        wg = WorkGraph(raw, policy=pol, taxonomy=tax)
+
+        # 4. Apply mutation
+        new_graph_dict = mutation_fn(wg)
+
+        # 5. Validate new state
+        val = validate_work_graph(new_graph_dict, pol, tax)
+        if val.get("status") != "PASS":
+            raise UsageError(f"Transaction failed validation: {val.get('errors')}")
+
+        # 6. Compute new content-addressed revision hash
+        new_hash = compute_revision_hash(new_graph_dict)
+        new_graph_dict["revision"] = new_hash
+
+        # 7. Write atomically
+        if save:
+            atomic_write(target, canonical_json(new_graph_dict) + "\n", overwrite=True)
+
+        return new_graph_dict
 
 def add_node_to_graph(
     graph: WorkGraph,

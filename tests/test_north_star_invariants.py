@@ -269,9 +269,11 @@ class TestDoctorRecoveryAndSchemaMigration:
         }
         graph_file.write_text(canonical_json(base_raw), encoding="utf-8")
 
-        # Simulate orphaned .tmp file from crashed write
+        # Simulate orphaned .tmp file from crashed write (>60s ago)
         stale_tmp = tmp_path / ".work-graph.json.tmp999"
         stale_tmp.write_text("crash artifact", encoding="utf-8")
+        past = time.time() - 100
+        os.utime(str(stale_tmp), (past, past))
 
         res = doctor_recover(graph_file)
         assert res["status"] in ("RECOVERED", "STABLE")
