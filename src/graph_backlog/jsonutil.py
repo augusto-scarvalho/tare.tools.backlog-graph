@@ -110,14 +110,13 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
     if path.is_symlink():
         raise UsageError("Refusing to overwrite a symlink")
     
-    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(parent))
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.tmp_", dir=str(parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
             f.flush()
             os.fsync(f.fileno())
             
-        # Retry loop for transient Windows file-locks during os.replace
         max_attempts = 10
         for attempt in range(max_attempts):
             try:
@@ -128,7 +127,6 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
                     raise
                 time.sleep(0.02 * (attempt + 1))
                 
-        # POSIX directory sync
         if hasattr(os, "O_DIRECTORY"):
             try:
                 dir_fd = os.open(str(parent), os.O_RDONLY | os.O_DIRECTORY)
@@ -146,19 +144,24 @@ def atomic_write(path: Path | str, text: str, overwrite: bool = True) -> None:
                 pass
 
 def is_pid_alive(pid: int) -> bool:
-    """Verify whether a process with given PID is actively running."""
+    """Verify whether a process with given PID is actively running (handling cross-user permissions correctly)."""
     if pid <= 0:
         return False
     if os.name == "nt":
         PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
         handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
         if handle == 0:
-            return False
+            err = ctypes.GetLastError()
+            # ERROR_ACCESS_DENIED (5) means the process is alive but runs under another account/elevation
+            return err == 5
         ctypes.windll.kernel32.CloseHandle(handle)
         return True
     else:
         try:
             os.kill(pid, 0)
+            return True
+        except PermissionError:
+            # Process exists and is alive, but owned by another user (EPERM)
             return True
         except (OSError, ProcessLookupError):
             return False
@@ -194,7 +197,6 @@ def graph_lock(
             acquired = True
             break
         except FileExistsError:
-            # Check for stale lockfile (> stale_age_s AND dead PID or non-local host)
             try:
                 mtime = os.path.getmtime(str(lock_file))
                 if (time.time() - mtime) > stale_age_s:
@@ -203,19 +205,17 @@ def graph_lock(
                     owner_pid = parsed.get("pid", 0)
                     owner_host = parsed.get("host", "")
                     
-                    # Only break stale lock if owner PID is dead on this machine or lock is truly abandoned
-                    if owner_host == socket.gethostname():
+                    # STRICT SAFETY: ONLY break stale lock if owner is confirmed dead on the SAME local host
+                    # NEVER steal locks from remote hosts or unconfirmed PIDs!
+                    if owner_host == socket.gethostname() and owner_pid > 0:
                         if not is_pid_alive(owner_pid):
                             try:
-                                os.unlink(str(lock_file))
+                                # Re-check ownership before unlinking to prevent TOCTOU
+                                check_raw = lock_file.read_text(encoding="utf-8", errors="ignore")
+                                if check_raw == raw:
+                                    os.unlink(str(lock_file))
                             except OSError:
                                 pass
-                    else:
-                        # Remote host stale lock
-                        try:
-                            os.unlink(str(lock_file))
-                        except OSError:
-                            pass
             except OSError:
                 pass
             time.sleep(0.05)
@@ -228,11 +228,9 @@ def graph_lock(
     finally:
         if acquired and lock_file.exists():
             try:
-                # STRICT: Only delete if lease_token matches our exact ownership!
                 raw = lock_file.read_text(encoding="utf-8", errors="ignore")
                 parsed = json.loads(raw) if raw.strip() else {}
                 if parsed.get("lease_token") == lease_token:
                     os.unlink(str(lock_file))
             except Exception:
-                # Do NOT blindly unlink in error case if we cannot verify ownership
                 pass

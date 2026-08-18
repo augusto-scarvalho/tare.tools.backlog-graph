@@ -1,5 +1,7 @@
 from __future__ import annotations
+import json
 import os
+import socket
 import time
 import pytest
 from pathlib import Path
@@ -57,8 +59,9 @@ class TestNorthStarLockAndCanonicalHash:
         graph_file.write_text("{}", encoding="utf-8")
         lock_file = tmp_path / ".work-graph.json.lock"
 
-        # Create simulated stale lock from 100 seconds ago
-        lock_file.write_text('{"pid": 999999, "lease_token": "old"}', encoding="utf-8")
+        # Create simulated stale lock from 100 seconds ago on current host with dead PID
+        stale_data = {"pid": 999999, "host": socket.gethostname(), "lease_token": "old"}
+        lock_file.write_text(json.dumps(stale_data), encoding="utf-8")
         past_time = time.time() - 100
         os.utime(str(lock_file), (past_time, past_time))
 
@@ -270,7 +273,7 @@ class TestDoctorRecoveryAndSchemaMigration:
         graph_file.write_text(canonical_json(base_raw), encoding="utf-8")
 
         # Simulate orphaned .tmp file from crashed write (>60s ago)
-        stale_tmp = tmp_path / ".work-graph.json.tmp999"
+        stale_tmp = tmp_path / ".work-graph.json.tmp_999"
         stale_tmp.write_text("crash artifact", encoding="utf-8")
         past = time.time() - 100
         os.utime(str(stale_tmp), (past, past))

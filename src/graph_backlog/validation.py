@@ -508,14 +508,13 @@ def doctor_recover(graph_path: str | Path, stale_tmp_age_s: float = 60.0) -> dic
     with graph_lock(target, timeout=5.0):
         # 1. Clean up only verified stale .tmp files from aborted writes (> stale_tmp_age_s)
         now = time.time()
-        for tmp in parent.glob(f".{target.name}.*"):
-            if not tmp.name.endswith(".lock"):
-                try:
-                    if (now - tmp.stat().st_mtime) > stale_tmp_age_s:
-                        tmp.unlink()
-                        recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
-                except OSError:
-                    pass
+        for tmp in parent.glob(f".{target.name}.tmp_*"):
+            try:
+                if (now - tmp.stat().st_mtime) > stale_tmp_age_s:
+                    tmp.unlink()
+                    recovered_items.append(f"cleaned_stale_tmp:{tmp.name}")
+            except OSError:
+                pass
                     
         # 2. Re-read and stabilize state
         raw = load_json(target)
