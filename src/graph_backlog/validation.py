@@ -568,16 +568,21 @@ def doctor_recover(
     current_machine = get_machine_id()
     recovered_items = []
 
-    # Operator intervention: safe force removal of an abandoned lock on local machine
+    # Operator intervention: safe force removal of an abandoned lock ONLY if verified local and owner PID is dead
     if force_unlock and lock_file.exists():
         try:
-            lock_file.unlink()
-            recovered_items.append("force_unlocked_stale_lock")
-        except OSError:
+            raw_l = lock_file.read_text(encoding="utf-8", errors="ignore")
+            parsed_l = json.loads(raw_l) if raw_l.strip() else {}
+            owner_pid = parsed_l.get("pid", 0)
+            owner_machine = parsed_l.get("machine_id", "")
+            if owner_machine == current_machine and owner_pid > 0 and not is_pid_alive(owner_pid):
+                lock_file.unlink()
+                recovered_items.append("force_unlocked_stale_lock")
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
 
     with graph_lock(target, timeout=5.0):
-        # 1. Clean up only verified stale .tmp files from aborted writes (> stale_tmp_age_s)
+        # 1. Clean up only proven stale .tmp files from aborted writes (> stale_tmp_age_s)
         if clean_tmp:
             now = time.time()
             for tmp in parent.glob(f".{target.name}.tmp_*"):

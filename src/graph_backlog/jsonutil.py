@@ -28,8 +28,6 @@ class RevisionMismatchError(UsageError):
     """Raised when a CAS operation detects a divergent graph revision."""
     pass
 
-ATOMIC_MAGIC_HEADER = "/* TARE_ATOMIC_TEMP_V1 */\n"
-
 def assert_no_symlinks_in_path(p: Path | str) -> None:
     """Validate that no component of the path (target or any ancestor) is a symlink."""
     curr = Path(p).absolute()
