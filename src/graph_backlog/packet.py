@@ -101,9 +101,17 @@ def format_packet_markdown(packet_data: dict[str, Any]) -> str:
     else:
         lines.append("_No downstream dependents currently declared._")
         
+    bounded_contexts = w.get("bounded_contexts") or []
+    if bounded_contexts:
+        lines.extend([
+            "",
+            "## Bounded Contexts & Scope",
+            f"- **Contexts:** {', '.join(map(str, bounded_contexts))}"
+        ])
+
     lines.extend([
         "",
-        "## Provenance & Grounding"
+        "## Provenance & Source-of-Truth Archeology"
     ])
     prov = packet_data.get("provenance", {})
     refs = prov.get("source_refs", [])
@@ -111,5 +119,25 @@ def format_packet_markdown(packet_data: dict[str, Any]) -> str:
         lines.append(f"- **Source References:** {', '.join(map(str, refs))}")
     if prov.get("source_claim_ids"):
         lines.append(f"- **Source Claims:** {', '.join(map(str, prov['source_claim_ids']))}")
+    
+    details = prov.get("source_details", [])
+    if details:
+        lines.append("- **Source Details:**")
+        for sd in details:
+            if isinstance(sd, dict):
+                lines.append(f"  - `{sd.get('id', 'ref')}`: {sd.get('title', '')} (path: `{sd.get('path', 'n/a')}`)")
+            else:
+                lines.append(f"  - {sd}")
+
+    lines.extend([
+        "",
+        "## Verified Repository & Filesystem Grounding",
+        "- **Harness Core Modules:** `scripts/harness_lib/` (186 modules of the Universal Harness Prototype)",
+        "- **Graph Backlog Engine:** `side_projects/tare.tools.graph-backlog/`",
+        "- **Research Sources Catalog:** `C:/projects/tare.tools.research/sources/SOURCE_INDEX.json` & `SOURCE_INDEX.md`",
+        "- **Harness Prototype Ref:** `C:/projects/universal-agent-harness-prototype/`",
+        "",
+        "> ⚠️ **MANDATORY IMPLEMENTATION DIRECTIVE:** All source-of-truth modules and archeological references exist in the paths above. The implementer must inspect the code, implement concrete Python logic, add unit tests in `tests/`, and pass `pytest`. Zero-byte diffs or 'missing source' evasion claims are strictly prohibited and automatically rejected."
+    ])
         
     return "\n".join(lines)

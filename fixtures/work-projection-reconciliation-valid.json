@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "canonical": [
+    {"taskstore_id": "TS-1001", "snapshot_revision": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"},
+    {"taskstore_id": "TS-1002", "snapshot_revision": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"}
+  ],
+  "projections": [
+    {"taskstore_ref": "TS-1001", "relay_train_id": "TRAIN-08-RELAY-PLANNER-VENDOR-FAILOVER-01", "work_graph_task_id": "RELAY-PLANNER-VENDOR-FAILOVER-01", "github_issue_id": null, "kanban_lane": "done"},
+    {"taskstore_ref": "TS-1002", "relay_train_id": "TRAIN-11-GRAPH-SCHEMA-VALIDATION-01", "work_graph_task_id": "graph-audit-schema-validation", "github_issue_id": "20", "kanban_lane": "done"}
+  ]
+}

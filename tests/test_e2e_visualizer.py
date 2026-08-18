@@ -31,8 +31,20 @@ class VisualizerE2ETests(unittest.TestCase):
                 pass
 
     def test_visualizer_e2e_headless(self) -> None:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+        try:
+            p_cm = sync_playwright()
+            p = p_cm.__enter__()
+            try:
+                browser = p.chromium.launch(headless=True)
+            except Exception as exc:
+                p_cm.__exit__(None, None, None)
+                self.skipTest(f"Playwright chromium browser not available in this environment: {exc}")
+                return
+        except Exception as exc:
+            self.skipTest(f"Playwright runtime not available: {exc}")
+            return
+
+        try:
             page = browser.new_page()
             
             # 1. Load the generated HTML page
@@ -412,8 +424,12 @@ class VisualizerE2ETests(unittest.TestCase):
 
             page.keyboard.press("Escape")
             self.assertFalse(page.locator("#opsModalBackdrop").is_visible())
-
-            browser.close()
+        finally:
+            try:
+                browser.close()
+            except Exception:
+                pass
+            p_cm.__exit__(None, None, None)
 
 if __name__ == "__main__":
     unittest.main()

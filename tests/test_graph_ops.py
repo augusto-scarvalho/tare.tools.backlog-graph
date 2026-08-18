@@ -11,7 +11,7 @@ FIXTURES = ROOT / "fixtures"
 
 def run_cmd(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, str(SCRIPT)] + list(args)
-    res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
+    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(ROOT))
     if check and res.returncode != 0:
         raise AssertionError(f"Command failed ({res.returncode}): {' '.join(cmd)}\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
     return res

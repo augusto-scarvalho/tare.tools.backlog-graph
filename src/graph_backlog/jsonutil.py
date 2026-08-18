@@ -39,6 +39,12 @@ def load_json(path: str | Path) -> Any:
 
 def dump_formatted(obj: Any, fmt: str = "json") -> None:
     """Output object to stdout in the requested format."""
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     if fmt == "json":
         print(json.dumps(stable_dict(obj), ensure_ascii=False, indent=2))
     elif fmt == "jsonl":

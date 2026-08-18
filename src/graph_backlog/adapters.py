@@ -4,6 +4,7 @@ import io
 import re
 from datetime import datetime, timezone
 from typing import Any
+from xml.sax import saxutils
 
 from .core import WorkGraph
 
@@ -213,6 +214,61 @@ class CsvAdapter:
         for e in graph.edges:
             writer.writerow([e.get("from"), e.get("to"), e.get("type"), e.get("semantic", True)])
         return buf.getvalue()
+
+
+class GraphMLAdapter:
+    """Export a work graph to deterministic, schema-valid GraphML 1.0 XML.
+
+    Determinism contract (exit criterion: two clean builds are hash-identical):
+      - nodes sorted by id; edges sorted by (from, to, type);
+      - every text field XML-escaped (& < > " '), UTF-8, '\\n' line endings only;
+      - no wall-clock timestamps in output.
+    """
+
+    # (key id, attr.name, source dict field) for node data payloads.
+    _NODE_KEYS = [
+        ("d_title", "title", "title"),
+        ("d_status", "status", None),  # None -> derived via graph.status_of
+        ("d_cluster", "cluster", "cluster"),
+        ("d_priority", "priority", "priority"),
+        ("d_horizon", "horizon", "horizon"),
+        ("d_summary", "summary", "summary"),
+    ]
+    _EDGE_KEYS = [("d_type", "type", "type"), ("d_semantic", "semantic", "semantic")]
+
+    @staticmethod
+    def _esc(v: Any) -> str:
+        # saxutils.escape does &,<,> ; add quotes so values are attribute-safe too.
+        return saxutils.escape("" if v is None else str(v), {'"': "&quot;", "'": "&apos;"})
+
+    @classmethod
+    def to_graphml(cls, graph: WorkGraph) -> str:
+        lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">',
+        ]
+        for kid, name, _ in cls._NODE_KEYS:
+            lines.append(f'  <key id="{kid}" for="node" attr.name="{name}" attr.type="string"/>')
+        for kid, name, _ in cls._EDGE_KEYS:
+            lines.append(f'  <key id="{kid}" for="edge" attr.name="{name}" attr.type="string"/>')
+        lines.append('  <graph edgedefault="directed">')
+
+        for n in sorted(graph.nodes, key=lambda x: str(x.get("id", ""))):
+            lines.append(f'    <node id="{cls._esc(n.get("id"))}">')
+            for kid, _, field in cls._NODE_KEYS:
+                val = graph.status_of(n) if field is None else n.get(field)
+                lines.append(f'      <data key="{kid}">{cls._esc(val)}</data>')
+            lines.append('    </node>')
+
+        for e in sorted(graph.edges, key=lambda x: (str(x.get("from", "")), str(x.get("to", "")), str(x.get("type", "")))):
+            lines.append(f'    <edge source="{cls._esc(e.get("from"))}" target="{cls._esc(e.get("to"))}">')
+            for kid, _, field in cls._EDGE_KEYS:
+                lines.append(f'      <data key="{kid}">{cls._esc(e.get(field, True) if field == "semantic" else e.get(field))}</data>')
+            lines.append('    </edge>')
+
+        lines.append('  </graph>')
+        lines.append('</graphml>')
+        return "\n".join(lines) + "\n"
 
 
 class GitHubIssuesAdapter:

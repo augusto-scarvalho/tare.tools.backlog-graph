@@ -48,10 +48,11 @@ class CliAndPacketTests(unittest.TestCase):
         self.assertEqual(ret, 0)
 
         # mutation-test
+        target_ops = str(ROOT / "graph_ops.py")
         ret = main([
             "--graph", self.graph_file,
             "mutation-test",
-            "--target", "src/graph_backlog/simulation.py",
+            "--target", target_ops,
             "--max-mutants", "5",
             "--test-module", "tests.test_diff_and_ledger"
         ])

@@ -92,6 +92,8 @@ def structural_errors(
             err("NODE_UNKNOWN", f"{p}.{k}", "unknown node field")
             
         nid = n.get("id")
+        if "id" not in n:
+            err("MISSING_ID", f"{p}.id", "node is missing the required id field")
         if not isinstance(nid, str) or not nid.strip():
             err("NODE_ID", f"{p}.id", "id must be non-empty string")
         else:
@@ -139,7 +141,7 @@ def structural_errors(
         if isinstance(sources, dict):
             for ref in n.get("source_refs", []) if isinstance(n.get("source_refs"), list) else []:
                 if ref not in sources:
-                    err("SOURCE_REF", f"{p}.source_refs", f"unknown source ref {ref!r}")
+                    err("INVALID_SOURCE_REF", f"{p}.source_refs", f"unknown source ref {ref!r}")
                     
     for nid, cnt in Counter(node_ids).items():
         if cnt > 1:
@@ -224,6 +226,12 @@ def validate_work_graph(
             "path": "$.edges",
             "message": f"blocking SCC/self-loop: {cycles}"
         })
+    # A literal self-loop (edge from == to) also fails closed under its own named
+    # code, in ADDITION to the SCC's BLOCKING_CYCLE (FAL-01).
+    for i, e in enumerate(raw.get("edges", []) if isinstance(raw.get("edges"), list) else []):
+        if isinstance(e, dict) and e.get("from") is not None and e.get("from") == e.get("to"):
+            errors.append({"code": "SELF_LOOP", "path": f"$.edges[{i}]",
+                           "message": f"edge source == target ({e.get('from')!r}): self-loop forbidden"})
         
     return {
         "status": "PASS" if not errors else "FAIL",

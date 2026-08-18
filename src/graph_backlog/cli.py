@@ -152,7 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
     # Visualizer & export
     exp = sp.add_parser("export")
     exp.add_argument("--output", "-o", required=True, help="Destination output file path")
-    exp.add_argument("--export-format", choices=["html", "json", "md", "mermaid", "csv-nodes", "csv-edges"], default="html")
+    exp.add_argument("--export-format", choices=["html", "json", "md", "mermaid", "csv-nodes", "csv-edges", "graphml"], default="html")
 
     # Fast mutations
     an = sp.add_parser("add-node")
@@ -294,6 +294,11 @@ def handle_intake(graph: WorkGraph, args: argparse.Namespace) -> dict[str, Any]:
     return obj
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
     parser = build_parser()
     args = parser.parse_args(normalize_format_argv(sys.argv[1:] if argv is None else argv))
     try:
@@ -525,6 +530,10 @@ def main(argv: list[str] | None = None) -> int:
                 from .adapters import CsvAdapter
                 atomic_write(args.output, CsvAdapter.edges_to_csv(graph), overwrite=True)
                 obj = {"exported": args.output, "format": "csv-edges", "edges": len(graph.edges)}
+            elif args.export_format == "graphml":
+                from .adapters import GraphMLAdapter
+                atomic_write(args.output, GraphMLAdapter.to_graphml(graph), overwrite=True)
+                obj = {"exported": args.output, "format": "graphml", "nodes": len(graph.nodes)}
         elif args.cmd == "add-node":
             from .mutations import add_node_to_graph
             new_graph_dict = add_node_to_graph(
