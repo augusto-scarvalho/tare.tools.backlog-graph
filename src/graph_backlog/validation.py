@@ -189,7 +189,7 @@ def structural_errors(
             
         if not isinstance(t, str):
             err("EDGE_FIELD_TYPE", f"{p}.type", f"type must be string, got {type(t).__name__}")
-        elif t not in rels:
+        elif rels and t not in rels:
             err("RELATION_TAXONOMY", f"{p}.type", f"relation {t!r} has no taxonomy")
 
         if not isinstance(e.get("semantic"), bool):
