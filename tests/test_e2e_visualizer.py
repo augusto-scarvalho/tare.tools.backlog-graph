@@ -5,7 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None
 
 from graph_backlog.core import WorkGraph
 from graph_backlog.visualizer import generate_html_viewer
@@ -31,6 +34,9 @@ class VisualizerE2ETests(unittest.TestCase):
                 pass
 
     def test_visualizer_e2e_headless(self) -> None:
+        if sync_playwright is None:
+            self.skipTest("playwright not installed")
+            return
         try:
             p_cm = sync_playwright()
             p = p_cm.__enter__()
