@@ -555,7 +555,9 @@ def doctor_recover(
     clean_tmp: bool = True
 ) -> dict[str, Any]:
     """Perform post-crash recovery and state stabilization on a work-graph (BG-07)."""
+    import os
     import time
+    import uuid
     from pathlib import Path
     from .jsonutil import (
         load_json,
@@ -576,7 +578,7 @@ def doctor_recover(
     current_machine = get_machine_id()
     recovered_items = []
 
-    # Operator intervention: safe force removal of an abandoned lock ONLY if verified local and owner PID is dead
+    # Operator intervention: safe eviction of an abandoned lock ONLY if verified local and owner PID is dead
     if force_unlock and lock_file.exists():
         try:
             raw_l = lock_file.read_text(encoding="utf-8", errors="ignore")
@@ -584,8 +586,11 @@ def doctor_recover(
             owner_pid = parsed_l.get("pid", 0)
             owner_machine = parsed_l.get("machine_id", "")
             if owner_machine == current_machine and owner_pid > 0 and not is_pid_alive(owner_pid):
-                lock_file.unlink()
-                recovered_items.append("force_unlocked_stale_lock")
+                try:
+                    os.unlink(str(lock_file))
+                    recovered_items.append("force_unlocked_stale_lock")
+                except OSError:
+                    pass
         except (json.JSONDecodeError, OSError, ValueError):
             pass
 
