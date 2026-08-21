@@ -2,7 +2,7 @@
 
 # tare.tools.backlog-graph
 
-**Deterministic Directed Acyclic Graph (DAG) Backlog Engine and Topological Execution Framework for Software Engineering Teams and Autonomous AI Agents.**
+**Motor Determinístico de Backlog em Grafo Acíclico Dirigido (DAG) e Framework de Execução Topológica para Equipes de Engenharia de Software e Agentes Autônomos de IA.**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://python.org)
@@ -22,14 +22,14 @@
 </p>
 
 <p align="center">
-  <em>🇧🇷 Para a versão em Português, consulte <a href="README.pt-BR.md">README.pt-BR.md</a>.</em>
+  <em>🇺🇸 For the English canonical version, see <a href="README.md">README.md</a>.</em>
 </p>
 
 </div>
 
 ---
 
-## Why Graph Backlog? (The Paradigm Shift)
+## Por Que Backlog em Grafo? (A Mudança de Paradigma)
 
 Modern software delivery is a **topological dependency graph**, not a flat list or an unconstrained Kanban column.
 
@@ -81,7 +81,7 @@ flowchart TD
 
 ---
 
-## Key Architectural Pillars
+## Pilares Arquiteturais Principais
 
 ### 1. Deterministic Ready Frontier
 Calculates the exact subset of non-completed nodes whose upstream dependencies are 100% satisfied (`DONE` with Definition of Done verified). Agents and developers always pull mathematically sound work.
@@ -108,7 +108,7 @@ Detects topological cycles (Tarjan Strongly Connected Components), dangling edge
 
 ---
 
-## Third-Party Backlog Ingestion
+## Ingestão de Backlogs de Terceiros
 
 Ingest real-world backlogs from existing tools using standard CLI pipelines with **zero external dependencies**:
 
@@ -131,7 +131,7 @@ python graph_ops.py import-md backlog.md --out work-graph.json
 
 ---
 
-## Quickstart and Installation
+## Instalação e Início Rápido
 
 ### Zero Dependencies (Pure Python Stdlib)
 Run `graph_ops.py` directly without installing third-party packages:
@@ -154,7 +154,7 @@ After installation, both `graph-backlog` and `graph-ops` executables become avai
 
 ---
 
-## CLI Command Reference
+## Referência de Comandos da CLI
 
 | Subcommand | Purpose and Output | Example Usage |
 |---|---|---|
@@ -278,7 +278,7 @@ python graph_ops.py packet $NEXT_ID --format md > .agent/current-context.md
 
 ---
 
-## Repository Structure
+## Estrutura do Repositório
 
 ```text
 tare.tools.backlog-graph/
@@ -324,7 +324,7 @@ tare.tools.backlog-graph/
 
 ---
 
-## Automated Testing
+## Testes Automatizados
 
 Run the full automated test suite:
 ```bash
@@ -337,7 +337,7 @@ python -m unittest discover -s tests -v
 
 ---
 
-## License and Attribution
+## Licença e Atribuição
 
 Licensed under the **Apache License, Version 2.0**. See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
 
