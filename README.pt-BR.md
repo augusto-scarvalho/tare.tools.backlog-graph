@@ -18,6 +18,7 @@
   <a href="#cli-command-reference">CLI Reference</a> •
   <a href="#python-library-api">Python Library</a> •
   <a href="#interactive-mission-control-and-copilot-bridge">Interactive UI</a> •
+  <a href="CHANGELOG.md">Changelog</a> •
   <a href="#license-and-attribution">License</a>
 </p>
 
