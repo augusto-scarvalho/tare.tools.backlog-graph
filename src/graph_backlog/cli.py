@@ -33,7 +33,7 @@ from .grounding import encode_work_grounding, ground_work_item
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 PASS, VALIDATION_FAIL, RUNTIME_ERROR = 0, 1, 2
 
 def build_parser() -> argparse.ArgumentParser:

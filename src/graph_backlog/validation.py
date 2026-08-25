@@ -82,6 +82,7 @@ def structural_errors(
     optional_node = {
         "spec_ref", "superseded_by", "superseded_at", "supersession_reason",
         "target_repositories", "grounding_refs", "target_paths", "target_symbols",
+        "repository_scopes",
     }
     for i, n in enumerate(nodes):
         p = f"$.nodes[{i}]"
@@ -116,6 +117,7 @@ def structural_errors(
             "bounded_contexts", "evidence_required", "exit_criteria", "source_refs",
             "source_details", "provenance", "source_claim_ids", "tags", "notes", "items",
             "target_repositories", "grounding_refs", "target_paths", "target_symbols",
+            "repository_scopes",
         ):
             if k in n and not isinstance(n[k], list):
                 err("NODE_FIELD_TYPE", f"{p}.{k}", "must be array")
@@ -134,6 +136,64 @@ def structural_errors(
             for j, item in enumerate(value):
                 if not isinstance(item, str) or not item.strip():
                     err("NODE_FIELD_TYPE", f"{p}.{k}[{j}]", "must be a non-empty string")
+
+        scopes = n.get("repository_scopes")
+        if isinstance(scopes, list):
+            if len(scopes) > 16:
+                err("NODE_FIELD_BOUNDS", f"{p}.repository_scopes", "must contain at most 16 items")
+            repositories: list[str] = []
+            for j, scope in enumerate(scopes):
+                scope_path = f"{p}.repository_scopes[{j}]"
+                if not isinstance(scope, dict):
+                    err("NODE_FIELD_TYPE", scope_path, "must be an object")
+                    continue
+                required_scope = {
+                    "repository", "grounding_refs", "target_paths", "target_symbols"
+                }
+                for field in sorted(required_scope - set(scope)):
+                    err("NODE_REQUIRED", f"{scope_path}.{field}", "missing required field")
+                for field in sorted(set(scope) - required_scope):
+                    err("NODE_UNKNOWN", f"{scope_path}.{field}", "unknown repository scope field")
+                repository = scope.get("repository")
+                if not isinstance(repository, str) or not repository.strip():
+                    err("NODE_FIELD_TYPE", f"{scope_path}.repository", "must be a non-empty string")
+                else:
+                    repositories.append(repository.strip())
+                for field, maximum in (
+                    ("grounding_refs", 128),
+                    ("target_paths", 256),
+                    ("target_symbols", 256),
+                ):
+                    value = scope.get(field)
+                    if not isinstance(value, list):
+                        err("NODE_FIELD_TYPE", f"{scope_path}.{field}", "must be an array")
+                        continue
+                    if len(value) > maximum:
+                        err("NODE_FIELD_BOUNDS", f"{scope_path}.{field}", f"must contain at most {maximum} items")
+                    if len(value) != len(set(item for item in value if isinstance(item, str))):
+                        err("NODE_FIELD_DUPLICATE", f"{scope_path}.{field}", "must not contain duplicates")
+                    for item_index, item in enumerate(value):
+                        if not isinstance(item, str) or not item.strip():
+                            err("NODE_FIELD_TYPE", f"{scope_path}.{field}[{item_index}]", "must be a non-empty string")
+            if len(repositories) != len(set(repositories)):
+                err("NODE_FIELD_DUPLICATE", f"{p}.repository_scopes", "repository entries must be unique")
+            legacy_fields = (
+                "target_repositories", "grounding_refs", "target_paths", "target_symbols"
+            )
+            if any(n.get(field) for field in legacy_fields):
+                err("NODE_SCOPE_AMBIGUOUS", p, "repository_scopes cannot be mixed with legacy flat selection")
+        else:
+            repositories = n.get("target_repositories") or []
+            flat_selection = any(
+                n.get(field)
+                for field in ("grounding_refs", "target_paths", "target_symbols")
+            )
+            if len(repositories) > 1 or (flat_selection and len(repositories) != 1):
+                err(
+                    "NODE_SCOPE_AMBIGUOUS",
+                    f"{p}.target_repositories",
+                    "flat selection requires exactly one repository; multiple repositories require repository_scopes",
+                )
                 
         if "confidence" in n and not isinstance(n["confidence"], dict):
             err("CONFIDENCE_TYPE", f"{p}.confidence", "must be object")

@@ -13,13 +13,17 @@ projection into an orchestrator. The mode is opt-in, read-only and fail-closed.
 3. `execution_scope_sha256` covers the full work node, incident edges, direct
    prerequisites and referenced source records. Unrelated graph metadata does
    not invalidate the fence.
-4. Optional bounded `target_repositories`, `grounding_refs`, `target_paths`,
-   and `target_symbols` let Work select downstream repository context
-   explicitly. They are opaque data here; Backlog Graph never calls SpecGraph.
+4. Optional bounded `repository_scopes` are the strict multirepository source
+   of truth. Each scope binds one repository to its own `grounding_refs`,
+   `target_paths`, and `target_symbols`; scopes are unique and deterministic.
+   Legacy flat selection remains compatible only for exactly one repository.
+   Mixed or ambiguous selection fails closed. These values are opaque here;
+   Backlog Graph never calls SpecGraph.
 5. Kernel preserves the exact bytes and re-runs `ground` with the expected
    digest at bounded checkpoints.
 6. Agent Runtime blocks before dispatch, after a provider result and before a
-   terminal claim if the scope drifted or could not be revalidated.
+   terminal claim if any repository scope drifted, is missing, duplicated or
+   could not be revalidated.
 
 The projection always declares `NONE / READ_ONLY PROJECTION`. Binding,
 Authority, provider routing, evidence acceptance and canonical settlement stay

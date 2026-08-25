@@ -16,6 +16,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 - Added optional, bounded `target_repositories`, `grounding_refs`,
   `target_paths`, and `target_symbols` fields so a Work item can select its
   SpecGraph context explicitly without coupling either graph implementation.
+- Added per-repository `repository_scopes` as the strict multirepository SSOT.
+  Legacy flat selection remains valid for one repository; ambiguous multi-repo
+  or mixed selection fails closed.
 
 ### Fixed
 
@@ -24,7 +27,7 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Changed
 
-- Bumped the package and CLI to `1.1.0` for the managed-execution contract.
+- Bumped the package and CLI to `1.2.0` for strict multirepository selection.
 
 ## 2026-08-21
 

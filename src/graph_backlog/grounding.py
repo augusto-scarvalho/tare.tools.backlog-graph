@@ -141,6 +141,8 @@ def ground_work_item(
     else:
         reason_codes.append("READY_FOR_MANAGED_EXECUTION")
 
+    repository_scopes = _repository_scopes(node)
+
     work = {
         "id": node_id,
         "title": _bounded_text(node.get("title"), "title", 2_048),
@@ -156,10 +158,9 @@ def ground_work_item(
             _bounded_string_list(node.get("bounded_contexts"), "bounded_contexts", 64)
         ),
         "target_repositories": list(
-            _bounded_string_list(
-                node.get("target_repositories"), "target_repositories", 16
-            )
+            scope["repository"] for scope in repository_scopes
         ),
+        "repository_scopes": repository_scopes,
         "grounding_refs": list(
             _bounded_string_list(node.get("grounding_refs"), "grounding_refs", 128)
         ),
@@ -306,6 +307,62 @@ def _bounded_string_list(value: Any, field: str, maximum: int) -> tuple[str, ...
     if not isinstance(value, list) or len(value) > maximum:
         raise ValueError(f"{field} must be a bounded string list")
     return tuple(_bounded_text(item, field, 2_048) for item in value)
+
+
+def _repository_scopes(node: dict[str, Any]) -> list[dict[str, Any]]:
+    value = node.get("repository_scopes")
+    if value is not None:
+        if not isinstance(value, list) or len(value) > 16:
+            raise ValueError("repository_scopes must be a bounded list")
+        scopes = []
+        for item in value:
+            if not isinstance(item, dict):
+                raise ValueError("repository scope must be an object")
+            scopes.append(
+                {
+                    "repository": _bounded_text(
+                        item.get("repository"), "repository", 2_048
+                    ),
+                    "grounding_refs": list(
+                        _bounded_string_list(
+                            item.get("grounding_refs"), "grounding_refs", 128
+                        )
+                    ),
+                    "target_paths": list(
+                        _bounded_string_list(
+                            item.get("target_paths"), "target_paths", 256
+                        )
+                    ),
+                    "target_symbols": list(
+                        _bounded_string_list(
+                            item.get("target_symbols"), "target_symbols", 256
+                        )
+                    ),
+                }
+            )
+        return sorted(scopes, key=lambda scope: (scope["repository"].casefold(), scope["repository"]))
+
+    repositories = _bounded_string_list(
+        node.get("target_repositories"), "target_repositories", 16
+    )
+    if not repositories:
+        return []
+    if len(repositories) != 1:
+        raise ValueError("multiple repositories require repository_scopes")
+    return [
+        {
+            "repository": repositories[0],
+            "grounding_refs": list(
+                _bounded_string_list(node.get("grounding_refs"), "grounding_refs", 128)
+            ),
+            "target_paths": list(
+                _bounded_string_list(node.get("target_paths"), "target_paths", 256)
+            ),
+            "target_symbols": list(
+                _bounded_string_list(node.get("target_symbols"), "target_symbols", 256)
+            ),
+        }
+    ]
 
 
 def _bounded_text(value: Any, field: str, max_bytes: int) -> str:

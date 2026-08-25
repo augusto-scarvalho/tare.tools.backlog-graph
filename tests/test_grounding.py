@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from graph_backlog.grounding import encode_work_grounding, ground_work_item
 
 
@@ -87,6 +89,73 @@ def test_work_grounding_projects_explicit_specgraph_selection(tmp_path: Path) ->
         "src/tare_tools_agent_runtime/runtime.py"
     ]
     assert report.work["target_symbols"] == ["AgentRuntime.run"]
+    assert report.work["repository_scopes"] == [
+        {
+            "repository": "tare.tools.agent-runtime",
+            "grounding_refs": ["adr-agent-loop", "contract-turn-request"],
+            "target_paths": ["src/tare_tools_agent_runtime/runtime.py"],
+            "target_symbols": ["AgentRuntime.run"],
+        }
+    ]
+
+
+def test_multirepository_scope_is_explicit_and_deterministic(tmp_path: Path) -> None:
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["nodes"][1]["repository_scopes"] = [
+        {
+            "repository": "repo-b",
+            "grounding_refs": ["B"],
+            "target_paths": ["src/b.py"],
+            "target_symbols": [],
+        },
+        {
+            "repository": "repo-a",
+            "grounding_refs": ["A"],
+            "target_paths": ["src/a.py"],
+            "target_symbols": ["a"],
+        },
+    ]
+    graph_path = tmp_path / "multi.json"
+    graph_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    report = ground_work_item(graph_path, "TASK-02")
+
+    assert report.status == "READY"
+    assert report.work["target_repositories"] == ["repo-a", "repo-b"]
+    assert [scope["repository"] for scope in report.work["repository_scopes"]] == [
+        "repo-a",
+        "repo-b",
+    ]
+
+
+@pytest.mark.parametrize(
+    "selection",
+    [
+        {"target_repositories": ["repo-a", "repo-b"]},
+        {
+            "repository_scopes": [
+                {
+                    "repository": "repo-a",
+                    "grounding_refs": [],
+                    "target_paths": [],
+                    "target_symbols": [],
+                }
+            ],
+            "target_repositories": ["repo-a"],
+        },
+    ],
+)
+def test_ambiguous_multirepository_selection_fails_closed(
+    tmp_path: Path, selection: dict[str, object]
+) -> None:
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["nodes"][1].update(selection)
+    graph_path = tmp_path / "ambiguous.json"
+    graph_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    report = ground_work_item(graph_path, "TASK-02")
+
+    assert report.status == "SOURCE_INVALID"
 
 
 def test_blocked_and_unbounded_items_fail_closed(tmp_path: Path) -> None:
