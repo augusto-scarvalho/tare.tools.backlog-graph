@@ -84,3 +84,14 @@ $$\text{Score} = W_{\text{priority}} + W_{\text{horizon}} + W_{\text{criticality
 - The query and analyzer engine operates as a **read-only projection**.
 - Mutations create new immutable snapshots or append structured events to the `GraphLedger`.
 - Change diffing (`diff` and `validate-change`) verifies semantic compatibility before applying updates.
+
+### 4.1 Managed-agent boundary
+
+The ecosystem-managed path uses `ground`, never a mutating command. Backlog
+Graph computes a bounded work projection and execution-scope digest; Kernel
+transports and rechecks it; Agent Runtime blocks dispatch or terminal claims on
+drift. The OS remains the owner of binding, Authority, and canonical settlement.
+
+Standalone mutation commands are not part of this managed path and hooks must
+not invoke them. The projection neither changes TaskStore state nor grants an
+agent permission to do so.

@@ -29,10 +29,11 @@ from .validation import (
 )
 from .diff import semantic_diff, validate_change
 from .packet import generate_packet, format_packet_markdown
+from .grounding import encode_work_grounding, ground_work_item
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 PASS, VALIDATION_FAIL, RUNTIME_ERROR = 0, 1, 2
 
 def build_parser() -> argparse.ArgumentParser:
@@ -106,6 +107,15 @@ def build_parser() -> argparse.ArgumentParser:
     pk = sp.add_parser("packet")
     pk.add_argument("id", help="Node ID")
     pk.add_argument("--profile", choices=["planning", "operational"], default="planning")
+
+    gd = sp.add_parser("ground", help="Project bounded managed-execution context")
+    gd.add_argument("id", help="Exact Work item ID")
+    gd.add_argument("--work-graph", required=True, help="Explicit Work Graph path")
+    gd.add_argument(
+        "--profile", choices=["planning", "operational"], default="operational"
+    )
+    gd.add_argument("--max-bytes", type=int, default=8192)
+    gd.add_argument("--expected-scope-sha256")
 
     st = sp.add_parser("stale")
     st.add_argument("--limit", type=int, default=100)
@@ -320,6 +330,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(normalize_format_argv(sys.argv[1:] if argv is None else argv))
     try:
+        if args.cmd == "ground":
+            if args.format != "json":
+                raise UsageError("ground supports only JSON output")
+            report = ground_work_item(
+                args.work_graph,
+                args.id,
+                profile=args.profile,
+                max_bytes=args.max_bytes,
+                expected_scope_sha256=args.expected_scope_sha256,
+                policy_path=args.policy,
+                taxonomy_path=args.taxonomy,
+            )
+            sys.stdout.buffer.write(encode_work_grounding(report))
+            return PASS if report.status == "READY" else VALIDATION_FAIL
+
         if args.cmd in ("import-github", "import-linear", "import-gitlab", "import-md", "import-jira"):
             if getattr(args, "file", None) and args.file != "-":
                 with open(args.file, "r", encoding="utf-8") as f:

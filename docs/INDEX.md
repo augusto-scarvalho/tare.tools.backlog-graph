@@ -18,3 +18,4 @@
 ## 🚀 3. Guias & Referência CLI
 * **[`QUICKSTART.md`](QUICKSTART.md):** Guia rápido de primeiros passos e comandos essenciais.
 * **[`CLI_REFERENCE.md`](CLI_REFERENCE.md):** Manual completo de comandos CLI (`graph_ops.py`) e opções de validação/doctor.
+* **[`MANAGED_WORK_GUARD.md`](MANAGED_WORK_GUARD.md):** Cerca de escopo, bloqueio de drift e controle frugal contra estagnação tipo Zenão.

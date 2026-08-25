@@ -21,6 +21,7 @@ from .validation import (
 )
 from .diff import semantic_diff, validate_change
 from .packet import generate_packet, format_packet_markdown
+from .grounding import WorkGroundingReport, encode_work_grounding, ground_work_item
 from .ledger import GraphLedger
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
@@ -34,7 +35,7 @@ from .adapters import (
     JiraAdapter
 )
 
-__version__ = "0.2.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "WorkGraph",
@@ -58,6 +59,9 @@ __all__ = [
     "validate_change",
     "generate_packet",
     "format_packet_markdown",
+    "WorkGroundingReport",
+    "encode_work_grounding",
+    "ground_work_item",
     "GraphLedger",
     "simulate_completions",
     "generate_html_viewer",

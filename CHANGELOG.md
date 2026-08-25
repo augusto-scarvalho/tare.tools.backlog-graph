@@ -4,7 +4,27 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
-No entries yet.
+### Added
+
+- Added `backlog ground`, a bounded, deterministic and read-only execution
+  envelope under `tare.tools/work-grounding/1`, with exact graph, item and
+  execution-scope identities plus optional drift fencing through
+  `--expected-scope-sha256`.
+- Added fail-closed statuses for stale, blocked, unbounded, missing, invalid and
+  drifted work items. Strict managed execution requires fresh operational
+  readiness and explicit exit criteria.
+- Added optional, bounded `target_repositories`, `grounding_refs`,
+  `target_paths`, and `target_symbols` fields so a Work item can select its
+  SpecGraph context explicitly without coupling either graph implementation.
+
+### Fixed
+
+- Removed frozen-harness paths and invented implementation directives from
+  Markdown work packets. Missing exit criteria are now reported honestly.
+
+### Changed
+
+- Bumped the package and CLI to `1.1.0` for the managed-execution contract.
 
 ## 2026-08-21
 

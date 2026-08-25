@@ -1,0 +1,140 @@
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+from graph_backlog.grounding import encode_work_grounding, ground_work_item
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SAMPLE = ROOT / "fixtures" / "sample-backlog.json"
+
+
+def test_ready_work_grounding_is_bounded_deterministic_and_identified() -> None:
+    first = ground_work_item(SAMPLE, "TASK-02")
+    second = ground_work_item(SAMPLE, "TASK-02")
+
+    assert first == second
+    assert first.schema == "tare.tools/work-grounding/1"
+    assert first.status == "READY"
+    assert first.authority == "NONE / READ_ONLY PROJECTION"
+    assert first.work["exit_criteria"] == [
+        "Endpoints return 200 OK",
+        "Contract tests pass",
+    ]
+    assert first.byte_count == len(encode_work_grounding(first))
+    assert first.byte_count <= 8_192
+    assert len(first.graph_sha256) == 64
+    assert len(first.work_item_sha256) == 64
+    assert len(first.execution_scope_sha256) == 64
+
+
+def test_scope_fence_ignores_unrelated_metadata_but_detects_item_drift(
+    tmp_path: Path,
+) -> None:
+    baseline = ground_work_item(SAMPLE, "TASK-02")
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["meta"]["generated_at"] = "2099-01-01T00:00:00Z"
+    metadata_only = tmp_path / "metadata-only.json"
+    metadata_only.write_text(json.dumps(raw), encoding="utf-8")
+
+    unchanged = ground_work_item(
+        metadata_only,
+        "TASK-02",
+        expected_scope_sha256=baseline.execution_scope_sha256,
+    )
+    assert unchanged.status == "READY"
+    assert unchanged.graph_sha256 != baseline.graph_sha256
+    assert unchanged.execution_scope_sha256 == baseline.execution_scope_sha256
+
+    raw["nodes"][1]["summary"] = "Changed canonical work scope"
+    drifted_path = tmp_path / "drifted.json"
+    drifted_path.write_text(json.dumps(raw), encoding="utf-8")
+    drifted = ground_work_item(
+        drifted_path,
+        "TASK-02",
+        expected_scope_sha256=baseline.execution_scope_sha256,
+    )
+
+    assert drifted.status == "DRIFT"
+    assert drifted.reason_codes == ("EXECUTION_SCOPE_CHANGED",)
+
+
+def test_work_grounding_projects_explicit_specgraph_selection(tmp_path: Path) -> None:
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["nodes"][1].update(
+        {
+            "target_repositories": ["tare.tools.agent-runtime"],
+            "grounding_refs": ["adr-agent-loop", "contract-turn-request"],
+            "target_paths": ["src/tare_tools_agent_runtime/runtime.py"],
+            "target_symbols": ["AgentRuntime.run"],
+        }
+    )
+    graph_path = tmp_path / "work-selection.json"
+    graph_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    report = ground_work_item(graph_path, "TASK-02")
+
+    assert report.status == "READY"
+    assert report.work["target_repositories"] == ["tare.tools.agent-runtime"]
+    assert report.work["grounding_refs"] == [
+        "adr-agent-loop",
+        "contract-turn-request",
+    ]
+    assert report.work["target_paths"] == [
+        "src/tare_tools_agent_runtime/runtime.py"
+    ]
+    assert report.work["target_symbols"] == ["AgentRuntime.run"]
+
+
+def test_blocked_and_unbounded_items_fail_closed(tmp_path: Path) -> None:
+    blocked = ground_work_item(SAMPLE, "TASK-03")
+    assert blocked.status == "BLOCKED"
+
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["nodes"][1]["exit_criteria"] = []
+    unbounded_path = tmp_path / "unbounded.json"
+    unbounded_path.write_text(json.dumps(raw), encoding="utf-8")
+    unbounded = ground_work_item(unbounded_path, "TASK-02")
+
+    assert unbounded.status == "UNBOUNDED_WORK"
+    assert unbounded.reason_codes == ("EXIT_CRITERIA_MISSING",)
+
+
+def test_cli_stdout_is_exact_declared_bytes() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "graph_backlog.cli",
+            "--format",
+            "json",
+            "ground",
+            "TASK-02",
+            "--work-graph",
+            str(SAMPLE),
+        ],
+        check=False,
+        capture_output=True,
+        cwd=ROOT,
+    )
+    payload = json.loads(completed.stdout)
+
+    assert completed.returncode == 0
+    assert payload["status"] == "READY"
+    assert len(completed.stdout) == payload["byte_count"]
+    assert not completed.stdout.endswith(b"\n")
+
+
+def test_markdown_packet_contains_no_frozen_harness_directive() -> None:
+    from graph_backlog.core import WorkGraph
+    from graph_backlog.packet import format_packet_markdown, generate_packet
+
+    graph = WorkGraph(json.loads(SAMPLE.read_text(encoding="utf-8")))
+    rendered = format_packet_markdown(generate_packet(graph, "TASK-02"))
+
+    assert "universal-agent-harness-prototype" not in rendered
+    assert "MANDATORY IMPLEMENTATION DIRECTIVE" not in rendered
+    assert "grants no Authority" in rendered

@@ -65,7 +65,7 @@ def format_packet_markdown(packet_data: dict[str, Any]) -> str:
         for ec in exit_criteria:
             lines.append(f"- [ ] {ec}")
     else:
-        lines.append("- [ ] Implementation complete and verified against test suite.")
+        lines.append("_No exit criteria declared; strict managed execution must refuse this item._")
         
     lines.extend([
         "",
@@ -131,13 +131,8 @@ def format_packet_markdown(packet_data: dict[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Verified Repository & Filesystem Grounding",
-        "- **Harness Core Modules:** `scripts/harness_lib/` (186 modules of the Universal Harness Prototype)",
-        "- **Graph Backlog Engine:** `side_projects/tare.tools.graph-backlog/`",
-        "- **Research Sources Catalog:** `C:/projects/tare.tools.research/sources/SOURCE_INDEX.json` & `SOURCE_INDEX.md`",
-        "- **Harness Prototype Ref:** `C:/projects/universal-agent-harness-prototype/`",
-        "",
-        "> ⚠️ **MANDATORY IMPLEMENTATION DIRECTIVE:** All source-of-truth modules and archeological references exist in the paths above. The implementer must inspect the code, implement concrete Python logic, add unit tests in `tests/`, and pass `pytest`. Zero-byte diffs or 'missing source' evasion claims are strictly prohibited and automatically rejected."
+        "> This packet is a read-only planning projection. It grants no Authority and "
+        "does not invent repository paths, acceptance criteria, or implementation directives."
     ])
         
     return "\n".join(lines)

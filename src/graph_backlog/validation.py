@@ -79,7 +79,10 @@ def structural_errors(
         "projection_run_id", "staleness_state", "readiness", "completion"
     }
     
-    optional_node = {"spec_ref", "superseded_by", "superseded_at", "supersession_reason"}
+    optional_node = {
+        "spec_ref", "superseded_by", "superseded_at", "supersession_reason",
+        "target_repositories", "grounding_refs", "target_paths", "target_symbols",
+    }
     for i, n in enumerate(nodes):
         p = f"$.nodes[{i}]"
         if not isinstance(n, dict):
@@ -111,10 +114,26 @@ def structural_errors(
                 
         for k in (
             "bounded_contexts", "evidence_required", "exit_criteria", "source_refs",
-            "source_details", "provenance", "source_claim_ids", "tags", "notes", "items"
+            "source_details", "provenance", "source_claim_ids", "tags", "notes", "items",
+            "target_repositories", "grounding_refs", "target_paths", "target_symbols",
         ):
             if k in n and not isinstance(n[k], list):
                 err("NODE_FIELD_TYPE", f"{p}.{k}", "must be array")
+
+        for k, maximum in (
+            ("target_repositories", 16),
+            ("grounding_refs", 128),
+            ("target_paths", 256),
+            ("target_symbols", 256),
+        ):
+            value = n.get(k)
+            if not isinstance(value, list):
+                continue
+            if len(value) > maximum:
+                err("NODE_FIELD_BOUNDS", f"{p}.{k}", f"must contain at most {maximum} items")
+            for j, item in enumerate(value):
+                if not isinstance(item, str) or not item.strip():
+                    err("NODE_FIELD_TYPE", f"{p}.{k}[{j}]", "must be a non-empty string")
                 
         if "confidence" in n and not isinstance(n["confidence"], dict):
             err("CONFIDENCE_TYPE", f"{p}.confidence", "must be object")

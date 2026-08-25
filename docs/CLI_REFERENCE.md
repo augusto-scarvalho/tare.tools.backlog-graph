@@ -14,6 +14,27 @@ The `graph_ops.py` (and installed `graph-backlog` command) provides a comprehens
 
 ## Subcommands
 
+### Managed execution: `ground <id>`
+
+Emits canonical compact JSON for one operationally ready item. The graph path is
+mandatory so hooks cannot silently bind to an unintended default.
+
+```bash
+python graph_ops.py --format json ground TASK-02 \
+  --work-graph fixtures/sample-backlog.json \
+  --profile operational \
+  --max-bytes 8192
+```
+
+- Exit `0` means `READY`; every other status exits non-zero.
+- `--expected-scope-sha256 <digest>` revalidates an existing fence and returns
+  `DRIFT` if execution-relevant state changed.
+- Output has no trailing newline and `byte_count` is the exact stdout length.
+- The command is read-only and grants no Authority.
+
+This is the managed-agent contract. `packet` remains a human-readable context
+view and must not be used as a drift fence.
+
 ### 1. `validate`
 Performs structural, schema, and DAG cycle validation on the graph.
 ```bash
@@ -200,5 +221,4 @@ Imports tasks and dependency relations from structured Markdown tasklists (`back
 ```bash
 python graph_ops.py import-md backlog.md --out work-graph.json
 ```
-
 

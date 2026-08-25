@@ -76,6 +76,7 @@ flowchart TD
 | **Root-Cause Analysis (`why`)** | Manual reading of ticket comments | **Instant automated blocker resolution and dependency tree** |
 | **Critical Path Analysis (`critical-path`)** | Not computable | **Exact longest bottleneck chain identification** |
 | **Agent Implementation Packets (`packet`)** | Ad-hoc copy-pasting of issue descriptions | **Fully compiled Markdown context with DoD and grounding** |
+| **Managed Work Fence (`ground`)** | Agent trusts a stale ticket snapshot | **Bounded, hash-fenced, read-only execution context** |
 | **What-If Simulation (`simulate`)** | Impossible without altering production state | **Counterfactual topological projection overlay** |
 | **Auditability and Governance (`ledger`)** | Destructive state transitions | **Append-only SHA-256 Merkle audit trail** |
 | **Runtime Dependencies** | Heavy server or complex SDKs | **Zero external dependencies (pure Python 3.10+ stdlib)** |
@@ -97,6 +98,14 @@ Ranks eligible frontier work using deterministic multi-criteria scoring balancin
 
 ### 4. Implementation Packet Compiler
 Compiles self-contained, high-signal Markdown implementation packets ready for LLM prompts, agentic sidecars, and automated code review pipelines.
+
+### Managed Work Grounding
+`ground <id>` emits canonical, byte-bounded JSON only for operationally ready
+work with explicit exit criteria. Its execution-scope digest changes when the
+item, incident dependencies, direct prerequisites, or referenced sources
+change, allowing a managed runtime to stop on drift. It grants no Authority and
+never writes the canonical backlog. See
+[`docs/MANAGED_WORK_GUARD.md`](docs/MANAGED_WORK_GUARD.md).
 
 ### 5. Counterfactual "What-If" Simulation
 Simulates the downstream impact of marking candidate tasks as completed *before writing code*, projecting exactly which tasks will be unlocked next.
@@ -170,6 +179,7 @@ After installation, both `graph-backlog` and `graph-ops` executables become avai
 | `path <a> <b>` | Computes the shortest dependency path from `A` to `B` | `python graph_ops.py path TASK-01 TASK-03` |
 | `critical-path` | Calculates the longest bottleneck sequence in the DAG | `python graph_ops.py critical-path` |
 | `packet <id>` | Compiles self-contained Markdown prompt context for AI agents | `python graph_ops.py packet TASK-02 --format md` |
+| `ground <id>` | Emits bounded operational JSON and an execution-scope fence | `python graph_ops.py --format json ground TASK-02 --work-graph fixtures/sample-backlog.json` |
 | `simulate` | Projects frontier changes when completing candidate work | `python graph_ops.py simulate --complete TASK-02` |
 | `diff <other>` | Computes deep semantic diff between two graph snapshots | `python graph_ops.py diff previous-graph.json` |
 | `doctor` | Runs structural, cycle, evidence, and reconciliation audit | `python graph_ops.py doctor` |
