@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "policy": "ADR-058",
+  "repository": "tare.tools.backlog-graph",
+  "mode": "observe",
+  "surfaces": [
+    {
+      "id": "classification-authority",
+      "class": "E3_CRITICAL",
+      "paths": ["policies/delivery-evidence.json", "src/graph_backlog/delivery_evidence.py"]
+    },
+    {
+      "id": "canonical-identity-ledger-recovery",
+      "class": "E3_CRITICAL",
+      "paths": ["src/graph_backlog/jsonutil.py", "src/graph_backlog/ledger.py", "src/graph_backlog/mutations.py"]
+    },
+    {
+      "id": "operational-graph-contracts",
+      "class": "E2_OPERATIONAL",
+      "paths": ["src/graph_backlog/grounding.py", "src/graph_backlog/validation.py", "src/graph_backlog/diff.py", "src/graph_backlog/simulation.py", "src/graph_backlog/packet.py", "src/graph_backlog/cli.py"]
+    },
+    {
+      "id": "mutation-runner-safety",
+      "class": "E2_OPERATIONAL",
+      "paths": ["src/graph_backlog/mutation_testing.py", "tests/test_mutation_testing.py"]
+    },
+    {
+      "id": "ci-and-build-behavior",
+      "class": "E2_OPERATIONAL",
+      "paths": [".github/workflows/**", "pyproject.toml"]
+    },
+    {
+      "id": "test-behavior",
+      "class": "E1_LOCAL_BEHAVIOR",
+      "paths": ["tests/**"]
+    }
+  ]
+}

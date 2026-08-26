@@ -196,7 +196,7 @@ class MutationEngine:
     @staticmethod
     def _copy_shadow(repository_root: Path, shadow_root: Path) -> None:
         ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
-        for dirname in ("src", "tests", "fixtures"):
+        for dirname in ("src", "tests", "fixtures", "policies"):
             source = repository_root / dirname
             if source.exists():
                 shutil.copytree(source, shadow_root / dirname, ignore=ignore)
