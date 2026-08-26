@@ -106,6 +106,31 @@ def is_valid(x: int, flag: bool) -> bool:
         self.assertEqual(res.score_percentage, 100.0)
         self.assertEqual({detail["status"] for detail in res.details}, {"KILLED"})
 
+    def test_curated_graph_mutation_canaries_are_killed(self) -> None:
+        res = MutationEngine.run_mutation_test(
+            target_file=ROOT / "src" / "graph_backlog" / "mutations.py",
+            test_modules=[
+                "tests.test_adapters_and_mutations::"
+                "AdaptersAndMutationsTests::test_add_node_mutation",
+                "tests.test_north_star_invariants::"
+                "TestCASLandAndSupersede::"
+                "test_transaction_defaults_to_atomic_persistence_with_matching_cas",
+                "tests.test_north_star_invariants::"
+                "TestCASLandAndSupersede::test_supersede_node_creates_acyclic_relation",
+            ],
+            mutation_ids=[0, 4, 6, 7, 16, 33],
+            max_mutants=6,
+            timeout_seconds=10,
+        )
+
+        self.assertEqual(res.total_mutants, 6)
+        self.assertEqual(res.killed, 6)
+        self.assertEqual(res.survived, 0)
+        self.assertEqual(res.timed_out, 0)
+        self.assertEqual(res.errored, 0)
+        self.assertEqual(res.score_percentage, 100.0)
+        self.assertEqual({detail["status"] for detail in res.details}, {"KILLED"})
+
     def test_curated_jsonutil_mutation_canaries_are_killed(self) -> None:
         res = MutationEngine.run_mutation_test(
             target_file=ROOT / "src" / "graph_backlog" / "jsonutil.py",

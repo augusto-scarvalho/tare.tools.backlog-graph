@@ -7,9 +7,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 ### Added
 
 - Added bounded PR mutation canaries for operational-readiness, graph
-  validation, core prerequisite semantics, managed-work grounding, canonical
-  serialization, process liveness, and lock safety, with explicit `KILLED`,
-  `SURVIVED`, `TIMEOUT`, and `ERROR` outcomes.
+  validation, core prerequisite semantics, managed-work grounding, atomic
+  graph mutations, canonical serialization, process liveness, and lock safety,
+  with explicit `KILLED`, `SURVIVED`, `TIMEOUT`, and `ERROR` outcomes.
 - Added falsifiers for materialization scope, minimum evidence grade, canonical
   revision, semantic-edge defaults, informational relations, and supersession.
 - Added grounding falsifiers for immutable/canonical reports, budget trimming,

@@ -2,11 +2,11 @@
 
 Mutation testing in backlog-graph has two deliberately separate layers:
 
-1. A bounded PR gate runs 35 curated canaries over operational readiness,
+1. A bounded PR gate runs 41 curated canaries over operational readiness,
    graph validation, core prerequisite semantics, managed-work grounding,
-   canonical serialization, process liveness, and lock safety. It is intended
-   to catch the loss of critical assertions quickly, not to claim project-wide
-   mutation coverage.
+   atomic graph mutations, canonical serialization, process liveness, and lock
+   safety. It is intended to catch the loss of critical assertions quickly,
+   not to claim project-wide mutation coverage.
 2. Broader campaigns run per target file, manually or on a schedule. Their
    survivors are evidence for test review, not automatic proof of a defect.
 
@@ -36,14 +36,17 @@ focused suites, so it must not be presented as whole-project coverage.
 | `validation.py` | 134 | 52 | 82 | 38.8% | `tests.test_validation` |
 | `core.py` | 42 | 38 | 4 | 90.5% | `tests.test_relations`, `tests.test_algorithms` |
 | `grounding.py` | 34 | 32 | 2 | 94.1% | `tests.test_grounding` |
+| `mutations.py` | 36 | 36 | 0 | 100.0% | `tests.test_adapters_and_mutations`, `tests.test_north_star_invariants` |
 | `jsonutil.py` | 38 | 35 | 3 | 92.1% | `tests.test_jsonutil` |
-| Other production files | 458 | Not qualified | Not qualified | - | - |
+| Other production files | 422 | Not qualified | Not qualified | - | - |
 
 Survivors must be triaged as missing coverage, equivalent mutations, or
 behavior covered by a different focused suite. Only consequential,
 non-equivalent survivors should normally become new tests or PR canaries.
 The two remaining grounding survivors are redundant type guards behind the
 structural graph validation used by the public grounding flow.
+All discovered `mutations.py` candidates are killed by focused transaction,
+graph-mutation, and supersession tests.
 The three remaining `jsonutil.py` survivors are equivalent in the current
 control flow: redundant `sort_keys` after recursive key sorting, recursive
 scratch-directory creation after its parent already exists, and a cleanup
