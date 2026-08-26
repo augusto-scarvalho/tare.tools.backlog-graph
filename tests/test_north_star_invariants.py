@@ -10,11 +10,12 @@ from graph_backlog.jsonutil import (
     graph_lock,
     LockTimeoutError,
     RevisionMismatchError,
+    UsageError,
     canonical_json,
     sha256_canonical,
     compute_revision_hash
 )
-from graph_backlog.core import WorkGraph
+from graph_backlog.core import WorkGraph, load_default_policy, load_default_taxonomy
 from graph_backlog.algorithms import (
     compute_frontier,
     ranked_next,
@@ -22,10 +23,15 @@ from graph_backlog.algorithms import (
     frontier_sort_key
 )
 from graph_backlog.mutations import (
+    execute_graph_transaction,
     land_train_tasks,
     supersede_node_in_graph,
-    add_node_to_graph
+    add_node_to_graph,
+    complete_node_in_graph,
 )
+
+ROOT = Path(__file__).resolve().parent.parent
+SAMPLE = ROOT / "fixtures" / "sample-backlog.json"
 
 class TestNorthStarLockAndCanonicalHash:
     """Verifies BG-01 Lockfile and BG-02 JCS Canonical Digest invariants."""
@@ -209,6 +215,46 @@ class TestCASLandAndSupersede:
         assert new_rev != current_rev
         assert new_rev == compute_revision_hash(landed_dict)
 
+    def test_transaction_defaults_to_atomic_persistence_with_matching_cas(
+        self,
+        tmp_path: Path,
+    ):
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_bytes(SAMPLE.read_bytes())
+        raw = json.loads(graph_file.read_text(encoding="utf-8"))
+        expected_rev = compute_revision_hash(raw)
+        policy = load_default_policy()
+        taxonomy = load_default_taxonomy()
+
+        def mutate(graph: WorkGraph) -> dict[str, object]:
+            assert graph.policy is policy
+            assert graph.taxonomy is taxonomy
+            return complete_node_in_graph(graph, "TASK-02", "transaction evidence")
+
+        result = execute_graph_transaction(
+            graph_file,
+            mutate,
+            expected_rev=expected_rev,
+            policy=policy,
+            taxonomy=taxonomy,
+        )
+
+        persisted = json.loads(graph_file.read_text(encoding="utf-8"))
+        assert persisted == result
+        assert persisted["revision"] == compute_revision_hash(persisted)
+        assert graph_file.read_text(encoding="utf-8").endswith("\n")
+
+    def test_transaction_missing_graph_raises_usage_error_and_releases_lock(
+        self,
+        tmp_path: Path,
+    ):
+        graph_file = tmp_path / "missing.json"
+
+        with pytest.raises(UsageError, match="Cannot load JSON"):
+            execute_graph_transaction(graph_file, lambda graph: graph.to_dict())
+
+        assert not (tmp_path / ".missing.json.lock").exists()
+
     def test_cas_landing_mismatch_raises_revision_mismatch_error(self):
         wg = self._base_valid_graph()
         g1 = add_node_to_graph(wg, "TASK-01", "Task 1", priority="P0")
@@ -244,6 +290,8 @@ class TestCASLandAndSupersede:
         edge = next(e for e in superseded_dict["edges"] if e["type"] == "SUPERSEDED_BY")
         assert edge["from"] == "TASK-OLD"
         assert edge["to"] == "TASK-NEW"
+        assert edge["semantic"] is True
+        assert edge["notes"] == ["Architecture refactored in ADR-046"]
 
 class TestDoctorRecoveryAndSchemaMigration:
     """Verifies BG-07 Doctor Recovery and BG-09 Schema Migration invariants."""

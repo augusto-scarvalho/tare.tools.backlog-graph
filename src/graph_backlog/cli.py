@@ -206,6 +206,8 @@ def build_parser() -> argparse.ArgumentParser:
     mt.add_argument("--target", default="src/graph_backlog/algorithms.py", help="File to mutate")
     mt.add_argument("--max-mutants", type=int, default=25, help="Max mutants to test")
     mt.add_argument("--test-module", action="append", help="Test modules to run against mutants")
+    mt.add_argument("--mutation-id", action="append", type=int, help="Run only this mutation ID (repeatable)")
+    mt.add_argument("--timeout-seconds", type=float, default=15.0, help="Per-baseline/mutant test timeout")
 
     # 3rd Party Adapters & Ingestion
     igh = sp.add_parser("import-github", help="Import graph from GitHub Issues JSON file or piped stdin")
@@ -664,20 +666,31 @@ def main(argv: list[str] | None = None) -> int:
                 "saved": bool(args.save)
             }
         elif args.cmd == "mutation-test":
-            from .mutation_testing import MutationEngine
+            from .mutation_testing import MutationEngine, MutationRunError
             tests = args.test_module or ["tests.test_algorithms", "tests.test_validation", "tests.test_graph_ops"]
-            res = MutationEngine.run_mutation_test(
-                target_file=args.target,
-                test_modules=tests,
-                max_mutants=args.max_mutants
-            )
+            try:
+                res = MutationEngine.run_mutation_test(
+                    target_file=args.target,
+                    test_modules=tests,
+                    max_mutants=args.max_mutants,
+                    mutation_ids=args.mutation_id,
+                    timeout_seconds=args.timeout_seconds,
+                )
+            except MutationRunError as exc:
+                raise UsageError(str(exc)) from exc
             obj = {
                 "target": args.target,
                 "total_mutants": res.total_mutants,
                 "killed": res.killed,
                 "survived": res.survived,
+                "timed_out": res.timed_out,
+                "errored": res.errored,
                 "mutation_score_percent": res.score_percentage,
-                "status": "PASS" if res.score_percentage >= 70.0 else "WARN",
+                "status": (
+                    "PASS"
+                    if res.score_percentage >= 70.0 and not res.timed_out and not res.errored
+                    else "WARN"
+                ),
                 "details": res.details
             }
         elif args.cmd == "visualize":

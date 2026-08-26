@@ -346,6 +346,9 @@ pytest
 python -m unittest discover -s tests -v
 ```
 
+The bounded PR canaries and broader manual mutation campaigns are documented
+in [docs/MUTATION_TESTING.md](docs/MUTATION_TESTING.md).
+
 ---
 
 ## License and Attribution

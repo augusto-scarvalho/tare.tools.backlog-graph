@@ -16,7 +16,7 @@ import unittest
 from pathlib import Path
 from typing import Any
 
-from graph_backlog.core import WorkGraph, load_default_taxonomy
+from graph_backlog.core import WorkGraph, load_default_taxonomy, normalize_key
 from graph_backlog.algorithms import compute_frontier, readiness, ranked_next, unresolved_prereqs
 
 # Prerequisite relations that MUST block their dependent (prerequisite_role=source: A -> B).
@@ -54,6 +54,20 @@ def _two_node_graph(rel_type: str, a_status: str, a_dod: bool = False) -> WorkGr
 
 
 class BlockingRelationGoldenTests(unittest.TestCase):
+    def test_normalize_key_preserves_words_and_normalizes_separators(self) -> None:
+        self.assertEqual(normalize_key(" Critical_Path "), "critical-path")
+        self.assertEqual(normalize_key(None), "")
+
+    def test_missing_semantic_flag_defaults_to_blocking(self) -> None:
+        raw = {
+            "meta": {},
+            "nodes": [_node("A", "NOT_DONE"), _node("B")],
+            "edges": [{"from": "A", "to": "B", "type": "BLOCKS"}],
+        }
+        graph = WorkGraph(raw)
+
+        self.assertFalse(readiness(graph, graph.by_id["B"])["ready"])
+
     def test_every_prerequisite_relation_blocks_then_unblocks(self) -> None:
         for rel in PREREQUISITE_RELATIONS:
             with self.subTest(relation=rel):
@@ -82,6 +96,8 @@ class BlockingRelationGoldenTests(unittest.TestCase):
                 g = _two_node_graph(rel, "NOT_DONE")
                 self.assertTrue(readiness(g, g.by_id["B"])["ready"], f"{rel} must not block")
                 self.assertIn("B", [n["id"] for n in compute_frontier(g)])
+                self.assertFalse(g.block_in, f"{rel} must not create reverse blockers")
+                self.assertFalse(g.block_out, f"{rel} must not create reverse blockers")
 
     def test_taxonomy_declares_all_prerequisite_relations(self) -> None:
         # Falsifier: guards against silent taxonomy drift dropping a blocking type.
@@ -89,6 +105,46 @@ class BlockingRelationGoldenTests(unittest.TestCase):
         for rel in PREREQUISITE_RELATIONS:
             self.assertEqual(rels[rel]["dependency_effect"], "prerequisite", rel)
             self.assertEqual(rels[rel]["prerequisite_role"], "source", rel)
+
+
+class PrerequisiteRequirementTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.graph = _two_node_graph("BLOCKS", "DONE", a_dod=True)
+        self.prerequisite = self.graph.by_id["A"]
+
+    @staticmethod
+    def _edge(**requirements: Any) -> dict[str, Any]:
+        return {"type": "BLOCKS", "requirements": requirements}
+
+    def test_materialization_scope_must_match(self) -> None:
+        self.prerequisite["completion"]["materialization_scope"] = "local"
+
+        self.assertTrue(
+            self.graph.prerequisite_satisfies("A", self._edge(materialization_scope="local"))
+        )
+        self.assertFalse(
+            self.graph.prerequisite_satisfies("A", self._edge(materialization_scope="production"))
+        )
+
+    def test_minimum_evidence_grade_accepts_boundary_and_rejects_lower_grade(self) -> None:
+        self.prerequisite["completion"]["evidence_grade"] = "B"
+
+        self.assertTrue(
+            self.graph.prerequisite_satisfies("A", self._edge(minimum_evidence_grade="B"))
+        )
+        self.assertFalse(
+            self.graph.prerequisite_satisfies("A", self._edge(minimum_evidence_grade="A"))
+        )
+
+    def test_canonical_revision_must_match(self) -> None:
+        self.prerequisite["canonical_revision"] = "revision-1"
+
+        self.assertTrue(
+            self.graph.prerequisite_satisfies("A", self._edge(canonical_revision="revision-1"))
+        )
+        self.assertFalse(
+            self.graph.prerequisite_satisfies("A", self._edge(canonical_revision="revision-2"))
+        )
 
 
 class SupersededResolutionTests(unittest.TestCase):
@@ -115,6 +171,17 @@ class SupersededResolutionTests(unittest.TestCase):
     def test_superseded_with_no_successor_fails_closed(self) -> None:
         g = self._graph([_node("A", "SUPERSEDED")], [])
         self.assertFalse(g.is_satisfied("A"))
+
+    def test_unknown_node_is_not_satisfied(self) -> None:
+        g = self._graph([], [])
+        self.assertFalse(g.is_satisfied("missing"))
+
+    def test_supersession_defaults_to_semantic(self) -> None:
+        g = self._graph(
+            [_node("A", "SUPERSEDED"), _node("B", "DONE", dod=True)],
+            [{"from": "A", "to": "B", "type": "SUPERSEDED_BY"}],
+        )
+        self.assertTrue(g.is_satisfied("A"))
 
     def test_superseded_cycle_fails_closed(self) -> None:
         g = self._graph(

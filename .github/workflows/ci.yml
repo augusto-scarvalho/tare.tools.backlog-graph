@@ -26,6 +26,10 @@ jobs:
           pip install pytest jsonschema pytest-subtests
           pip install -e .
 
+      - name: Run Hermetic Mutation Canaries
+        run: |
+          pytest tests/test_mutation_testing.py -v
+
       - name: Run Test Suite
         run: |
-          pytest tests/ -v
+          pytest tests/ -v --ignore=tests/test_mutation_testing.py

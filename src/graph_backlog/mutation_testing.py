@@ -1,16 +1,17 @@
 from __future__ import annotations
+
 import ast
-import copy
-import importlib
-import io
+import hashlib
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import time
-import unittest
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+
 
 @dataclass
 class MutationCandidate:
@@ -23,9 +24,10 @@ class MutationCandidate:
     mutated_op: str
     mutant_ast: ast.AST
 
+
 class ASTMutator(ast.NodeTransformer):
     """AST transformer that generates mutation candidates for Python code."""
-    
+
     COMP_MAP = {
         ast.Eq: ast.NotEq,
         ast.NotEq: ast.Eq,
@@ -73,12 +75,9 @@ class ASTMutator(ast.NodeTransformer):
                     description=f"Change comparison {op_type.__name__} to {type(target_op).__name__}",
                     original_op=op_type.__name__,
                     mutated_op=type(target_op).__name__,
-                    mutant_ast=node
+                    mutant_ast=node,
                 ))
-                if self.target_mutation_index == cand_id:
-                    new_ops.append(target_op)
-                else:
-                    new_ops.append(op)
+                new_ops.append(target_op if self.target_mutation_index == cand_id else op)
                 self.current_index += 1
             else:
                 new_ops.append(op)
@@ -99,7 +98,7 @@ class ASTMutator(ast.NodeTransformer):
                 description=f"Change boolean operator {op_type.__name__} to {type(target_op).__name__}",
                 original_op=op_type.__name__,
                 mutated_op=type(target_op).__name__,
-                mutant_ast=node
+                mutant_ast=node,
             ))
             if self.target_mutation_index == cand_id:
                 node.op = target_op
@@ -118,24 +117,38 @@ class ASTMutator(ast.NodeTransformer):
                 description=f"Invert boolean constant {node.value} -> {new_val}",
                 original_op=str(node.value),
                 mutated_op=str(new_val),
-                mutant_ast=node
+                mutant_ast=node,
             ))
             if self.target_mutation_index == cand_id:
                 node.value = new_val
             self.current_index += 1
         return node
 
+
 @dataclass
 class MutationResult:
     total_mutants: int
     killed: int
     survived: int
+    timed_out: int
     errored: int
     score_percentage: float
     details: list[dict[str, Any]]
 
+
+@dataclass
+class _TestRun:
+    status: str
+    duration_sec: float
+    output: str
+
+
+class MutationRunError(RuntimeError):
+    """Raised when a mutation run cannot produce trustworthy results."""
+
+
 class MutationEngine:
-    """Engine to discover, inject, and evaluate mutations against unit tests."""
+    """Discover and evaluate Python mutants in an isolated shadow copy."""
 
     @staticmethod
     def discover_mutations(source_code: str, filename: str = "<source>") -> list[MutationCandidate]:
@@ -146,106 +159,191 @@ class MutationEngine:
         return mutator.candidates
 
     @staticmethod
-    def run_tests_on_module(test_modules: list[str]) -> bool:
-        """Run unittest suite and return True if all pass, False if any fail."""
-        for mod in list(sys.modules.keys()):
-            if mod.startswith("graph_backlog") or mod.startswith("tests"):
-                del sys.modules[mod]
+    def _repository_root(target_path: Path) -> Path:
+        for parent in (target_path.parent, *target_path.parents):
+            if (parent / "pyproject.toml").is_file() and (parent / "src" / "graph_backlog").is_dir():
+                return parent
+        raise MutationRunError(f"Could not find backlog-graph repository root for {target_path}")
 
-        loader = unittest.TestLoader()
-        suite = unittest.TestSuite()
-        for mod in test_modules:
-            try:
-                suite.addTests(loader.loadTestsFromName(mod))
-            except Exception:
-                return False
-        
-        stream = io.StringIO()
-        runner = unittest.TextTestRunner(stream=stream, verbosity=0)
-        result = runner.run(suite)
-        return result.wasSuccessful()
+    @staticmethod
+    def _pytest_targets(test_modules: list[str], repository_root: Path) -> list[str]:
+        if not test_modules:
+            raise MutationRunError("At least one test module is required")
+
+        targets: list[str] = []
+        for value in test_modules:
+            selector = ""
+            module_or_path = value
+            if "::" in value:
+                module_or_path, selector = value.split("::", 1)
+                selector = f"::{selector}"
+            if module_or_path.startswith("tests."):
+                module_or_path = module_or_path.replace(".", "/") + ".py"
+            candidate = Path(module_or_path)
+            if candidate.suffix == ".py":
+                test_path = candidate if candidate.is_absolute() else repository_root / candidate
+                try:
+                    relative = test_path.resolve().relative_to(repository_root)
+                except ValueError as exc:
+                    raise MutationRunError(f"Test target escapes repository root: {value}") from exc
+                if not test_path.is_file():
+                    raise MutationRunError(f"Test target does not exist: {value}")
+                targets.append(relative.as_posix() + selector)
+            else:
+                targets.append(value)
+        return targets
+
+    @staticmethod
+    def _copy_shadow(repository_root: Path, shadow_root: Path) -> None:
+        ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
+        for dirname in ("src", "tests", "fixtures"):
+            source = repository_root / dirname
+            if source.exists():
+                shutil.copytree(source, shadow_root / dirname, ignore=ignore)
+        for entrypoint in repository_root.glob("*.py"):
+            shutil.copy2(entrypoint, shadow_root / entrypoint.name)
+        shutil.copy2(repository_root / "pyproject.toml", shadow_root / "pyproject.toml")
+
+    @staticmethod
+    def _run_pytest(
+        shadow_root: Path,
+        pytest_targets: list[str],
+        timeout_seconds: float,
+    ) -> _TestRun:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(shadow_root / "src")
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        env["PYTHONHASHSEED"] = "0"
+        command = [sys.executable, "-m", "pytest", *pytest_targets, "-q", "--tb=short"]
+        started = time.monotonic()
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=shadow_root,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            output = exc.stdout or ""
+            if isinstance(output, bytes):
+                output = output.decode(errors="replace")
+            return _TestRun("TIMEOUT", time.monotonic() - started, output)
+
+        if completed.returncode == 0:
+            status = "PASS"
+        elif completed.returncode == 1:
+            status = "KILLED"
+        else:
+            status = "ERROR"
+        return _TestRun(status, time.monotonic() - started, completed.stdout)
 
     @staticmethod
     def run_mutation_test(
         target_file: Path | str,
         test_modules: list[str],
-        max_mutants: int = 40
+        max_mutants: int = 40,
+        *,
+        mutation_ids: list[int] | None = None,
+        timeout_seconds: float = 15.0,
     ) -> MutationResult:
         target_path = Path(target_file).resolve()
-        source_code = target_path.read_text(encoding="utf-8")
-        candidates = MutationEngine.discover_mutations(source_code, filename=str(target_path))
-        
-        total = min(len(candidates), max_mutants)
-        killed = 0
-        survived = 0
-        errored = 0
-        details = []
+        if not target_path.is_file() or target_path.suffix != ".py":
+            raise MutationRunError(f"Mutation target must be an existing Python file: {target_path}")
+        if max_mutants < 0:
+            raise MutationRunError("max_mutants cannot be negative")
+        if timeout_seconds <= 0:
+            raise MutationRunError("timeout_seconds must be positive")
 
-        # Backup original content
-        original_bytes = target_path.read_bytes()
-
+        repository_root = MutationEngine._repository_root(target_path)
         try:
-            for idx in range(total):
-                cand = candidates[idx]
-                # Generate mutated AST
+            relative_target = target_path.relative_to(repository_root)
+        except ValueError as exc:
+            raise MutationRunError("Mutation target must be inside the backlog-graph repository") from exc
+
+        source_bytes = target_path.read_bytes()
+        source_hash = hashlib.sha256(source_bytes).hexdigest()
+        source_code = source_bytes.decode("utf-8")
+        candidates = MutationEngine.discover_mutations(source_code, filename=str(target_path))
+        by_id = {candidate.id: candidate for candidate in candidates}
+
+        if mutation_ids is None:
+            selected = candidates[:max_mutants]
+        else:
+            missing = sorted(set(mutation_ids) - set(by_id))
+            if missing:
+                raise MutationRunError(f"Unknown mutation ids: {missing}")
+            selected = [by_id[mutation_id] for mutation_id in mutation_ids[:max_mutants]]
+
+        pytest_targets = MutationEngine._pytest_targets(test_modules, repository_root)
+        killed = survived = timed_out = errored = 0
+        details: list[dict[str, Any]] = []
+
+        with tempfile.TemporaryDirectory(prefix="backlog-mutants-") as temp_dir:
+            shadow_root = Path(temp_dir)
+            MutationEngine._copy_shadow(repository_root, shadow_root)
+            shadow_target = shadow_root / relative_target
+            if not shadow_target.exists():
+                shadow_target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(target_path, shadow_target)
+
+            baseline = MutationEngine._run_pytest(shadow_root, pytest_targets, timeout_seconds)
+            if baseline.status != "PASS":
+                tail = baseline.output[-2000:].strip()
+                raise MutationRunError(
+                    f"Mutation baseline did not pass ({baseline.status}).\n{tail}"
+                )
+
+            for candidate in selected:
                 tree = ast.parse(source_code, filename=str(target_path))
-                mutator = ASTMutator(target_mutation_index=idx)
+                mutator = ASTMutator(target_mutation_index=candidate.id)
                 mutator.filename = str(target_path)
                 mutated_tree = mutator.visit(tree)
                 ast.fix_missing_locations(mutated_tree)
-
                 mutated_code = ast.unparse(mutated_tree)
-                target_path.write_text(mutated_code, encoding="utf-8")
+                compile(mutated_code, str(shadow_target), "exec")
+                shadow_target.write_text(mutated_code, encoding="utf-8")
 
-                # Invalidate import caches and reload module
-                importlib.invalidate_caches()
-                for mname, mobj in list(sys.modules.items()):
-                    if hasattr(mobj, "__file__") and mobj.__file__:
-                        try:
-                            if Path(mobj.__file__).resolve() == target_path:
-                                importlib.reload(mobj)
-                        except Exception:
-                            pass
-
-                # Run test suite
-                t0 = time.time()
-                passed = MutationEngine.run_tests_on_module(test_modules)
-                dt = time.time() - t0
-
-                if passed:
-                    # Mutant survived -> test didn't catch the bug
+                run = MutationEngine._run_pytest(shadow_root, pytest_targets, timeout_seconds)
+                if run.status == "PASS":
                     survived += 1
                     status = "SURVIVED"
-                else:
-                    # Mutant killed -> test caught the bug!
+                elif run.status == "KILLED":
                     killed += 1
                     status = "KILLED"
+                elif run.status == "TIMEOUT":
+                    timed_out += 1
+                    status = "TIMEOUT"
+                else:
+                    errored += 1
+                    status = "ERROR"
 
-                details.append({
-                    "id": cand.id,
-                    "line": cand.lineno,
+                detail: dict[str, Any] = {
+                    "id": candidate.id,
+                    "line": candidate.lineno,
                     "status": status,
-                    "description": cand.description,
-                    "duration_sec": round(dt, 3)
-                })
-        finally:
-            # Restore original code
-            target_path.write_bytes(original_bytes)
-            importlib.invalidate_caches()
-            for mname, mobj in list(sys.modules.items()):
-                if hasattr(mobj, "__file__") and mobj.__file__:
-                    try:
-                        if Path(mobj.__file__).resolve() == target_path:
-                            importlib.reload(mobj)
-                    except Exception:
-                        pass
+                    "description": candidate.description,
+                    "duration_sec": round(run.duration_sec, 3),
+                }
+                if status in {"TIMEOUT", "ERROR"}:
+                    detail["output_tail"] = run.output[-2000:].strip()
+                details.append(detail)
+                shadow_target.write_bytes(source_bytes)
 
-        score = (killed / total * 100.0) if total > 0 else 100.0
+        if hashlib.sha256(target_path.read_bytes()).hexdigest() != source_hash:
+            raise MutationRunError(f"Source integrity check failed for {target_path}")
+
+        total = len(selected)
+        score = (killed / total * 100.0) if total else 100.0
         return MutationResult(
             total_mutants=total,
             killed=killed,
             survived=survived,
+            timed_out=timed_out,
             errored=errored,
             score_percentage=round(score, 1),
-            details=details
+            details=details,
         )

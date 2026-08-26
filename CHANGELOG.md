@@ -6,6 +6,14 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Added
 
+- Added bounded PR mutation canaries for operational-readiness, graph
+  validation, core prerequisite semantics, managed-work grounding, canonical
+  serialization, process liveness, and lock safety, with explicit `KILLED`,
+  `SURVIVED`, `TIMEOUT`, and `ERROR` outcomes.
+- Added falsifiers for materialization scope, minimum evidence grade, canonical
+  revision, semantic-edge defaults, informational relations, and supersession.
+- Added grounding falsifiers for immutable/canonical reports, budget trimming,
+  incident-edge and source drift, revision identity, and bounded input errors.
 - Added `backlog ground`, a bounded, deterministic and read-only execution
   envelope under `tare.tools/work-grounding/1`, with exact graph, item and
   execution-scope identities plus optional drift fencing through
@@ -22,6 +30,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Fixed
 
+- Replaced the permanently skipped, in-place mutation runner with a hermetic
+  temporary repository copy, a passing baseline gate, per-mutant timeouts, and
+  a SHA-256 proof that production sources remain unchanged.
 - Removed frozen-harness paths and invented implementation directives from
   Markdown work packets. Missing exit criteria are now reported honestly.
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,8 @@ def test_ready_work_grounding_is_bounded_deterministic_and_identified() -> None:
     assert first.schema == "tare.tools/work-grounding/1"
     assert first.status == "READY"
     assert first.authority == "NONE / READ_ONLY PROJECTION"
+    assert first.work["title"] == "Build Core Business API"
+    assert first.work["kind"] == "task"
     assert first.work["exit_criteria"] == [
         "Endpoints return 200 OK",
         "Contract tests pass",
@@ -31,6 +34,46 @@ def test_ready_work_grounding_is_bounded_deterministic_and_identified() -> None:
     assert len(first.graph_sha256) == 64
     assert len(first.work_item_sha256) == 64
     assert len(first.execution_scope_sha256) == 64
+
+
+def test_invalid_work_id_fails_with_a_bounded_input_error() -> None:
+    with pytest.raises(ValueError, match="work_id must be a non-empty string"):
+        ground_work_item(SAMPLE, 7)  # type: ignore[arg-type]
+
+
+def test_grounding_report_is_immutable_and_encoding_is_canonical(
+    tmp_path: Path,
+) -> None:
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["nodes"][1]["title"] = "Execução canônica"
+    graph_path = tmp_path / "unicode.json"
+    graph_path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    report = ground_work_item(graph_path, "TASK-02")
+    encoded = encode_work_grounding(report)
+
+    with pytest.raises(FrozenInstanceError):
+        report.status = "BLOCKED"  # type: ignore[misc]
+    assert "Execução canônica".encode("utf-8") in encoded
+    assert encoded.startswith(b'{"authority":')
+
+
+def test_graph_revision_prefers_declared_projection_identity() -> None:
+    report = ground_work_item(SAMPLE, "TASK-02")
+
+    assert report.graph_revision == "proj-sample-001"
+
+
+def test_budget_trims_optional_downstream_before_failing() -> None:
+    full = ground_work_item(SAMPLE, "TASK-02")
+    assert len(full.downstream) == 1
+
+    trimmed = ground_work_item(SAMPLE, "TASK-02", max_bytes=full.byte_count - 1)
+
+    assert trimmed.status == "READY"
+    assert trimmed.byte_count <= full.byte_count - 1
+    assert trimmed.downstream == ()
+    assert trimmed.omitted_downstream == 1
 
 
 def test_scope_fence_ignores_unrelated_metadata_but_detects_item_drift(
@@ -62,6 +105,44 @@ def test_scope_fence_ignores_unrelated_metadata_but_detects_item_drift(
 
     assert drifted.status == "DRIFT"
     assert drifted.reason_codes == ("EXECUTION_SCOPE_CHANGED",)
+
+
+@pytest.mark.parametrize("edge_index", [0, 1])
+def test_scope_fence_detects_inbound_and_outbound_edge_drift(
+    tmp_path: Path,
+    edge_index: int,
+) -> None:
+    baseline = ground_work_item(SAMPLE, "TASK-02")
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["edges"][edge_index]["notes"].append("changed incident contract")
+    changed_path = tmp_path / f"edge-{edge_index}.json"
+    changed_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    changed = ground_work_item(
+        changed_path,
+        "TASK-02",
+        expected_scope_sha256=baseline.execution_scope_sha256,
+    )
+
+    assert changed.status == "DRIFT"
+    assert changed.reason_codes == ("EXECUTION_SCOPE_CHANGED",)
+
+
+def test_scope_fence_detects_referenced_source_drift(tmp_path: Path) -> None:
+    baseline = ground_work_item(SAMPLE, "TASK-02")
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["sources"]["SRC-INIT"]["title"] = "Changed source contract"
+    changed_path = tmp_path / "source.json"
+    changed_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    changed = ground_work_item(
+        changed_path,
+        "TASK-02",
+        expected_scope_sha256=baseline.execution_scope_sha256,
+    )
+
+    assert changed.status == "DRIFT"
+    assert changed.reason_codes == ("EXECUTION_SCOPE_CHANGED",)
 
 
 def test_work_grounding_projects_explicit_specgraph_selection(tmp_path: Path) -> None:

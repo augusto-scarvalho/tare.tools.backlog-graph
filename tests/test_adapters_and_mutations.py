@@ -53,6 +53,11 @@ class AdaptersAndMutationsTests(unittest.TestCase):
         self.assertEqual(val["status"], "PASS")
         self.assertEqual(len(new_graph_raw["nodes"]), 4)
         self.assertEqual(len(new_graph_raw["edges"]), 3)
+        added_node = next(n for n in new_graph_raw["nodes"] if n["id"] == "TASK-04")
+        self.assertIs(added_node["readiness"]["operational_identity_required"], False)
+        self.assertIs(added_node["completion"]["dod_satisfied"], False)
+        added_edge = next(e for e in new_graph_raw["edges"] if e["to"] == "TASK-04")
+        self.assertIs(added_edge["semantic"], True)
 
     def test_complete_node_mutation(self) -> None:
         new_graph_raw = complete_node_in_graph(
