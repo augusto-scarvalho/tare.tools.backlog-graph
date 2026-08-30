@@ -6,6 +6,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Added
 
+- Added a shared, tested changelog guard for local pre-push and GitHub CI. It
+  requires meaningful `Unreleased` entries for material changes, validates
+  committed content, and prevents silent deletion or rewriting of history.
 - Added bounded PR mutation canaries for operational-readiness, graph
   validation, core prerequisite semantics, managed-work grounding, atomic
   graph mutations, canonical serialization, process liveness, and lock safety,
