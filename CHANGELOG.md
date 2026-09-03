@@ -6,6 +6,8 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Added
 
+- Preserved canonical ontology payload bytes across operating-system checkouts
+  so federated SHA-256 verification remains stable.
 - Added the repository-owned machine-readable ontology for deterministic
   frontier selection, typed dependency semantics, CAS-leased mutation and
   atomic reopen cascades, without creating a Library payload copy.
