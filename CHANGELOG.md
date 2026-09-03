@@ -6,6 +6,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Added
 
+- Added the repository-owned machine-readable ontology for deterministic
+  frontier selection, typed dependency semantics, CAS-leased mutation and
+  atomic reopen cascades, without creating a Library payload copy.
 - Moved `SPEC-BACKLOG-001` from the central Library copy into this owning
   repository and linked it from the documentation index.
 - Added a shared, tested changelog guard for local pre-push and GitHub CI. It

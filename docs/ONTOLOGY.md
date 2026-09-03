@@ -1,5 +1,10 @@
 # Ontology & Relation Taxonomy
 
+The canonical machine-readable vocabulary owned by this repository is
+[`../ontology/domain_ontology.yaml`](../ontology/domain_ontology.yaml). This
+document explains the operational taxonomies in human-readable form; it is not
+a second ontology payload.
+
 ## 1. Node Types (Kinds)
 
 | Kind | Purpose | Actionable by Default |
