@@ -12,6 +12,7 @@
 ## 📐 2. Arquitetura & Ontologia
 * **[`ARCHITECTURE.md`](ARCHITECTURE.md):** Visão arquitetural profunda do grafo acíclico dirigido, isolamento SQLite WAL e transições de estado.
 * **[`ONTOLOGY.md`](ONTOLOGY.md):** Taxonomia dos nós de tarefa, relações de bloqueio/dependência e vocabulário semântico.
+* **[`SPEC-BACKLOG-001.md`](SPEC-BACKLOG-001.md):** Critérios verificáveis do motor de DAG, fronteira incremental, reabertura atômica e concorrência CAS.
 
 ---
 
