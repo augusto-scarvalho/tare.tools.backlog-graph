@@ -40,6 +40,11 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Fixed
 
+- Made repository-relation integration fixtures opt-in through
+  `BACKLOG_GRAPH_CANONICAL_GRAPH`; tests no longer walk into parent checkouts
+  and silently consume an unrelated `work-graph.json`.
+- Made the standalone `graph_ops.py` wrapper put its own `src/` first even
+  when an editable or stale installed copy already added that path later.
 - Replaced the permanently skipped, in-place mutation runner with a hermetic
   temporary repository copy, a passing baseline gate, per-mutant timeouts, and
   a SHA-256 proof that production sources remain unchanged.

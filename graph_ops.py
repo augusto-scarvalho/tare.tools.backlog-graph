@@ -8,8 +8,10 @@ from pathlib import Path
 
 # Ensure src/ is on python path when running script directly
 _src_dir = Path(__file__).resolve().parent / "src"
-if str(_src_dir) not in sys.path:
-    sys.path.insert(0, str(_src_dir))
+_src_text = str(_src_dir)
+if _src_text in sys.path:
+    sys.path.remove(_src_text)
+sys.path.insert(0, _src_text)
 
 from graph_backlog.cli import main
 

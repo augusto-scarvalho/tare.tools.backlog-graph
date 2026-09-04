@@ -7,11 +7,12 @@ Proves the three exit criteria of graph-audit-frontier-semantics:
   3. The planning frontier is never presented as Authority / execution
      eligibility (immutable non-authority invariant on every payload).
 
-All in-memory; zero disk mutation (FAL-05). The canonical integration test
-locates work-graph.json by walking up and skips if absent, so the standalone
-subsystem stays portable while still running inside this repo.
+All in-memory; zero disk mutation (FAL-05). The optional canonical integration
+test reads only ``BACKLOG_GRAPH_CANONICAL_GRAPH``. It never walks above this
+repository and accidentally turns a parent checkout into fixture authority.
 """
 from __future__ import annotations
+import os
 import unittest
 from pathlib import Path
 from typing import Any
@@ -210,18 +211,22 @@ class NonAuthorityInvariantTests(unittest.TestCase):
 
 
 def _find_canonical_graph() -> Path | None:
-    for parent in Path(__file__).resolve().parents:
-        candidate = parent / "work-graph.json"
-        if candidate.exists():
-            return candidate
-    return None
+    configured = os.environ.get("BACKLOG_GRAPH_CANONICAL_GRAPH")
+    if not configured:
+        return None
+    candidate = Path(configured).expanduser().resolve()
+    if not candidate.is_file():
+        raise RuntimeError(
+            "BACKLOG_GRAPH_CANONICAL_GRAPH must identify an existing regular file"
+        )
+    return candidate
 
 
 class CanonicalBlockerIntegrationTests(unittest.TestCase):
     def setUp(self) -> None:
         path = _find_canonical_graph()
         if path is None:
-            self.skipTest("canonical work-graph.json not found (standalone checkout)")
+            self.skipTest("BACKLOG_GRAPH_CANONICAL_GRAPH not configured")
         self.graph = WorkGraph.from_file(path)
 
     def test_p0_first_batch_blocked_by_exact_byte_acquisition(self) -> None:
