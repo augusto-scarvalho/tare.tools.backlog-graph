@@ -40,6 +40,11 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Fixed
 
+- Documented the gap between the relocated specification and the Python
+  implementation: deterministic scanned frontier and optional graph-revision
+  CAS are not incremental O(1) selection or mandatory task-version CAS. Kept
+  the original criteria and explicit reopen-cascade gap for contract review;
+  no runtime semantics or Rust-port claims were changed.
 - Made repository-relation integration fixtures opt-in through
   `BACKLOG_GRAPH_CANONICAL_GRAPH`; tests no longer walk into parent checkouts
   and silently consume an unrelated `work-graph.json`.
