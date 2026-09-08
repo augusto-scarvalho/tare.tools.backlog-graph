@@ -1,0 +1,15 @@
+{
+  "decision_version": "1.0",
+  "decision_id": "editorial.adr-046_backlog_graph_north_star.20260818.001",
+  "document_id": "research.architecture.adr-046_backlog_graph_north_star.2026-08-18",
+  "manifest_sha256": "7a5536ee85377da7228601ee5d323758f56eb69cea67c973c002a1cc89bf2c07",
+  "decision": "accept",
+  "pages_approved": true,
+  "reviewer": {
+    "name": "augusto-scarvalho",
+    "role": "editorial-reviewer",
+    "identity_ref": "github:augusto-scarvalho"
+  },
+  "reviewed_at": "2026-08-18T01:08:11.256666+00:00",
+  "notes": "Ratificado por consenso formal tripartite e publicado automaticamente via Relay Publisher Engine com derivativo EN."
+}

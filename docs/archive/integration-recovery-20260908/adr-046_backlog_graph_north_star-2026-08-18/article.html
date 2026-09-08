@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>ADR-046: North Star do tare.tools.backlog-graph — Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica</title>
+</head>
+<body>
+  <main>
+    <article data-tare-document>
+      <header data-tare-role="document-header">
+        <h1>ADR-046: North Star do tare.tools.backlog-graph — Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica</h1>
+        <p data-tare-role="abstract">Estudo formal de arquitetura para o tare.tools Agent OS.</p>
+      </header>
+
+      <aside data-tare-role="authority-boundary">
+        RESEARCH / PEER-REVIEW RATIFIED DRAFT. Publicação em tare.tools.research sob governança de Design Science. Não concede isoladamente autorização de mutação em repositórios de produção sem o protocolo canônico do Relay Mesh.
+      </aside>
+
+      <section id="scope" data-tare-section="scope">
+        <h2>1. Escopo &amp; Formulação do Problema</h2>
+        <p>Sistemas tradicionais de gestão de tarefas (Jira, Linear, GitHub Projects) operam sobre <strong>filas lineares ou quadros Kanban planos</strong>, ignorando a estrutura topológica inerente da engenharia de software. Essa abordagem gera três patologias sistêmicas:</p>
+<ol>
+<li><strong>Cegueira de Bloqueios (<em>Blocker Blindness</em>):</strong> Dificuldade de identificar a cadeia de dependências que trava entregas críticas;</li>
+<li><strong>Priorização Ilusória (<em>Blind Prioritization</em>):</strong> Itens P0 bloqueados por pré-requisitos secundários esquecidos;</li>
+<li><strong>Alucinação de Fronteira (<em>Frontier Hallucination</em>):</strong> Agentes de IA escolhendo tarefas inviáveis por falta de pré-condições satisfeitas.</li>
+</ol>
+<p>O <strong><code>tare.tools.backlog-graph</code></strong> resolve esse problema transformando o backlog em um <strong>Grafo Acíclico Dirigido (DAG)</strong> com cálculo matemático determinístico da fronteira de trabalho executável.</p>
+<hr/>
+      </section>
+
+      <section id="evidence" data-tare-section="evidence">
+        <h2>2. Método &amp; Trilha de Evidências</h2>
+        <h3>A. Desacoplamento &amp; Zero Dependências (Pure Python Stdlib):</h3>
+<ul>
+<li>O <code>tare.tools.backlog-graph</code> é construído <strong>100% em Python puro (stdlib)</strong>, rodando instantaneamente sem dependências pesadas em qualquer ambiente de CI/CD ou máquina local.</li>
+<li>79 testes unitários e de integração cobrem validação de schemas, ordenação topológica, detecção de ciclos de Tarjan e reconciliação.</li>
+</ul>
+<h3>B. Ordenação Total e Determinismo Matemático:</h3>
+<ul>
+<li>A fronteira de execução (<code>frontier</code> / <code>next</code>) segue uma ordenação total estável:
+$$\text{FrontierOrder} = \langle \text{Priority (P0 } &gt; \text{ P1 } &gt; \text{ P2)},\ -\text{CriticalPathDepth},\ \text{NodeID (Lexicográfico)} \rangle$$</li>
+<li>O estado <code>READY</code> é <strong>estritamente derivado</strong>: um nó torna-se elegível se e somente se todos os seus pré-requisitos estão <code>DONE</code>.</li>
+</ul>
+<h3>C. Hash de Revisão Canônico (RFC 8785 / JCS):</h3>
+<ul>
+<li>O estado do grafo é content-addressed:
+$$\text{revision_hash} = \text{sha256}(\text{JCS_CanonicalJSON}(\text{work-graph without revision}))$$</li>
+</ul>
+<h3>D. Transação CAS com Exclusão Mútua:</h3>
+<ul>
+<li>Toda mutação é serializada sob um <strong>lockfile exclusivo (<code>.work-graph.json.lock</code>)</strong> com gravação em <code>.tmp</code>, <code>fsync</code> e <code>os.replace</code> atômico.</li>
+<li>Landings concorrentes com revisão obsoleta falham fechados com <code>RevisionMismatchError</code>.</li>
+</ul>
+<h3>E. Conectores Universais:</h3>
+<ul>
+<li>Suporte nativo para Jira, Linear, GitLab, GitHub Issues, CSV, Markdown, Mermaid e GraphML.</li>
+</ul>
+<hr/>
+      </section>
+
+      <section id="findings" data-tare-section="findings">
+        <h2>3. Proposta &amp; Resultados Arquiteturais</h2>
+        <h3>ADR-046: North Star do tare.tools.backlog-graph — Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica</h3>
+<ul>
+<li><strong>Status:</strong> Ratificado e Aprovado pela Mesa Redonda Tripartite (<code>CASE-2026-08-17-BACKLOG-GRAPH-NORTH-STAR</code>)</li>
+<li><strong>Data:</strong> 2026-08-17</li>
+<li><strong>Autores:</strong> Antigravity Mediator (sob direcionamento do Operador Humano e consenso da Mesa Tripartite: Google Gemini 3.7 Flash High, Anthropic Claude Fable 5 High, OpenAI GPT-5.6 Sol High)</li>
+<li><strong>Escopo:</strong> <code>tare.tools.backlog-graph</code> (Repositório Standalone Universal)</li>
+</ul>
+<hr/>
+<h3>3. Roadmap de Implementação em 4 Fases</h3>
+<ol>
+<li><strong>Fase 1 (Motor Core &amp; Validação — Atual v0.5):</strong> 79 testes passando 100%, algoritmos topológicos e visualizador HTML offline.</li>
+<li><strong>Fase 2 (Conectores &amp; Adapters Unidirecionais):</strong> Ingestão de tickets de Jira/Linear/GitHub e sub-grafos federados.</li>
+<li><strong>Fase 3 (Visualizador Interativo &amp; Copilot Bridge):</strong> Canvas interativo com simulação <em>what-if</em> e injeção de contexto in-editor.</li>
+<li><strong>Fase 4 (Distribuição Global &amp; Pacote PyPI):</strong> Pacote oficial no PyPI (<code>pip install tare-backlog-graph</code>) e extensão do VS Code.</li>
+</ol>
+      </section>
+
+      <section id="limitations" data-tare-section="limitations">
+        <h2>4. Limitações &amp; Ameaças à Validade</h2>
+        <p>Limitações operacionais aplicáveis a ambientes de execução heterogêneos.</p>
+      </section>
+
+      <section id="references" data-tare-section="references">
+        <h2>5. Referências &amp; Genealogia Canônica</h2>
+        <p>Repositório canônico tare-research/tare.tools.</p>
+      </section>
+    </article>
+  </main>
+</body>
+</html>

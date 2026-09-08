@@ -1,0 +1,30 @@
+{
+  "document_id": "research.architecture.study_backlog_graph_topological_execution_engine.2026-08-18",
+  "document_type": "research",
+  "status": "RESEARCH",
+  "title": "North Star do tare.tools.backlog-graph: Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica para Humanos e Agentes de IA",
+  "created_at": "2026-08-18T01:09:35.660046+00:00",
+  "language": "pt-BR",
+  "abstract": "Este estudo formaliza a especificação arquitetural definitiva e os fundamentos matemáticos do **`tare.tools.backlog-graph`**, um motor determinístico de gestão de backlogs em Grafo Acíclico Dirigido (DAG) e framework de execução topológica projetado para desenvolvedores humanos e agentes autônomos de IA. Superando o modelo linear e cego dos issue trackers tradicionais (Jira, Linear, GitHub Projects), o `tare.tools.backlog-graph` resolve as três patologias clássicas de entrega de software: *Blocker Blindness*, *Blind Prioritization* e *Frontier Hallucination*. O sistema é implementado em **Python puro com zero dependências externas (stdlib pura)**, garantindo portabilidade universal e execução instantânea. O documento formaliza a função de ordenação total estável da fronteira de execução ($\\text{Priority} \\rightarrow -\\text{Depth} \\rightarrow \\text{Lexicographical ID}$), define o algoritmo de canonicalização de estado baseado em JSON Canonicalization Scheme (RFC 8785 / JCS), estabelece o protocolo de mutação transacional Compare-And-Swap (CAS) sob lockfile de exclusão mútua, e detalha o compilador de *Implementation Packets* com *Definition of Done* (DoD) para swarms multiagente. A solidez do framework é demonstrada por uma suíte de 79 testes unitários e de integração cobrindo 100% dos fluxos de validação acíclica, reconciliação de projeções e mutações.",
+  "authors": [
+    {
+      "name": "Augusto Carvalho",
+      "role": "author"
+    },
+    {
+      "name": "Antigravity Mediator",
+      "role": "agent"
+    }
+  ],
+  "bounded_contexts": [
+    "Harness Architecture",
+    "Control Plane",
+    "Governance / Audit",
+    "Validation / Assurance"
+  ],
+  "provenance": {
+    "origin": "ratified_tripartite_round_table",
+    "source_file": "STUDY_BACKLOG_GRAPH_TOPOLOGICAL_EXECUTION_ENGINE.md",
+    "canonical_repo": "tare-research/tare.tools"
+  }
+}

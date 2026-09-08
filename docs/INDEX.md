@@ -21,3 +21,7 @@
 * **[`CLI_REFERENCE.md`](CLI_REFERENCE.md):** Manual completo de comandos CLI (`graph_ops.py`) e opções de validação/doctor.
 * **[`MANAGED_WORK_GUARD.md`](MANAGED_WORK_GUARD.md):** Cerca de escopo, bloqueio de drift e controle frugal contra estagnação tipo Zenão.
 * **[`MUTATION_TESTING.md`](MUTATION_TESTING.md):** Runner hermético, canários de PR e campanhas amplas de qualificação.
+
+## Historical recovery
+
+- [Recovered publication packages (history only)](archive/integration-recovery-20260908/README.md).

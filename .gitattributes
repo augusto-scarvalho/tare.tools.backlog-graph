@@ -1,1 +1,4 @@
 ontology/** -text
+
+# Preserve recovered historical publication payload hashes.
+docs/archive/integration-recovery-20260908/** -text
