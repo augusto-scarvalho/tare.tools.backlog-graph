@@ -1,0 +1,30 @@
+{
+  "document_id": "research.architecture.adr-046_backlog_graph_north_star.2026-08-18",
+  "document_type": "research",
+  "status": "RESEARCH",
+  "title": "ADR-046: North Star do tare.tools.backlog-graph — Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica",
+  "created_at": "2026-08-18T01:08:11.256666+00:00",
+  "language": "en",
+  "abstract": "Estudo formal de arquitetura para o tare.tools Agent OS.",
+  "authors": [
+    {
+      "name": "Augusto Carvalho",
+      "role": "author"
+    },
+    {
+      "name": "Antigravity Mediator",
+      "role": "agent"
+    }
+  ],
+  "bounded_contexts": [
+    "Harness Architecture",
+    "Control Plane",
+    "Governance / Audit",
+    "Validation / Assurance"
+  ],
+  "provenance": {
+    "origin": "ratified_tripartite_round_table",
+    "translation_of": "research.architecture.adr-046_backlog_graph_north_star.2026-08-18",
+    "source_file": "ADR-046_BACKLOG_GRAPH_NORTH_STAR.md"
+  }
+}

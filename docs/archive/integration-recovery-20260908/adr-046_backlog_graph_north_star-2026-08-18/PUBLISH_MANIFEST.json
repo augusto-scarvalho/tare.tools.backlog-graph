@@ -1,0 +1,25 @@
+{
+  "packet_version": "1.1",
+  "document_id": "research.architecture.adr-046_backlog_graph_north_star.2026-08-18",
+  "document_type": "research",
+  "status": "RESEARCH",
+  "repository": "tare.tools.research",
+  "bounded_contexts": [
+    "Harness Architecture",
+    "Control Plane",
+    "Governance / Audit",
+    "Validation / Assurance"
+  ],
+  "primary_artifact": "article.html",
+  "artifacts": [
+    "article.html",
+    "document-metadata.json",
+    "article.en.html",
+    "document-metadata.en.json",
+    "TRANSLATION_MANIFEST.en.json"
+  ],
+  "requested_channels": [
+    "pages"
+  ],
+  "canonical_change": false
+}

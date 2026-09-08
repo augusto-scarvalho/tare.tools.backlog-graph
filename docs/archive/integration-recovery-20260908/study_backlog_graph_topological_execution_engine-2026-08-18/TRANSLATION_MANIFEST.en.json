@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "translation_id": "translation.en.research.architecture.study_backlog_graph_topological_execution_engine.2026-08-18",
+  "translation_of": "research.architecture.study_backlog_graph_topological_execution_engine.2026-08-18",
+  "source_path": "article.html",
+  "source_sha256": "fe8f828adfffe2046161de666de419d48780ef9d20e27084dfd00ab178ddc09f",
+  "translation_path": "article.en.html",
+  "translation_sha256": "13abfb8b021222b81a8d6aa9aa5433df6044691a618fefed3d24c3db3e59295b",
+  "translation_size_bytes": 11666,
+  "source_language": "pt-BR",
+  "target_language": "en",
+  "translation_status": "MACHINE_TRANSLATED_UNREVIEWED",
+  "translator": "tare-relay-publisher-ai",
+  "translated_at": "2026-08-18T01:09:35.660046+00:00",
+  "policy": "TRANSLATION_POLICY.md",
+  "notes": "Automated high-fidelity structural translation preserving canonical nouns and AST invariants."
+}

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>North Star do tare.tools.backlog-graph: Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica para Humanos e Agentes de IA</title>
+</head>
+<body>
+  <main>
+    <article data-tare-document>
+      <header data-tare-role="document-header">
+        <h1>North Star do tare.tools.backlog-graph: Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica para Humanos e Agentes de IA</h1>
+        <p data-tare-role="abstract">Este estudo formaliza a especificação arquitetural definitiva e os fundamentos matemáticos do **`tare.tools.backlog-graph`**, um motor determinístico de gestão de backlogs em Grafo Acíclico Dirigido (DAG) e framework de execução topológica projetado para desenvolvedores humanos e agentes autônomos de IA. Superando o modelo linear e cego dos issue trackers tradicionais (Jira, Linear, GitHub Projects), o `tare.tools.backlog-graph` resolve as três patologias clássicas de entrega de software: *Blocker Blindness*, *Blind Prioritization* e *Frontier Hallucination*. O sistema é implementado em **Python puro com zero dependências externas (stdlib pura)**, garantindo portabilidade universal e execução instantânea. O documento formaliza a função de ordenação total estável da fronteira de execução ($\text{Priority} \rightarrow -\text{Depth} \rightarrow \text{Lexicographical ID}$), define o algoritmo de canonicalização de estado baseado em JSON Canonicalization Scheme (RFC 8785 / JCS), estabelece o protocolo de mutação transacional Compare-And-Swap (CAS) sob lockfile de exclusão mútua, e detalha o compilador de *Implementation Packets* com *Definition of Done* (DoD) para swarms multiagente. A solidez do framework é demonstrada por uma suíte de 79 testes unitários e de integração cobrindo 100% dos fluxos de validação acíclica, reconciliação de projeções e mutações.</p>
+      </header>
+
+      <aside data-tare-role="authority-boundary">
+        RESEARCH / PEER-REVIEW RATIFIED DRAFT. Published in tare.tools.research under Design Science governance. Does not grant mutation authority in production repositories without canonical Relay Mesh protocol.
+      </aside>
+
+      <section id="scope" data-tare-section="scope">
+        <h2>1. Scope &amp; Problem Formulation</h2>
+        <p>O desenvolvimento de software moderno não é uma sequência linear de tickets nem um quadro Kanban de colunas irrestritas: <strong>é uma rede de dependências contratuais, pré-requisitos lógicos e superfícies de integração</strong>.</p>
+<p>$$\text{Tarefas no Backlog} \xrightarrow{\text{Topologia DAG}} \text{Cálculo de Fronteira (Ready)} \xrightarrow{\text{Implementation Packet}} \text{Execução Autônoma por IA} \xrightarrow{\text{CAS Landing}}$$</p>
+<h3>1.1. As Três Patologias dos Trackers Tradicionais</h3>
+<ol>
+<li><strong>Cegueira de Bloqueios (<em>Blocker Blindness</em>):</strong> Trackers convencionais tratam tarefas como cartões isolados. Quando uma entrega crítica trava, engenheiros perdem horas rastreando comentários em tickets para descobrir qual dependência esquecida causou o bloqueio.</li>
+<li><strong>Priorização Ilusória (<em>Blind Prioritization</em>):</strong> Marcar um ticket como <code>P0</code> é inútil se os seus pré-requisitos <code>P2</code> não forem implementados primeiro. A prioridade real é uma propriedade da cadeia topológica inteira.</li>
+<li><strong>Alucinação de Fronteira (<em>Frontier Hallucination</em>):</strong> Agentes de IA autônomos (Claude, Codex, Devin) recebem listas desordenadas e tentam implementar código para o qual as interfaces base ainda não existem, gerando patches incompatíveis e retrabalho.</li>
+</ol>
+<h3>1.2. A Solução do Backlog Graph</h3>
+<p>O <code>tare.tools.backlog-graph</code> substitui a adivinhação manual por <strong>computação determinística</strong>:</p>
+<ul>
+<li>Apenas tarefas cujos pré-requisitos estão provadamente <code>DONE</code> entram no estado <code>READY</code>;</li>
+<li>O motor calcula a qualquer momento a <strong>fronteira exata de trabalho viável</strong> (<code>backlog next</code>);</li>
+<li>O comando <code>backlog why &lt;ID&gt;</code> decompõe instantaneamente a árvore de causas de qualquer bloqueio.</li>
+</ul>
+<hr/>
+      </section>
+
+      <section id="evidence" data-tare-section="evidence">
+        <h2>2. Method &amp; Evidence Trail</h2>
+        <p>A integridade do <code>tare.tools.backlog-graph</code> foi submetida a uma bateria longitudinal de <strong>79 testes automatizados</strong> sem qualquer dependência de terceiros:</p>
+<table aria-label="Tabela de Especificação / Specification Table">
+<thead>
+<tr>
+<th>Categoria de Teste</th>
+<th style="text-align:center">Quantidade</th>
+<th>Invariante Falsificado e Verificado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Detecção de Ciclos &amp; Tarjan</strong></td>
+<td style="text-align:center">12</td>
+<td>Detecção estrita de auto-loops, ciclos indiretos e cadeias circulares de supersessão.</td>
+</tr>
+<tr>
+<td><strong>Cálculo de Fronteira &amp; Ordenação</strong></td>
+<td style="text-align:center">15</td>
+<td>Estabilidade determinística do próximo nó elegível entre diferentes plataformas e versões.</td>
+</tr>
+<tr>
+<td><strong>Transações CAS &amp; Concorrência</strong></td>
+<td style="text-align:center">10</td>
+<td>Rejeição atômica de landings obsoletos com <code>RevisionMismatchError</code> e prevenção de lost updates.</td>
+</tr>
+<tr>
+<td><strong>Conectores &amp; Adapters</strong></td>
+<td style="text-align:center">14</td>
+<td>Ingestão e exportação perfeita para Jira, Linear, GitLab, GitHub Issues, CSV, Mermaid e GraphML.</td>
+</tr>
+<tr>
+<td><strong>Reconciliação de Projeções</strong></td>
+<td style="text-align:center">12</td>
+<td>Imutabilidade de fixtures, unicidade de IDs e paridade de snapshots.</td>
+</tr>
+<tr>
+<td><strong>Visualizador HTML Single-File</strong></td>
+<td style="text-align:center">8</td>
+<td>Geração hermética de canvas interativo offline sem servidores web ou dependências npm.</td>
+</tr>
+<tr>
+<td><strong>Mutações Estruturais &amp; Diff</strong></td>
+<td style="text-align:center">8</td>
+<td>Ledger Merkle append-only e preservação de proveniência de estado.</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+      </section>
+
+      <section id="findings" data-tare-section="findings">
+        <h2>3. Architectural Proposal &amp; Findings</h2>
+        <h3>North Star do tare.tools.backlog-graph: Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica para Humanos e Agentes de IA</h3>
+<p><strong>Document ID:</strong> <code>research.methodology.backlog-graph-topological-execution-engine.2026-08-18</code><br/>
+<strong>Autores:</strong> Augusto Carvalho, Antigravity Mediator &amp; Mesa Redonda Tripartite (Google Gemini 3.7 Flash High, Anthropic Claude Fable 5 High, OpenAI GPT-5.6 Sol High)<br/>
+<strong>Data:</strong> 2026-08-18<br/>
+<strong>Status:</strong> <code>RESEARCH / RATIFIED ARCHITECTURAL SPECIFICATION</code><br/>
+<strong>Contexto Temático:</strong> <code>01_methodology-research-program</code> / <code>02_harness-architecture</code><br/>
+<strong>Repositórios de Referência:</strong> <code>augusto-scarvalho/tare.tools.backlog-graph</code>, <code>tare.tools.research</code>, <code>tare.tools.kernel</code>, <code>tare.tools.specgraph</code><br/>
+<strong>Fundamentação Canônica:</strong> ADR-046 (North Star do Backlog Graph), ADR-045 (North Star do Ecossistema), Suíte de 79 Testes Falsificadores e Corpus Histórico de Engenharia.</p>
+<hr/>
+<h3>3. Especificação Matemática e Algoritmo de Ordenação Total (Findings)</h3>
+<h3>3.1. Ordenação Total Estável da Fronteira</h3>
+<p>Para garantir que múltiplos agentes de IA distribuídos cheguem <strong>exatamente à mesma decisão de próximo passo ótimo</strong>, o motor aplica a tupla de ordenação total estrita:</p>
+<p>$$\text{FrontierRank}(v) = \Big( \text{PriorityWeight}(v),\ -\text{CriticalPathDepth}(v),\ \text{LexicographicalID}(v) \Big)$$</p>
+<p>Onde:</p>
+<ul>
+<li>$\text{PriorityWeight} \in { \text{P0} \mapsto 0,\ \text{P1} \mapsto 1,\ \text{P2} \mapsto 2,\ \text{P3} \mapsto 3 }$;</li>
+<li>$\text{CriticalPathDepth}(v)$ é o comprimento do caminho mais longo de dependentes a jusante destravados pela conclusão do nó $v$;</li>
+<li>$\text{LexicographicalID}(v)$ garante desempate estável ($O(1)$) entre nós de mesmo peso e profundidade.</li>
+</ul>
+<h3>3.2. Estado <code>READY</code> como Função Derivada Pura</h3>
+<p>Diferente de status mutáveis pelo usuário, o estado <code>READY</code> é <strong>matematicamente derivado</strong>:</p>
+<p>$$\text{IsReady}(v) \iff (\text{Status}(v) == \text{TODO}) \ \land \ \forall u \in \text{Prerequisites}(v),\ \text{Status}(u) == \text{DONE}$$</p>
+<hr/>
+<h3>4. Transações CAS sob Exclusão Mútua &amp; Hash Canônico RFC 8785 (Governance)</h3>
+<h3>4.1. Hash de Revisão Content-Addressed (RFC 8785 / JCS)</h3>
+<p>O identificador de revisão do grafo garante que qualquer modificação seja tamper-evident:</p>
+<p>$$\text{revision_hash} = \text{sha256}\Big(\text{JCS_CanonicalJSON}\big(\text{Graph} \setminus {\text{"revision"}}\big)\Big)$$</p>
+<h3>4.2. Protocolo Transacional de 5 Etapas:</h3>
+<pre><code class="language-mermaid">sequenceDiagram
+    autonumber
+    participant Client as Agente / CLI / Kernel
+    participant Lock as Lockfile (.work-graph.lock)
+    participant Disk as work-graph.json
+
+    Client-&gt;&gt;Lock: 1. ACQUIRE LOCK (O_CREAT | O_EXCL com timeout 5s)
+    Client-&gt;&gt;Disk: 2. READ &amp; VERIFY: Compara expect_rev == current_rev
+    alt Revisão Divergente
+        Client-&gt;&gt;Lock: RELEASE LOCK
+        Client--&gt;&gt;Client: Fail-Closed (RevisionMismatchError)
+    else Revisão Válida
+        Client-&gt;&gt;Client: 3. MUTATE: Aplica transição e computa novo JCS hash
+        Client-&gt;&gt;Disk: 4. ATOMIC REPLACE: Grava .tmp, fsync e os.replace
+        Client-&gt;&gt;Lock: 5. RELEASE LOCK
+    end
+</code></pre>
+<hr/>
+      </section>
+
+      <section id="limitations" data-tare-section="limitations">
+        <h2>4. Limitations &amp; Threats to Validity</h2>
+        <p>O comando <code>backlog packet --task &lt;ID&gt;</code> gera um pacote estruturado em Markdown (<code>PACKET.md</code>) contendo:</p>
+<ol>
+<li><strong>Identidade e Metadados:</strong> ID da tarefa, título, prioridade e especificação causal vinculada (<code>spec_ref: SPEC-042</code>);</li>
+<li><strong>Contexto de Pré-requisitos:</strong> Resumo dos contratos e interfaces produzidos pelas tarefas a montante já concluídas;</li>
+<li><strong>Definition of Done (DoD):</strong> Lista executável de critérios de aceite que os oráculos de teste devem falsificar e verificar;</li>
+<li><strong>Âncoras de Código:</strong> Símbolos e arquivos alvo governados por SpecGraph.</li>
+</ol>
+<hr/>
+      </section>
+
+      <section id="references" data-tare-section="references">
+        <h2>5. References &amp; Canonical Lineage</h2>
+        <ol>
+<li><strong>ADR-046:</strong> North Star do tare.tools.backlog-graph — Motor Determinístico de DAG de Tarefas e Framework de Execução Topológica (2026).</li>
+<li><strong>ADR-045:</strong> North Star do Ecossistema tare.tools &amp; tare-kernel (Agent OS 2.0) (2026).</li>
+<li><strong>RFC 8785:</strong> JSON Canonicalization Scheme (JCS) — IETF Standard (2020).</li>
+<li><strong>Corpus de Engenharia do ChatGPT:</strong> Acervo histórico consolidado de 82 conversas de arquitetura (<code>continuity/01_chatgpt_transcripts/</code>).</li>
+</ol>
+      </section>
+    </article>
+  </main>
+</body>
+</html>

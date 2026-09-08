@@ -1,0 +1,39 @@
+{
+  "record_version": "1.2",
+  "backend": "git-local",
+  "document_id": "research.architecture.study_backlog_graph_topological_execution_engine.2026-08-18",
+  "destination": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18",
+  "manifest_sha256": "86a64a6c82915b136a1066685d994b6463ad2d7fcfe9f11ef2e3c69b7dbc5fe6",
+  "artifact_sha256": {
+    "article.html": "fe8f828adfffe2046161de666de419d48780ef9d20e27084dfd00ab178ddc09f",
+    "document-metadata.json": "a61cdf275e11db853a76d2b4c45f7c93da58425decf3c288ac580f5d7ab06772",
+    "article.en.html": "13abfb8b021222b81a8d6aa9aa5433df6044691a618fefed3d24c3db3e59295b",
+    "document-metadata.en.json": "3cd04b2f89462e315ee9258c6fbd0fedee3b07c1ee03e70cd791e0fae6003909",
+    "TRANSLATION_MANIFEST.en.json": "ab0e2f397feaac43142deffacf8918af38b0b3a6b1f848bff9486978772d689d"
+  },
+  "primary_artifact": "article.html",
+  "requested_channels": [
+    "pages"
+  ],
+  "pages_approved": true,
+  "pages_projection": {
+    "language": "en",
+    "primary_artifact": "article.en.html",
+    "metadata_artifact": "document-metadata.en.json",
+    "translation_manifest": "TRANSLATION_MANIFEST.en.json",
+    "translation_manifest_sha256": "ab0e2f397feaac43142deffacf8918af38b0b3a6b1f848bff9486978772d689d"
+  },
+  "editorial_decision": {
+    "decision_id": "editorial.study_backlog_graph_topological_execution_engine.20260818.001",
+    "decision": "accept",
+    "pages_approved": true,
+    "reviewer": {
+      "name": "augusto-scarvalho",
+      "role": "editorial-reviewer",
+      "identity_ref": "github:augusto-scarvalho"
+    },
+    "reviewed_at": "2026-08-18T01:09:35.660046+00:00",
+    "sha256": "ef20deb98f9c46a49ea9dfdfdaee6c4ca34d8829e31d8cc0f354a329c2024068"
+  },
+  "remote_effects": false
+}

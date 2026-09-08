@@ -1,0 +1,15 @@
+{
+  "decision_version": "1.0",
+  "decision_id": "editorial.study_backlog_graph_topological_execution_engine.20260818.001",
+  "document_id": "research.architecture.study_backlog_graph_topological_execution_engine.2026-08-18",
+  "manifest_sha256": "86a64a6c82915b136a1066685d994b6463ad2d7fcfe9f11ef2e3c69b7dbc5fe6",
+  "decision": "accept",
+  "pages_approved": true,
+  "reviewer": {
+    "name": "augusto-scarvalho",
+    "role": "editorial-reviewer",
+    "identity_ref": "github:augusto-scarvalho"
+  },
+  "reviewed_at": "2026-08-18T01:09:35.660046+00:00",
+  "notes": "Ratificado por consenso formal tripartite e publicado automaticamente via Relay Publisher Engine com derivativo EN."
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "tare.tools/historical-owner-recovery/1",
+  "status": "HISTORICAL",
+  "indexing": "HISTORY_ONLY",
+  "authority": "NONE",
+  "owner": "tare.tools.backlog-graph",
+  "source_branch": "agent/publish-adr-046_backlog_graph_north_star-1787015292",
+  "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+  "promotion_claimed": false,
+  "implementation_or_attestation_claimed": false,
+  "reason": "Recover historical attempted publication as exact source evidence at its technical owner. Original editorial claims remain historical and are not reapproved; no publisher/harness activation.",
+  "files": [
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/EDITORIAL_DECISION.json",
+      "sha256": "201b412ce642f046086e861ed9f0b8662b6575b2a77e50d969bc6dd73c7e258f",
+      "preserved_path": "EDITORIAL_DECISION.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/PUBLICATION_RECORD.json",
+      "sha256": "65a99bb7e420d2c32b95bc3c7de678de512781d05587fd51bcb912723b0b9790",
+      "preserved_path": "PUBLICATION_RECORD.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/PUBLISH_MANIFEST.json",
+      "sha256": "7a5536ee85377da7228601ee5d323758f56eb69cea67c973c002a1cc89bf2c07",
+      "preserved_path": "PUBLISH_MANIFEST.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/TRANSLATION_MANIFEST.en.json",
+      "sha256": "1d939a8067f729bdf7def0f43cf18108083ad82dec07ded445aadfc6b6e26a3f",
+      "preserved_path": "TRANSLATION_MANIFEST.en.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/article.en.html",
+      "sha256": "5375064504f451760a5304c711ab6370ab371cb1331a03387d424bd87d3bf716",
+      "preserved_path": "article.en.html"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/article.html",
+      "sha256": "62661097936ec6d458c9b5878f970d1b7d57949620debcc32bd10ff9ebb53f88",
+      "preserved_path": "article.html"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/document-metadata.en.json",
+      "sha256": "7978838e02622646d7df47c594205b457ad0c6f3bd730db8bd048a36381e27ec",
+      "preserved_path": "document-metadata.en.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "1ca20d2b0020a5efc15c6b524e0781fa55a6e664",
+      "source_path": "research/02_harness-architecture/adr-046_backlog_graph_north_star-2026-08-18/document-metadata.json",
+      "sha256": "56030f0ae40d1e2783c0c8f45f293edd254ebd2db3eb3aca44fe611fd83cb428",
+      "preserved_path": "document-metadata.json"
+    }
+  ]
+}

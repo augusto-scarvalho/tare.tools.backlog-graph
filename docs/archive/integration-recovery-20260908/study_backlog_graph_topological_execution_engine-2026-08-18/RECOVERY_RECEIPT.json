@@ -1,0 +1,70 @@
+{
+  "schema": "tare.tools/historical-owner-recovery/1",
+  "status": "HISTORICAL",
+  "indexing": "HISTORY_ONLY",
+  "authority": "NONE",
+  "owner": "tare.tools.backlog-graph",
+  "source_branch": "agent/publish-study_backlog_graph_topological_execution_engine-1787015376",
+  "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+  "promotion_claimed": false,
+  "implementation_or_attestation_claimed": false,
+  "reason": "Recover historical attempted publication as exact source evidence at its technical owner. Original editorial claims remain historical and are not reapproved; no publisher/harness activation.",
+  "files": [
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/EDITORIAL_DECISION.json",
+      "sha256": "ef20deb98f9c46a49ea9dfdfdaee6c4ca34d8829e31d8cc0f354a329c2024068",
+      "preserved_path": "EDITORIAL_DECISION.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/PUBLICATION_RECORD.json",
+      "sha256": "671ccdcabe2753ec219f008cdb24cfd908aa82f0fea00dada2c37fc36ca3df00",
+      "preserved_path": "PUBLICATION_RECORD.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/PUBLISH_MANIFEST.json",
+      "sha256": "86a64a6c82915b136a1066685d994b6463ad2d7fcfe9f11ef2e3c69b7dbc5fe6",
+      "preserved_path": "PUBLISH_MANIFEST.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/TRANSLATION_MANIFEST.en.json",
+      "sha256": "ab0e2f397feaac43142deffacf8918af38b0b3a6b1f848bff9486978772d689d",
+      "preserved_path": "TRANSLATION_MANIFEST.en.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/article.en.html",
+      "sha256": "13abfb8b021222b81a8d6aa9aa5433df6044691a618fefed3d24c3db3e59295b",
+      "preserved_path": "article.en.html"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/article.html",
+      "sha256": "fe8f828adfffe2046161de666de419d48780ef9d20e27084dfd00ab178ddc09f",
+      "preserved_path": "article.html"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/document-metadata.en.json",
+      "sha256": "3cd04b2f89462e315ee9258c6fbd0fedee3b07c1ee03e70cd791e0fae6003909",
+      "preserved_path": "document-metadata.en.json"
+    },
+    {
+      "source_repository": "tare.tools.library",
+      "source_commit": "7a1313ca16aca4ab3b5b47c45f43901940505dcf",
+      "source_path": "research/01_methodology-research-program/study_backlog_graph_topological_execution_engine-2026-08-18/document-metadata.json",
+      "sha256": "a61cdf275e11db853a76d2b4c45f7c93da58425decf3c288ac580f5d7ab06772",
+      "preserved_path": "document-metadata.json"
+    }
+  ]
+}

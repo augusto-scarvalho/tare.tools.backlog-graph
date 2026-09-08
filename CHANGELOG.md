@@ -6,6 +6,10 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ### Added
 
+- Recovered historical owner publications from unintegrated Library branches, with
+  exact source bytes and SHA-256 receipts, explicit history-only status and no
+  current specification, qualification or publisher authority.
+
 - Preserved canonical ontology payload bytes across operating-system checkouts
   so federated SHA-256 verification remains stable.
 - Added the repository-owned machine-readable ontology for deterministic
