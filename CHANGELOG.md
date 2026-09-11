@@ -4,6 +4,8 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- Exclude local credential files, private work folders, agent-local settings and SQLite sidecars from future Git additions.
+
 ### Added
 
 - Recovered historical owner publications from unintegrated Library branches, with
