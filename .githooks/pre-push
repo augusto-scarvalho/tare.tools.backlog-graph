@@ -50,6 +50,15 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     fi
 
     run_checker "$base_sha" "$local_sha" || result=1
+    [ "$remote_ref" != refs/heads/main ] || pushes_main=1
 done
+
+# The build machine (the only one with a Tare-Publish task) publishes a product release right after a push of
+# main. Git has no post-push hook: a detached process starts the task once this push has had time to land.
+if [ "$result" = 0 ] && [ "${pushes_main:-0}" = 1 ] && command -v schtasks.exe >/dev/null 2>&1 \
+        && schtasks.exe //Query //TN Tare-Publish >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "Start-Process -WindowStyle Hidden powershell -ArgumentList \
+'-NoProfile','-Command','Start-Sleep 15; Start-ScheduledTask Tare-Publish'" >/dev/null 2>&1 || true
+fi
 
 exit "$result"

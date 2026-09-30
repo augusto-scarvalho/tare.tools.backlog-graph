@@ -4,6 +4,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- A push of main starts the product publisher at once on the build machine (the pre-push hook schedules
+  Tare-Publish shortly after, detached); other machines are unaffected.
+
 - Exclude local credential files, private work folders, agent-local settings and SQLite sidecars from future Git additions.
 
 ### Added
