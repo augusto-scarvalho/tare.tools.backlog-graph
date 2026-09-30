@@ -51,7 +51,18 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
     run_checker "$base_sha" "$local_sha" || result=1
     [ "$remote_ref" != refs/heads/main ] || pushes_main=1
+    pushed="${pushed:-} $local_sha"
 done
+
+# Every pushed commit gets a detached CI watcher (`tare ci watch`): a red run becomes an alert that agents
+# are shown before they can end a turn, plus a Windows notification. Machines without the product skip it.
+tare_cmd="${LOCALAPPDATA:-}/tare.tools/product/tare.cmd"
+if [ "$result" = 0 ] && [ -n "${LOCALAPPDATA:-}" ] && [ -f "$tare_cmd" ] && command -v powershell.exe >/dev/null 2>&1; then
+    for sha in ${pushed:-}; do
+        powershell.exe -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$tare_cmd' \
+-ArgumentList 'ci','watch','$repo_root','$sha'" >/dev/null 2>&1 || true
+    done
+fi
 
 # The build machine (the only one with a Tare-Publish task) publishes a product release right after a push of
 # main. Git has no post-push hook: a detached process starts the task once this push has had time to land.

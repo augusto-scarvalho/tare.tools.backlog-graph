@@ -4,6 +4,10 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- The pre-push hook also starts a detached `tare ci watch` for each pushed commit (from tare.tools.os). A red
+  GitHub run becomes an alert that agents see before they can end a turn, plus a Windows notification.
+  Machines without the tare product skip it.
+
 - A push of main starts the product publisher at once on the build machine (the pre-push hook schedules
   Tare-Publish shortly after, detached); other machines are unaffected.
 
