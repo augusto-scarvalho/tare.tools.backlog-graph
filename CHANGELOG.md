@@ -4,6 +4,9 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- The pre-push hook checks and watches a push by the branch it updates: a push from a detached HEAD
+  (`git push origin HEAD:main`) skipped the changelog guard and the CI watcher.
+
 - The pre-push hook also starts a detached `tare ci watch` for each pushed commit (from tare.tools.os). A red
   GitHub run becomes an alert that agents see before they can end a turn, plus a Windows notification.
   Machines without the tare product skip it.

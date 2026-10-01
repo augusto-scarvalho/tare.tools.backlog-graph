@@ -33,7 +33,9 @@ run_checker() {
 }
 
 while read -r local_ref local_sha remote_ref remote_sha; do
-    case "$local_ref" in
+    # The branch being updated decides, not the local name: `git push origin HEAD:main` from a detached
+    # worktree has local_ref HEAD and must still be checked and watched.
+    case "$remote_ref" in
         refs/heads/*) ;;
         *) continue ;;
     esac
