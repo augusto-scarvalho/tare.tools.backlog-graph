@@ -4,6 +4,8 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- Separate dated delivery/recovery records from distributable source, retain their immutable hash references and local custody, and document offline validation independent of operator graphs or historical packets.
+
 - The pre-push hook checks and watches a push by the branch it updates: a push from a detached HEAD
   (`git push origin HEAD:main`) skipped the changelog guard and the CI watcher.
 
