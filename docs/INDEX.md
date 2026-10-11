@@ -24,4 +24,6 @@
 
 ## Historical recovery
 
-- [Recovered publication packages (history only)](archive/integration-recovery-20260908/README.md).
+- Recovered publication packages are private historical records; their original
+  paths, owner commit and hashes are in [the records reference](RECORDS_ARCHIVE.json).
+- [Conteúdo distribuído, custódia e validação](guides/REPOSITORY_CONTENT.md).

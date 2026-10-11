@@ -1,5 +1,7 @@
 <div align="center">
 
+[Repository content and private record custody](docs/guides/REPOSITORY_CONTENT.md).
+
 # tare.tools.backlog-graph
 
 **Deterministic Directed Acyclic Graph (DAG) Backlog Engine and Topological Execution Framework for Software Engineering Teams and Autonomous AI Agents.**

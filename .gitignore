@@ -80,3 +80,7 @@ id_ed25519
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# Private records stay in local custody; see docs/RECORDS_ARCHIVE.json.
+/docs/archive/
+/docs/P1_DELIVERY_EVIDENCE_OBSERVATION_2026-08-26.md
