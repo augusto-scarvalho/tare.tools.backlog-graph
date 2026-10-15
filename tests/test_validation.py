@@ -91,7 +91,8 @@ class ValidationTests(unittest.TestCase):
     def test_doctor_and_evidence(self) -> None:
         graph = WorkGraph.from_file(FIXTURES / "sample-backlog.json")
         ev = verify_evidence(graph)
-        self.assertIn(ev["status"], ("PASS", "PASS_WITH_GAPS"))
+        self.assertEqual(ev["status"], "FAIL")
+        self.assertIn("COMPLETION_DOD_EVIDENCE_REQUIRED", {i["issue"] for i in ev["issues"]})
         
         doc = doctor_check(graph)
         self.assertEqual(doc["validation"], "PASS")

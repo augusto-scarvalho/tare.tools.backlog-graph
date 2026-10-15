@@ -33,7 +33,7 @@ from .grounding import encode_work_grounding, ground_work_item
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 PASS, VALIDATION_FAIL, RUNTIME_ERROR = 0, 1, 2
 
 def build_parser() -> argparse.ArgumentParser:
@@ -182,16 +182,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     cn = sp.add_parser("complete-node")
     cn.add_argument("id", help="Task ID to mark DONE")
-    cn.add_argument("--evidence", help="Evidence statement / test log summary")
-    cn.add_argument("--grade", default="B", help="Evidence grade (A, B, C, D)")
+    cn.add_argument("--evidence", help="Non-empty declared evidence reference (required for actionable nodes)")
+    cn.add_argument("--grade", choices=("A", "B", "C", "D"), help="Explicit evidence grade for actionable completion")
+    cn.add_argument("--grade-reason", help="Reason for the declared grade (required for actionable nodes)")
+    cn.add_argument("--source-ref", action="append", help="Registered graph.sources ID (repeatable; A/B require a recoverable source)")
     cn.add_argument("--save", action="store_true", help="Save changes to graph file directly")
 
     # Land & CAS (BG-05)
-    ld = sp.add_parser("land", help="Atomically land a train and mark tasks as DONE under CAS check")
+    ld = sp.add_parser("land", aliases=["land-train"], help="Atomically land a train and mark tasks as DONE under CAS check")
     ld.add_argument("--train", required=True, help="Train ID")
     ld.add_argument("--tasks", required=True, nargs="+", help="Task ID(s) landed in this train")
     ld.add_argument("--expect-rev", help="Expected CAS revision hash")
-    ld.add_argument("--evidence", help="Evidence summary / test log proof")
+    ld.add_argument("--evidence", help="Non-empty declared evidence reference (required for actionable nodes)")
+    ld.add_argument("--grade", choices=("A", "B", "C", "D"), help="Explicit evidence grade for actionable completion")
+    ld.add_argument("--grade-reason", help="Reason for the declared grade (required for actionable nodes)")
+    ld.add_argument("--source-ref", action="append", help="Registered graph.sources ID (repeatable; A/B require a recoverable source)")
     ld.add_argument("--save", action="store_true", default=True, help="Save changes directly (default: True)")
 
     # Supersede (BG-04)
@@ -612,14 +617,16 @@ def main(argv: list[str] | None = None) -> int:
                     wg,
                     node_id=args.id,
                     evidence_summary=args.evidence,
-                    evidence_grade=args.grade
+                    evidence_grade=args.grade,
+                    evidence_grade_reason=args.grade_reason,
+                    source_refs=args.source_ref
                 ),
                 policy=pol,
                 taxonomy=tax,
                 save=bool(args.save)
             )
             obj = {"status": "PASS", "action": "completed_node", "node_id": args.id, "saved": bool(args.save), "revision": new_graph_dict.get("revision")}
-        elif args.cmd == "land":
+        elif args.cmd in ("land", "land-train"):
             from .mutations import land_train_tasks, execute_graph_transaction
             new_graph_dict = execute_graph_transaction(
                 args.graph,
@@ -628,7 +635,10 @@ def main(argv: list[str] | None = None) -> int:
                     train_id=args.train,
                     task_ids=args.tasks,
                     evidence_summary=args.evidence,
-                    expected_rev=args.expect_rev
+                    expected_rev=args.expect_rev,
+                    evidence_grade=args.grade,
+                    evidence_grade_reason=args.grade_reason,
+                    source_refs=args.source_ref
                 ),
                 expected_rev=args.expect_rev,
                 policy=pol,

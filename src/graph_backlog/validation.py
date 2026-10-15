@@ -352,6 +352,87 @@ def validate_work_graph(
         "errors": errors
     }
 
+def completion_evidence_issues(
+    graph: WorkGraph, node: dict[str, Any], *, actionable: bool | None = None
+) -> list[dict[str, Any]]:
+    """Check declarations only; do not attest reference content or independence."""
+    completion = node.get("completion") or {}
+    if actionable is None:
+        actionable = node.get("kind") in graph.actionable_kinds
+    if not actionable or completion.get("status") != "DONE":
+        return []
+    issues: list[dict[str, Any]] = []
+    grade = completion.get("evidence_grade")
+
+    def issue(code: str) -> None:
+        issues.append({"id": node["id"], "issue": code, "grade": grade})
+
+    def text(value: Any) -> bool:
+        return isinstance(value, str) and bool(value.strip())
+
+    if grade is None or grade == "":
+        issue("COMPLETION_EVIDENCE_GRADE_REQUIRED")
+    elif not isinstance(grade, str) or grade not in ("A", "B", "C", "D"):
+        issue("COMPLETION_EVIDENCE_GRADE_INVALID")
+    if not text(completion.get("evidence_grade_reason")):
+        issue("COMPLETION_EVIDENCE_GRADE_REASON_REQUIRED")
+    evidence = completion.get("dod_evidence")
+    if not isinstance(evidence, list) or not evidence or not all(text(ref) for ref in evidence):
+        issue("COMPLETION_DOD_EVIDENCE_REQUIRED")
+    refs = node.get("source_refs") or []
+    if not isinstance(refs, list):
+        issue("COMPLETION_SOURCE_REF_INVALID")
+        refs = []
+    registered = []
+    for ref in refs:
+        if text(ref) and isinstance(graph.sources.get(ref), dict):
+            registered.append(graph.sources[ref])
+        else:
+            issue("COMPLETION_SOURCE_REF_INVALID")
+    provenance = node.get("provenance") or []
+    has_provenance = isinstance(provenance, list) and bool(provenance) and all(text(ref) for ref in provenance)
+    if not has_provenance and not registered:
+        issue("COMPLETION_PROVENANCE_REQUIRED")
+    if grade in ("A", "B") and not any(
+        text(source.get("locator")) and source.get("recoverability") in
+        ("RECOVERABLE_REFERENCE", "EXACT_BYTES", "CONTENT_ADDRESSED")
+        for source in registered
+    ):
+        issue("HIGH_GRADE_WITHOUT_RECOVERABLE_SOURCE")
+    minimum = (node.get("readiness") or {}).get("minimum_evidence_grade")
+    if minimum and (not isinstance(minimum, str) or not isinstance(grade, str) or
+                    EVIDENCE_ORDER.get(grade, -1) < EVIDENCE_ORDER.get(minimum, 99)):
+        issue("COMPLETION_EVIDENCE_GRADE_INSUFFICIENT")
+    return issues
+
+
+def validate_completion_evidence(
+    before: WorkGraph | dict[str, Any],
+    after: WorkGraph | dict[str, Any],
+    policy: dict[str, Any] | None = None
+) -> None:
+    """Guard new/revised actionable DONE declarations, leaving legacy untouched."""
+    from .jsonutil import UsageError
+
+    if policy is None and isinstance(before, WorkGraph):
+        policy = before.policy
+    old = before if isinstance(before, WorkGraph) else WorkGraph(before, policy=policy)
+    new_raw = after.to_dict() if isinstance(after, WorkGraph) else after
+    new = WorkGraph(new_raw, policy=policy or old.policy)
+    issues = []
+    fields = ("completion", "kind", "source_refs", "provenance", "readiness")
+    for node in new.nodes:
+        previous = old.by_id.get(node["id"])
+        actionable = node.get("kind") in new.actionable_kinds or (
+            previous is not None and previous.get("kind") in new.actionable_kinds
+        )
+        changed = previous is None or any(previous.get(key) != node.get(key) for key in fields)
+        if changed:
+            issues.extend(completion_evidence_issues(new, node, actionable=actionable))
+    if issues:
+        raise UsageError("Completion evidence validation failed: " + json.dumps(issues, sort_keys=True))
+
+
 def verify_evidence(graph: WorkGraph) -> dict[str, Any]:
     """Verify evidence coverage and detect high-grade claims lacking recoverable source locators."""
     issues = []
@@ -361,12 +442,17 @@ def verify_evidence(graph: WorkGraph) -> dict[str, Any]:
         ok = False
         for r in refs:
             src = graph.sources.get(r, {})
-            if src.get("locator") and src.get("recoverability") in ("RECOVERABLE_REFERENCE", "EXACT_BYTES", "CONTENT_ADDRESSED"):
+            if isinstance(src.get("locator"), str) and src["locator"].strip() and src.get("recoverability") in ("RECOVERABLE_REFERENCE", "EXACT_BYTES", "CONTENT_ADDRESSED"):
                 ok = True
         if ok:
             recoverable += 1
         grade = (n.get("completion") or {}).get("evidence_grade")
-        if grade in ("A", "B") and not ok:
+        completion_issues = completion_evidence_issues(graph, n)
+        issues.extend(completion_issues)
+        if grade in ("A", "B") and not ok and not any(
+            issue["issue"] == "HIGH_GRADE_WITHOUT_RECOVERABLE_SOURCE"
+            for issue in completion_issues
+        ):
             issues.append({
                 "id": n["id"],
                 "issue": "HIGH_GRADE_WITHOUT_RECOVERABLE_SOURCE",

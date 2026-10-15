@@ -63,7 +63,9 @@ class AdaptersAndMutationsTests(unittest.TestCase):
         new_graph_raw = complete_node_in_graph(
             self.graph,
             node_id="TASK-02",
-            evidence_summary="Integration tests passed with 100% assertions green."
+            evidence_summary="artifact:synthetic-integration-log",
+            evidence_grade="C",
+            evidence_grade_reason="Declared fixture reference; contents not independently verified."
         )
         val = validate_work_graph(new_graph_raw)
         self.assertEqual(val["status"], "PASS")

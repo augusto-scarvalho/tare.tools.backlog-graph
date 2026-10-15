@@ -200,15 +200,18 @@ class TestCASLandAndSupersede:
             wg1,
             train_id="TRAIN-01",
             task_ids=["TASK-01"],
-            evidence_summary="Pytest 100% green",
-            expected_rev=current_rev
+            evidence_summary="artifact:synthetic-pytest-log",
+            expected_rev=current_rev,
+            evidence_grade="C",
+            evidence_grade_reason="Declared fixture log; no independent attestation."
         )
 
         landed_node = next(n for n in landed_dict["nodes"] if n["id"] == "TASK-01")
         assert landed_node["completion"]["status"] == "DONE"
         assert landed_node["completion"]["dod_satisfied"] is True
         assert landed_node["completion"]["landed_train"] == "TRAIN-01"
-        assert "Landed in train TRAIN-01: Pytest 100% green" in landed_node["completion"]["dod_evidence"]
+        assert "artifact:synthetic-pytest-log" in landed_node["completion"]["dod_evidence"]
+        assert landed_node["completion"]["evidence_grade"] == "C"
 
         # The new revision must be different from current_rev
         new_rev = landed_dict["revision"]
@@ -229,7 +232,7 @@ class TestCASLandAndSupersede:
         def mutate(graph: WorkGraph) -> dict[str, object]:
             assert graph.policy is policy
             assert graph.taxonomy is taxonomy
-            return complete_node_in_graph(graph, "TASK-02", "transaction evidence")
+            return complete_node_in_graph(graph, "TASK-02", "artifact:transaction-evidence", "C", "Declared fixture reference")
 
         result = execute_graph_transaction(
             graph_file,

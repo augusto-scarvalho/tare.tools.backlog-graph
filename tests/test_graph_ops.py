@@ -108,10 +108,13 @@ class GraphOpsTests(unittest.TestCase):
 
     def test_doctor_command(self) -> None:
         p = FIXTURES / "sample-backlog.json"
-        res = run_cmd("--graph", str(p), "doctor")
-        self.assertEqual(res.returncode, 0)
+        res = run_cmd("--graph", str(p), "doctor", check=False)
+        self.assertEqual(res.returncode, 1)
         data = json.loads(res.stdout)
-        self.assertIn(data["status"], ("PASS", "PASS_SHADOW_WITH_GAPS"))
+        self.assertEqual(data["validation"], "PASS")
+        self.assertEqual(data["status"], "FAIL")
+        self.assertIn("COMPLETION_DOD_EVIDENCE_REQUIRED",
+                      {item["issue"] for item in data["evidence_verification"]["issues"]})
 
 if __name__ == "__main__":
     unittest.main()
