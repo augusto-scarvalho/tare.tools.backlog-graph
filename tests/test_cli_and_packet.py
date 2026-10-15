@@ -19,9 +19,10 @@ class CliAndPacketTests(unittest.TestCase):
         ret = main(["--graph", self.graph_file, "validate"])
         self.assertEqual(ret, 0)
 
-        # doctor
+        # The legacy fixture remains structurally valid but its old A closure
+        # has no explicit grade reason or DoD references.
         ret = main(["--graph", self.graph_file, "doctor"])
-        self.assertEqual(ret, 0)
+        self.assertEqual(ret, 1)
 
         # summary
         ret = main(["--graph", self.graph_file, "summary"])

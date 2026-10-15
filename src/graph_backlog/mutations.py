@@ -15,7 +15,7 @@ from .jsonutil import (
     canonical_json,
     stable_dict
 )
-from .validation import validate_work_graph
+from .validation import validate_work_graph, validate_completion_evidence
 from .algorithms import find_cycles_scc
 
 def execute_graph_transaction(
@@ -45,8 +45,12 @@ def execute_graph_transaction(
         # 3. Instantiate WorkGraph
         wg = WorkGraph(raw, policy=pol, taxonomy=tax)
 
+        # Snapshot before invoking callbacks, which may mutate WorkGraph.raw.
+        before = copy.deepcopy(raw)
+
         # 4. Apply mutation
         new_graph_dict = mutation_fn(wg)
+        validate_completion_evidence(before, new_graph_dict, pol)
 
         # 5. Validate new state
         val = validate_work_graph(new_graph_dict, pol, tax)
@@ -158,7 +162,9 @@ def complete_node_in_graph(
     graph: WorkGraph,
     node_id: str,
     evidence_summary: str | None = None,
-    evidence_grade: str = "B"
+    evidence_grade: str | None = None,
+    evidence_grade_reason: str | None = None,
+    source_refs: list[str] | None = None
 ) -> dict[str, Any]:
     """Mark a node as DONE and record its Definition of Done satisfaction."""
     if node_id not in graph.by_id:
@@ -167,18 +173,42 @@ def complete_node_in_graph(
     new_raw = copy.deepcopy(graph.to_dict())
     for n in new_raw["nodes"]:
         if n["id"] == node_id:
-            if not isinstance(n.get("completion"), dict):
-                n["completion"] = {}
-            n["completion"]["status"] = "DONE"
-            n["completion"]["dod_satisfied"] = True
-            n["completion"]["evidence_grade"] = evidence_grade
-            n["completion"]["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            if evidence_summary:
-                dod_ev = n["completion"].get("dod_evidence") or []
-                dod_ev.append(evidence_summary)
-                n["completion"]["dod_evidence"] = dod_ev
+            if n.get("kind") in graph.actionable_kinds and (
+                not isinstance(evidence_summary, str) or not evidence_summary.strip()
+            ):
+                raise UsageError("COMPLETION_DOD_EVIDENCE_REQUIRED: actionable completion requires non-empty --evidence")
+            declared_refs = source_refs if source_refs is not None else []
+            if not isinstance(declared_refs, list):
+                raise UsageError("COMPLETION_SOURCE_REF_INVALID: source_refs must be a list of registered IDs")
+            for ref in declared_refs:
+                if not isinstance(ref, str) or not ref.strip() or ref not in graph.sources:
+                    raise UsageError(f"COMPLETION_SOURCE_REF_INVALID: unknown registered source {ref!r}")
+            previous = copy.deepcopy(n.get("completion") or {})
+            completion = n.setdefault("completion", {})
+            completion["status"] = "DONE"
+            completion["dod_satisfied"] = True
+            # Never inherit a grade/reason from another conclusion.
+            completion["evidence_grade"] = evidence_grade
+            completion["evidence_grade_reason"] = evidence_grade_reason
+            references = ([evidence_summary] if evidence_summary else []) + declared_refs
+            values = completion.get("dod_evidence") or []
+            for ref in references:
+                if ref not in values:
+                    values.append(ref)
+            if values:
+                completion["dod_evidence"] = values
+            for field, references_to_add in (("provenance", references), ("source_refs", declared_refs)):
+                values = n.get(field) or []
+                for ref in references_to_add:
+                    if ref not in values:
+                        values.append(ref)
+                n[field] = values
+            if completion != previous:
+                completion["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             break
-            
+
+    validate_completion_evidence(graph, new_raw)
+    new_raw["revision"] = compute_revision_hash(new_raw)
     val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
     if val["status"] != "PASS":
         raise UsageError(f"Cannot complete node: validation failed: {val.get('errors')}")
@@ -191,7 +221,10 @@ def land_train_tasks(
     train_id: str,
     task_ids: list[str],
     evidence_summary: str | None = None,
-    expected_rev: str | None = None
+    expected_rev: str | None = None,
+    evidence_grade: str | None = None,
+    evidence_grade_reason: str | None = None,
+    source_refs: list[str] | None = None
 ) -> dict[str, Any]:
     """Atomically mark a batch of tasks as DONE under a train landing, enforcing CAS revision check (BG-05)."""
     current_dict = graph.to_dict()
@@ -203,32 +236,22 @@ def land_train_tasks(
         )
         
     new_raw = copy.deepcopy(current_dict)
-    now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    
     target_set = set(task_ids)
-    found_set = set()
-    
-    for n in new_raw.get("nodes", []):
-        nid = n.get("id")
-        if nid in target_set:
-            found_set.add(nid)
-            if not isinstance(n.get("completion"), dict):
-                n["completion"] = {}
-            n["completion"]["status"] = "DONE"
-            n["completion"]["dod_satisfied"] = True
-            n["completion"]["evidence_grade"] = "A"
-            n["completion"]["completed_at"] = now_iso
-            n["completion"]["landed_train"] = train_id
-            
-            dod_ev = n["completion"].get("dod_evidence") or []
-            ev_text = f"Landed in train {train_id}" + (f": {evidence_summary}" if evidence_summary else "")
-            dod_ev.append(ev_text)
-            n["completion"]["dod_evidence"] = dod_ev
-
-    missing = target_set - found_set
+    missing = target_set - set(graph.by_id)
     if missing:
         raise UsageError(f"Cannot land tasks: missing task IDs in graph: {sorted(missing)}")
         
+    for nid in sorted(target_set):
+        current = WorkGraph(new_raw, graph.policy, graph.taxonomy)
+        new_raw = complete_node_in_graph(
+            current, nid, evidence_summary, evidence_grade, evidence_grade_reason, source_refs
+        )
+        node = next(n for n in new_raw["nodes"] if n["id"] == nid)
+        if node["completion"].get("landed_train") != train_id:
+            node["completion"]["landed_train"] = train_id
+            node["completion"]["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    validate_completion_evidence(graph, new_raw)
+    new_raw["revision"] = compute_revision_hash(new_raw)
     val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
     if val["status"] != "PASS":
         raise UsageError(f"Landing failed validation: {val.get('errors')}")
