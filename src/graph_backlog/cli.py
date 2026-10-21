@@ -550,7 +550,9 @@ def main(argv: list[str] | None = None) -> int:
                 },
                 "anchored_claim_nodes": {
                     "count": claims,
-                    "coverage": round(claims / max(1, len(graph.nodes)), 4)
+                    "coverage": round(claims / max(1, len(graph.nodes)), 4),
+                    "verification_scope": "DECLARED_CLAIM_IDS_ONLY",
+                    "anchor_verification": "NOT_PERFORMED"
                 }
             }
         elif args.cmd == "doctor":

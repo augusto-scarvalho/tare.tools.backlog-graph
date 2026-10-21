@@ -150,6 +150,18 @@ Runs comprehensive health checks (structural validation, cycle checks, evidence 
 python graph_ops.py doctor
 ```
 
+`verify-evidence` and `coverage.source_recoverability` check declared source
+metadata and completion requirements. They report
+`verification_scope: DECLARED_SOURCE_METADATA_ONLY` and
+`content_verification: NOT_PERFORMED`: a locator is not a fetched or hashed file.
+For compatibility, `coverage.anchored_claim_nodes` keeps its original field
+name and counts nodes declaring `source_claim_ids`; its
+`verification_scope: DECLARED_CLAIM_IDS_ONLY` and
+`anchor_verification: NOT_PERFORMED` distinguish that count from checked
+message/span anchors. These read-only reports do not admit historical claims,
+prove delivery, or change completion/readiness. Revalidate bytes, anchors and
+current owner evidence separately before owner admission.
+
 ---
 
 ### 15. `export`

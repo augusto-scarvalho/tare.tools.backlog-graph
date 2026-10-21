@@ -4,6 +4,11 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- Disclose that evidence coverage checks declared source metadata and that
+  claim-node coverage counts declared IDs, without fetching content or checking
+  anchors. Preserve existing report fields and lifecycle behavior; add public
+  CLI regressions using missing sources and unresolved claim IDs.
+
 - Require an explicit evidence grade, reason and provenance before new or revised actionable DONE declarations; reject invalid atomic batches, remove implicit completion/landing grades, and report legacy gaps without rewriting them.
 
 - Separate dated delivery/recovery records from distributable source, retain their immutable hash references and local custody, and document offline validation independent of operator graphs or historical packets.
