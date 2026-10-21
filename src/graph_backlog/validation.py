@@ -434,7 +434,7 @@ def validate_completion_evidence(
 
 
 def verify_evidence(graph: WorkGraph) -> dict[str, Any]:
-    """Verify evidence coverage and detect high-grade claims lacking recoverable source locators."""
+    """Check declared metadata; do not fetch content or validate claim anchors."""
     issues = []
     recoverable = 0
     for n in graph.nodes:
@@ -463,6 +463,8 @@ def verify_evidence(graph: WorkGraph) -> dict[str, Any]:
     status = "FAIL" if issues else ("PASS" if recoverable == len(graph.nodes) else "PASS_WITH_GAPS")
     return {
         "status": status,
+        "verification_scope": "DECLARED_SOURCE_METADATA_ONLY",
+        "content_verification": "NOT_PERFORMED",
         "nodes": len(graph.nodes),
         "recoverable_source_nodes": recoverable,
         "coverage": cov,
