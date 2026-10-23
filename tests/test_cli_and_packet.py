@@ -1,5 +1,9 @@
 from __future__ import annotations
 import tempfile
+import contextlib
+import copy
+import io
+import json
 import unittest
 from pathlib import Path
 
@@ -58,6 +62,75 @@ class CliAndPacketTests(unittest.TestCase):
             "--test-module", "tests.test_diff_and_ledger"
         ])
         self.assertEqual(ret, 0)
+
+    def test_audit_commands_are_read_only_and_disclose_gaps(self) -> None:
+        from graph_backlog.jsonutil import load_json, compute_revision_hash
+        raw = load_json(self.graph_file)
+        node = raw["nodes"][0]
+        raw["sources"]["missing"] = {"kind": "doc", "title": "Unresolved bytes",
+                                      "recoverability": "UNRESOLVED_REFERENCE"}
+        node["source_refs"] = ["missing"]
+        node["source_claim_ids"] = ["missing:c1", "unattached:c2"]
+        raw["revision"] = compute_revision_hash(raw)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "graph.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            before = path.read_bytes()
+            def run(*args):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    code = main(["--graph", str(path), *args])
+                return code, json.loads(output.getvalue())
+            code, trace = run("trace", node["id"])
+            self.assertEqual(code, 0)
+            self.assertEqual(trace["node"], node)
+            self.assertEqual(trace["source_claim_ids"], node["source_claim_ids"])
+            self.assertEqual(trace["sources"][0]["source"], raw["sources"]["missing"])
+            self.assertTrue(trace["gaps"])
+            for key in ("content_verification", "anchor_verification", "execution_verification"):
+                self.assertEqual(trace[key], "NOT_PERFORMED")
+            code, report = run("reconcile")
+            self.assertEqual(code, 0)
+            self.assertEqual(report["checked"], len(raw["nodes"]))
+            self.assertNotIn(node["id"], [r["id"] for r in report["operational_divergences"]])
+            code, diff = run("diff", str(path), "--full")
+            self.assertEqual(code, 0)
+            self.assertTrue(diff["full_semantic"])
+            self.assertEqual(diff["changes"], [])
+            code, diff = run("diff", str(path), "--ignore-field", "notes")
+            self.assertFalse(diff["full_semantic"])
+            self.assertEqual(diff["ignored_fields"], ["notes"])
+            self.assertEqual(path.read_bytes(), before)
+            # Truly dangling references remain rejected by the owner validator.
+            del raw["sources"]["missing"]
+            raw["revision"] = compute_revision_hash(raw)
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            code, invalid = run("trace", node["id"])
+            self.assertEqual(code, 1)
+            self.assertEqual(invalid["status"], "FAIL")
+            self.assertIn("INVALID_SOURCE_REF", {e["code"] for e in invalid["errors"]})
+
+    def test_shadow_parity_cli_gate_does_not_claim_cutover(self) -> None:
+        from graph_backlog.jsonutil import load_json
+        raw = load_json(self.graph_file)
+        samples = [{"observed_at": time, "canonical": raw, "shadow": copy.deepcopy(raw)}
+                   for time in ("2026-01-01T00:00:00Z", "2026-01-01T00:01:00Z")]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "observations.json"
+            for diverge, expected in ((False, 0), (True, 1)):
+                if diverge:
+                    samples[1]["shadow"]["nodes"][0]["notes"].append("drift")
+                path.write_text(json.dumps(samples), encoding="utf-8")
+                before = path.read_bytes()
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    code = main(["--graph", self.graph_file, "shadow-parity", str(path),
+                                 "--min-window-seconds", "60"])
+                report = json.loads(output.getvalue())
+                self.assertEqual(code, expected)
+                self.assertEqual(report["eligible_for_cutover_review"], not diverge)
+                self.assertFalse(report["cutover_performed"])
+                self.assertEqual(path.read_bytes(), before)
 
     def test_packet_generation_details(self) -> None:
         graph = WorkGraph.from_file(self.graph_file)

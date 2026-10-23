@@ -137,12 +137,66 @@ python graph_ops.py simulate --mode complete --complete TASK-02
 ---
 
 ### 13. `diff <other>`
-Performs deep semantic diffing against another snapshot file.
+Performs deep semantic diffing against another snapshot file (other → current).
+No fields are implicitly volatile: source hashes, revisions, original outcomes,
+unknown nested metadata, node/edge fields and provenance participate. Unique
+string IDs align list items; ambiguous IDs preserve whole lists instead of
+silently collapsing entries. `--full` is the default. An explicit
+`--ignore-field NAME` applies recursively and reports `full_semantic: false`;
+filtered output is not sufficient for full parity.
 ```bash
 python graph_ops.py diff previous-snapshot.json
 ```
 
 ---
+
+### Read-only audit: `reconcile`, `trace <id>` and `shadow-parity`
+
+`reconcile` returns all nodes in `rows`, including canonical system/ID/revision,
+observation/run identity, staleness and separate planning/operational readiness
+with reasons. DONE and SUPERSEDED remain visible as history but never appear
+as operational candidates or pending divergences. Divergences report active
+operational infeasibility, not a task suggestion or execution result.
+
+`trace ID` preserves the complete node, all claim IDs (including unattached
+ones), declared sources, provenance and original DoD evidence. Unresolved
+sources/no references are explicit gaps. Dangling source refs still fail the
+existing graph validator. Content, anchors and execution are NOT_PERFORMED:
+locators, freshness, identities and evidence grades are declarations, not proof.
+
+Before any cutover review, check an independently captured offline window:
+
+```bash
+python graph_ops.py shadow-parity observations.json --min-window-seconds 86400
+```
+
+The input is a JSON array of objects with `observed_at` (timezone-aware ISO
+8601), `canonical` (complete graph snapshot), and `shadow` (complete graph
+snapshot). Require at least two strictly increasing observations spanning the
+chosen positive finite minimum, both graphs passing the existing owner
+validator, and zero full semantic changes in every pair. No ignore list is
+accepted. Output retains per-pair validation diagnostics, content revision
+hashes and diffs. Exit 0 means the supplied window passes; 1 means gaps/drift;
+2 means a command/input error. This does not verify continuous coverage between
+samples, the authenticity of captures or external execution. Owners must choose
+and record capture cadence and duration before collecting the window, preserve
+original snapshots/results, and review source custody separately.
+
+`eligible_for_cutover_review` is only this necessary, mechanically checked
+condition; `authority: NONE` and `cutover_performed: false` always remain.
+Synthetic tests qualify the checker, not a real deployment window. No cutover
+or actual parity window is claimed by this change. No legacy harness/TaskStore,
+provider calls, service or database is involved.
+
+Offline regressions:
+
+```bash
+python -m pytest -q tests/test_validation.py tests/test_cli_and_packet.py tests/test_diff_and_ledger.py
+```
+
+Passing these offline regressions qualifies the checker only; it does not
+establish a real captured parity window or grant cutover authority. A real
+captured window and independent owner review remain required.
 
 ### 14. `doctor`
 Runs comprehensive health checks (structural validation, cycle checks, evidence coverage, operational reconciliation).

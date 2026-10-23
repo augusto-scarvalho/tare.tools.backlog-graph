@@ -472,24 +472,39 @@ def verify_evidence(graph: WorkGraph) -> dict[str, Any]:
     }
 
 def reconcile(graph: WorkGraph) -> dict[str, Any]:
-    """Evaluate operational divergence between planning readiness and operational readiness."""
+    """Report declared projection state without changing or admitting work."""
     rows = []
-    for n in graph.nodes:
-        op = n.get("kind") in graph.actionable_kinds
+    for n in sorted(graph.nodes, key=lambda node: node["id"]):
+        op = (n.get("kind") in graph.actionable_kinds
+              and graph.status_of(n) not in {"DONE", "SUPERSEDED"})
+        planning = readiness(graph, n, "planning")
+        operational = readiness(graph, n, "operational")
         ident = all(n.get(k) for k in ("canonical_system", "canonical_id", "canonical_revision"))
         rows.append({
             "id": n["id"],
             "operational_candidate": op,
             "canonical_identity_complete": ident,
+            "canonical_system": n.get("canonical_system"),
+            "canonical_id": n.get("canonical_id"),
+            "canonical_revision": n.get("canonical_revision"),
+            "observed_at": n.get("observed_at"),
+            "projection_run_id": n.get("projection_run_id"),
+            "completion_status": graph.status_of(n),
             "staleness_state": n.get("staleness_state"),
-            "planning_ready": readiness(graph, n, "planning")["ready"],
-            "operational_ready": readiness(graph, n, "operational")["ready"]
+            "planning_ready": planning["ready"],
+            "operational_ready": operational["ready"],
+            "planning": planning,
+            "operational": operational
         })
     divergent = [x for x in rows if x["operational_candidate"] and not x["operational_ready"]]
     return {
         "status": "SHADOW_ONLY",
         "authority": "NONE",
         "checked": len(rows),
+        "rows": rows,
+        "verification_scope": "DECLARED_PROJECTION_METADATA_ONLY",
+        "content_verification": "NOT_PERFORMED",
+        "execution_verification": "NOT_PERFORMED",
         "operational_divergence_count": len(divergent),
         "operational_divergences": divergent,
         "note": "This proposes/reports reconciliation only. Canonical single-writer remains outside Graph Ops."

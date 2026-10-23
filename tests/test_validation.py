@@ -29,6 +29,47 @@ def _cli_exit(graph_path: Path) -> int:
                            "validate"], capture_output=True, text=True).returncode
 
 class ValidationTests(unittest.TestCase):
+    def test_reconcile_exposes_identity_and_preserves_closed_history(self) -> None:
+        import copy
+        nodes = []
+        for status in ("NOT_DONE", "PARTIAL", "DONE", "SUPERSEDED"):
+            nodes.append({"id": status, "kind": "task", "completion": {"status": status},
+                          "canonical_system": "owner", "canonical_id": "C-" + status,
+                          "canonical_revision": "r7", "staleness_state": "STALE",
+                          "observed_at": "2026-01-01T00:00:00Z", "projection_run_id": "p1"})
+        raw = {"nodes": nodes, "sources": {}, "edges": []}
+        before = copy.deepcopy(raw)
+        report = reconcile(WorkGraph(raw))
+        self.assertEqual(raw, before)
+        self.assertEqual(report, reconcile(WorkGraph(raw)))
+        self.assertEqual(report["status"], "SHADOW_ONLY")
+        self.assertEqual(report["authority"], "NONE")
+        self.assertEqual(report["execution_verification"], "NOT_PERFORMED")
+        self.assertEqual({r["id"] for r in report["operational_divergences"]}, {"NOT_DONE", "PARTIAL"})
+        self.assertEqual(len(report["rows"]), 4)
+        for row in report["rows"]:
+            self.assertEqual(row["canonical_id"], "C-" + row["id"])
+            self.assertEqual(row["canonical_revision"], "r7")
+            self.assertEqual(row["canonical_system"], "owner")
+            self.assertEqual(row["observed_at"], nodes[0]["observed_at"])
+            self.assertEqual(row["projection_run_id"], "p1")
+            self.assertFalse(row["operational_ready"])
+            self.assertIn("canonical_revision_or_freshness_unproven", row["operational"]["reasons"])
+        self.assertTrue(next(r for r in report["rows"] if r["id"] == "NOT_DONE")["planning_ready"])
+
+    def test_reconcile_missing_and_fresh_identity(self) -> None:
+        node = {"id": "n", "kind": "task", "staleness_state": "UNKNOWN"}
+        graph = WorkGraph({"nodes": [node], "edges": []})
+        row = reconcile(graph)["rows"][0]
+        self.assertIsNone(row["canonical_revision"])
+        self.assertFalse(row["canonical_identity_complete"])
+        self.assertIn("canonical_identity_missing", row["operational"]["reasons"])
+        node.update(canonical_system="owner", canonical_id="n", canonical_revision="1", staleness_state="FRESH")
+        report = reconcile(graph)
+        self.assertTrue(report["rows"][0]["operational_ready"])
+        self.assertEqual(report["operational_divergences"], [])
+        self.assertEqual(report["execution_verification"], "NOT_PERFORMED")
+
     def test_structural_errors_on_empty(self) -> None:
         errs = structural_errors({})
         self.assertTrue(len(errs) > 0)

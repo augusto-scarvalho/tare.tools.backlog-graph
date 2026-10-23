@@ -27,13 +27,13 @@ from .validation import (
     doctor_check,
     diagnose_graph
 )
-from .diff import semantic_diff, validate_change
+from .diff import semantic_diff, validate_change, shadow_parity
 from .packet import generate_packet, format_packet_markdown
 from .grounding import encode_work_grounding, ground_work_item
 from .simulation import simulate_completions
 from .visualizer import generate_html_viewer, serve_visualizer
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 PASS, VALIDATION_FAIL, RUNTIME_ERROR = 0, 1, 2
 
 def build_parser() -> argparse.ArgumentParser:
@@ -129,6 +129,10 @@ def build_parser() -> argparse.ArgumentParser:
     vc = sp.add_parser("validate-change")
     vc.add_argument("other", help="Path to other work-graph.json")
     vc.add_argument("--ignore-field", action="append", default=[])
+
+    parity = sp.add_parser("shadow-parity", help="Check an offline pre-cutover parity window")
+    parity.add_argument("observations", help="JSON array of observed_at/canonical/shadow snapshots")
+    parity.add_argument("--min-window-seconds", type=float, required=True)
 
     # Provenance
     src = sp.add_parser("sources")
@@ -411,6 +415,14 @@ def main(argv: list[str] | None = None) -> int:
             dump_formatted(obj, args.format)
             return PASS
 
+        if args.cmd == "shadow-parity":
+            samples = load_json(args.observations)
+            if not isinstance(samples, list):
+                raise UsageError("observations must be a JSON array")
+            obj = shadow_parity(samples, args.min_window_seconds)
+            dump_formatted(obj, args.format)
+            return PASS if obj["status"] == "PASS" else VALIDATION_FAIL
+
         raw = load_json(args.graph)
         pol = load_json(args.policy) if args.policy else load_default_policy()
         tax = load_json(args.taxonomy) if args.taxonomy else load_default_taxonomy()
@@ -488,7 +500,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "diff":
             other = load_json(args.other)
             obj = {
-                "full_semantic": True,
+                "full_semantic": not bool(args.ignore_field),
                 "ignored_fields": args.ignore_field,
                 "changes": semantic_diff(other, raw, set(args.ignore_field))
             }
@@ -511,6 +523,22 @@ def main(argv: list[str] | None = None) -> int:
                 ]
                 obj = {
                     "id": nid,
+                    "node": n,
+                    "authority": "NONE",
+                    "verification_scope": "DECLARED_SOURCE_METADATA_ONLY",
+                    "content_verification": "NOT_PERFORMED",
+                    "anchor_verification": "NOT_PERFORMED",
+                    "execution_verification": "NOT_PERFORMED",
+                    "gaps": (["no_source_refs"] if not refs else []) + [
+                        {"source_ref": row["source_ref"], "issue": "missing_or_unresolved_source"}
+                        for row in refs if not row["source"] or row["source"].get("recoverability")
+                        not in {"RECOVERABLE_REFERENCE", "EXACT_BYTES", "CONTENT_ADDRESSED"}
+                    ] + [
+                        {"claim_id": claim, "issue": "claim_without_source_ref"}
+                        for claim in n.get("source_claim_ids", [])
+                        if not any(str(claim).startswith(f"{ref}:") for ref in n.get("source_refs", []))
+                    ],
+                    "source_claim_ids": n.get("source_claim_ids", []),
                     "sources": refs,
                     "source_details": n.get("source_details", []),
                     "provenance": n.get("provenance", []),
