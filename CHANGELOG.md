@@ -4,6 +4,15 @@ Notable changes to `tare.tools.backlog-graph` are recorded here, newest first. T
 
 ## Unreleased
 
+- Release 1.3.1: make mutation-test subprocess output explicitly UTF-8 on Windows
+  and decode it defensively, preserving Unicode diagnostics and honest outcome
+  classification; add a real subprocess Unicode regression test.
+
+- Revalidate read-only Graph audit P1: expose canonical identity/revision and
+  readiness reasons, retain closed history without pending-work suggestions,
+  preserve ambiguous-ID lists in full diffs, disclose trace gaps, and check
+  supplied shadow-parity windows without claiming execution or cutover.
+
 - Disclose that evidence coverage checks declared source metadata and that
   claim-node coverage counts declared IDs, without fetching content or checking
   anchors. Preserve existing report fields and lifecycle behavior; add public

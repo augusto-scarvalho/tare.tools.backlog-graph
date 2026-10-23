@@ -214,6 +214,9 @@ class MutationEngine:
         env["PYTHONPATH"] = str(shadow_root / "src")
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         env["PYTHONHASHSEED"] = "0"
+        # Match the child's pipe encoding to the parent's decoder on every OS.
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
         command = [sys.executable, "-m", "pytest", *pytest_targets, "-q", "--tb=short"]
         started = time.monotonic()
         try:
@@ -224,14 +227,18 @@ class MutationEngine:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout_seconds,
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
             output = exc.stdout or ""
             if isinstance(output, bytes):
-                output = output.decode(errors="replace")
+                output = output.decode("utf-8", errors="replace")
             return _TestRun("TIMEOUT", time.monotonic() - started, output)
+        except OSError as exc:
+            return _TestRun("ERROR", time.monotonic() - started, str(exc))
 
         if completed.returncode == 0:
             status = "PASS"

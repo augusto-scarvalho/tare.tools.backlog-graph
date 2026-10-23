@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 import tempfile
 import unittest
@@ -148,17 +149,43 @@ def is_valid(x: int, flag: bool) -> bool:
         self.assertEqual(res.score_percentage, 100.0)
         self.assertEqual({detail["status"] for detail in res.details}, {"KILLED"})
 
+    def test_pytest_unicode_output_is_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "test_unicode.py").write_text(
+                "import sys\n"
+                "def test_output():\n"
+                "    print('ação 漢字 😀')\n"
+                "    print('diagnóstico ç', file=sys.stderr)\n",
+                encoding="utf-8",
+            )
+            # Simulate a legacy Windows pipe encoding inherited from the caller.
+            with patch.dict(os.environ, {"PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}):
+                result = MutationEngine._run_pytest(root, ["test_unicode.py", "-s"], 10)
+
+        self.assertEqual(result.status, "PASS", result.output)
+        self.assertIn("ação 漢字 😀", result.output)
+        self.assertIn("diagnóstico ç", result.output)
+
     def test_pytest_outcomes_are_classified_honestly(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             with patch("graph_backlog.mutation_testing.subprocess.run") as run:
+                run.return_value = subprocess.CompletedProcess([], 0, stdout="passed")
+                passed = MutationEngine._run_pytest(root, ["tests/test_x.py"], 1)
                 run.return_value = subprocess.CompletedProcess([], 1, stdout="failed")
                 killed = MutationEngine._run_pytest(root, ["tests/test_x.py"], 1)
                 run.return_value = subprocess.CompletedProcess([], 2, stdout="collection error")
                 errored = MutationEngine._run_pytest(root, ["tests/test_x.py"], 1)
-                run.side_effect = subprocess.TimeoutExpired([], 1, output="slow")
+                run.side_effect = subprocess.TimeoutExpired([], 1, output="ação".encode("utf-8"))
                 timed_out = MutationEngine._run_pytest(root, ["tests/test_x.py"], 1)
+                run.side_effect = OSError("process creation failed")
+                infrastructure = MutationEngine._run_pytest(root, ["tests/test_x.py"], 1)
 
+        self.assertEqual(passed.status, "PASS")
+        self.assertEqual(infrastructure.status, "ERROR")
+        self.assertIn("process creation failed", infrastructure.output)
+        self.assertEqual(timed_out.output, "ação")
         self.assertEqual(killed.status, "KILLED")
         self.assertEqual(errored.status, "ERROR")
         self.assertEqual(timed_out.status, "TIMEOUT")
