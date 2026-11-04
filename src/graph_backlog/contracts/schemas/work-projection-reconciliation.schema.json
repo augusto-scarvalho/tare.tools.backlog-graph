@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tare.tools/schemas/work-projection-reconciliation-1.json",
+  "title": "Work Projection Reconciliation",
+  "description": "Read-only reconciliation of the single canonical work writer (TaskStore) against relay/work-graph/github/kanban projections. TaskStore is the only operational writer; every other system is a derived projection keyed by taskstore_id and is never a second WorkRegistry.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "canonical", "projections"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "canonical": {
+      "type": "array",
+      "description": "The canonical TaskStore rows — the only operational work identities.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskstore_id", "snapshot_revision"],
+        "properties": {
+          "taskstore_id": {"type": "string", "minLength": 1},
+          "snapshot_revision": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "projections": {
+      "type": "array",
+      "description": "Read-only projections. Each references exactly one canonical TaskStore identity; projection references are explicitly null when unbound (missing keys are invalid). No projection may be a write target.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskstore_ref", "relay_train_id", "work_graph_task_id", "github_issue_id", "kanban_lane"],
+        "properties": {
+          "taskstore_ref": {"type": "string", "minLength": 1},
+          "relay_train_id": {"type": ["string", "null"], "minLength": 1},
+          "work_graph_task_id": {"type": ["string", "null"], "minLength": 1},
+          "github_issue_id": {"type": ["string", "null"], "minLength": 1},
+          "kanban_lane": {"type": ["string", "null"], "minLength": 1}
+        }
+      }
+    }
+  }
+}

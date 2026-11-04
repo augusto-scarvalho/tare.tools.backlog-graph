@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tare-tools-backlog-graph"
+version = "1.3.1"
+description = "Deterministic Directed Acyclic Graph (DAG) Backlog Engine, multi-theme visualizer, and implementation packet generator for human developers and autonomous AI agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Augusto Carvalho", email = "augusto-scarvalho@users.noreply.github.com" }
+]
+keywords = [
+    "dag",
+    "graph",
+    "backlog",
+    "dependencies",
+    "project-management",
+    "ai-agents",
+    "planning",
+    "topological-sort",
+    "tare-tools"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "jsonschema>=4.0"
+]
+
+[project.scripts]
+backlog = "graph_backlog.cli:main"
+graph-backlog = "graph_backlog.cli:main"
+graph-ops = "graph_backlog.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+graph_backlog = ["data/*", "contracts/**/*", "contracts/**/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/graph_backlog"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 75
+
+[tool.mutmut]
+paths_to_mutate = "src/graph_backlog/"
+runner = "pytest -q"
+tests_dir = "tests/"

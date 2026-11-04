@@ -1,0 +1,1082 @@
+{
+  "edges": [
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "platform-baseline",
+      "notes": [
+        "Schema work needs the CI baseline."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "ARCH_DOC"
+      ],
+      "to": "storage-schema",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "storage-schema",
+      "notes": [
+        "The API serves the v2 schema."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "ISSUE_12"
+      ],
+      "to": "sync-api",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "storage-schema",
+      "notes": [
+        "The cache stores v2 records."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "ARCH_DOC"
+      ],
+      "to": "offline-cache",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "sync-api",
+      "notes": [
+        "Merging runs inside the sync API."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "ISSUE_12"
+      ],
+      "to": "conflict-resolution",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "sync-api",
+      "notes": [
+        "The client syncs through the API."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "PLANNING_CALL"
+      ],
+      "to": "mobile-client",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "offline-cache",
+      "notes": [
+        "The client opens notes offline."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "PLANNING_CALL"
+      ],
+      "to": "mobile-client",
+      "type": "UNLOCKS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "legacy-sync-prototype",
+      "notes": [
+        "The API replaces the prototype."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "OLD_BOARD"
+      ],
+      "to": "sync-api",
+      "type": "SUPERSEDED_BY"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "legacy-sync-prototype",
+      "notes": [
+        "Prototype findings shaped v2."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "OLD_BOARD"
+      ],
+      "to": "storage-schema",
+      "type": "LINEAGE_TO"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "search-research",
+      "notes": [
+        "Search is optional for release."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": false,
+      "source_details": [],
+      "source_refs": [
+        "PLANNING_CALL"
+      ],
+      "to": "mobile-client",
+      "type": "INFORMS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "user-guide",
+      "notes": [
+        "Docs and client work are disjoint."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": false,
+      "source_details": [],
+      "source_refs": [],
+      "to": "mobile-client",
+      "type": "CAN_RUN_PARALLEL_WITH"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "release-review",
+      "notes": [
+        "Review evidence for the release."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "REVIEW_NOTES"
+      ],
+      "to": "mobile-client",
+      "type": "EVIDENCE_FOR"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "from": "sync-api",
+      "notes": [
+        "Guide documents sync states."
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": false,
+      "source_details": [],
+      "source_refs": [
+        "ISSUE_12"
+      ],
+      "to": "user-guide",
+      "type": "CROSS_CUTS"
+    },
+    {
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 1.0
+      },
+      "from": "sync-api",
+      "notes": [
+        "negative fixture: blocking self-loop"
+      ],
+      "requirements": {
+        "canonical_revision": null,
+        "materialization_scope": null,
+        "minimum_evidence_grade": null,
+        "prerequisite_status": [
+          "DONE"
+        ]
+      },
+      "semantic": true,
+      "source_details": [],
+      "source_refs": [
+        "REVIEW_NOTES"
+      ],
+      "to": "sync-api",
+      "type": "BLOCKS"
+    }
+  ],
+  "meta": {
+    "authority_boundary": "Read-only planning projection of a fictional example project; it grants no Authority.",
+    "completion_semantics": {
+      "done": "DoD supported for represented subject.",
+      "partial": "Bounded sub-slice complete with residuals.",
+      "superseded": "Never auto-satisfies a prerequisite; the SUPERSEDED_BY successor must satisfy it."
+    },
+    "default_view": {
+      "frontier_profile": "planning",
+      "hide_completed": true,
+      "hide_superseded": true,
+      "show_partial": true
+    },
+    "frontier_semantics": {
+      "operational": "requires canonical identity/revision, freshness and evidence requirements",
+      "planning": "dependency-feasible planning projection only; never executable authorization"
+    },
+    "generated_at": "2026-08-14T12:00:00Z",
+    "limitations": [
+      "Synthetic fixture: every project, issue and locator is fictional."
+    ],
+    "projection_run_id": "example-notes-app-2026-08-14",
+    "relation_taxonomy": "tare.tools/relation-taxonomy/0.2",
+    "schema": "work-graph-poc/0.5",
+    "snapshot": "example-notes-app-work-graph-v0.5",
+    "status": "SYNTHETIC FIXTURE / NON-CANONICAL",
+    "summary": {
+      "completion": {
+        "DONE": 2,
+        "NOT_DONE": 6,
+        "PARTIAL": 1,
+        "SUPERSEDED": 1
+      },
+      "edges": 12,
+      "nodes": 10
+    },
+    "title": "Example notes app - release planning graph"
+  },
+  "nodes": [
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Platform"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "01 Platform",
+      "completion": {
+        "completed_at": "2026-08-01",
+        "coordination_state": "CLOSED",
+        "dod_evidence": [
+          "CI run on main is green"
+        ],
+        "dod_satisfied": true,
+        "evidence_fresh_until": null,
+        "evidence_grade": "B",
+        "evidence_grade_original": null,
+        "evidence_grade_reason": "CI result linked from the architecture document.",
+        "evidence_observed_at": "2026-08-14T12:00:00Z",
+        "materialization_scope": "MAIN_CURRENT",
+        "residuals": [],
+        "status": "DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "foundation",
+      "epistemic_status": "CURRENT",
+      "evidence_required": [],
+      "exit_criteria": [
+        "CI runs the unit tests on every pull request."
+      ],
+      "horizon": "H0",
+      "id": "platform-baseline",
+      "items": [],
+      "kind": "train",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P0",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "ARCH_DOC"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Repository layout, build and CI pipeline for the notes app.",
+      "tags": [],
+      "title": "Project skeleton and CI baseline",
+      "unlock_score": 3.0,
+      "work_status": "done"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Storage"
+      ],
+      "canonical_id": "TASK-101",
+      "canonical_revision": "r3",
+      "canonical_system": "TaskStore",
+      "cluster": "02 Storage",
+      "completion": {
+        "completed_at": "2026-08-05",
+        "coordination_state": "CLOSED",
+        "dod_evidence": [
+          "Merged in PR 20 with migration tests"
+        ],
+        "dod_satisfied": true,
+        "evidence_fresh_until": null,
+        "evidence_grade": "B",
+        "evidence_grade_original": null,
+        "evidence_grade_reason": "Merged pull request with migration tests.",
+        "evidence_observed_at": "2026-08-14T12:00:00Z",
+        "materialization_scope": "MAIN_CURRENT",
+        "residuals": [],
+        "status": "DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "critical",
+      "epistemic_status": "CURRENT",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Migration from v1 keeps every note."
+      ],
+      "horizon": "H0",
+      "id": "storage-schema",
+      "items": [],
+      "kind": "work",
+      "metrics": {},
+      "notes": [],
+      "observed_at": "2026-08-14T12:00:00Z",
+      "priority": "P0",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "PR_20"
+      ],
+      "staleness_state": "FRESH",
+      "summary": "Versioned storage schema with migrations for notes and tags.",
+      "tags": [],
+      "title": "Storage schema v2",
+      "unlock_score": 4.0,
+      "work_status": "done"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Sync"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "03 Sync",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "critical",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Two clients converge after offline edits."
+      ],
+      "horizon": "H1",
+      "id": "sync-api",
+      "items": [],
+      "kind": "task_candidate",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P0",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "ISSUE_12"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "HTTP API that syncs notes between devices.",
+      "tags": [],
+      "title": "Sync API",
+      "unlock_score": 4.0,
+      "work_status": "planned"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Sync"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "03 Sync",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [
+          "Cache eviction policy is not implemented."
+        ],
+        "status": "PARTIAL",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "high",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Notes open offline after one sync."
+      ],
+      "horizon": "H1",
+      "id": "offline-cache",
+      "items": [],
+      "kind": "implementation_candidate",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P1",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "ARCH_DOC"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Local cache that keeps notes readable without a connection.",
+      "tags": [],
+      "title": "Offline cache",
+      "unlock_score": 2.0,
+      "work_status": "partial"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Sync"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "03 Sync",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "high",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Concurrent edits never lose text."
+      ],
+      "horizon": "H2",
+      "id": "conflict-resolution",
+      "items": [],
+      "kind": "task_candidate",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P1",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "ISSUE_12"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Merge concurrent edits of the same note deterministically.",
+      "tags": [],
+      "title": "Conflict resolution",
+      "unlock_score": 1.0,
+      "work_status": "planned"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Clients"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "04 Clients",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "high",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Release candidate passes the review checklist."
+      ],
+      "horizon": "H2",
+      "id": "mobile-client",
+      "items": [],
+      "kind": "train",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P1",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "PLANNING_CALL"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "First mobile release using the sync API and offline cache.",
+      "tags": [],
+      "title": "Mobile client release",
+      "unlock_score": 1.0,
+      "work_status": "planned"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Sync"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "03 Sync",
+      "completion": {
+        "completed_at": "2026-07-20",
+        "coordination_state": null,
+        "dod_evidence": [
+          "Prototype archived"
+        ],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": "C",
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": "2026-08-14T12:00:00Z",
+        "materialization_scope": "HISTORICAL_ONLY",
+        "residuals": [],
+        "status": "SUPERSEDED",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "low",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Prototype retired."
+      ],
+      "horizon": "H4",
+      "id": "legacy-sync-prototype",
+      "items": [],
+      "kind": "historical_task",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P3",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "OLD_BOARD"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "File-based sync prototype replaced by the sync API.",
+      "tags": [],
+      "title": "Legacy sync prototype",
+      "unlock_score": 0.0,
+      "work_status": "superseded"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Research"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "05 Research",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "low",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Written comparison with a recommendation."
+      ],
+      "horizon": "H3",
+      "id": "search-research",
+      "items": [],
+      "kind": "research_candidate",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P2",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "PLANNING_CALL"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Compare embedded full-text search engines.",
+      "tags": [],
+      "title": "Full-text search options",
+      "unlock_score": 1.0,
+      "work_status": "option"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Assurance"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "06 Assurance",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "high",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Review notes record no open blocker."
+      ],
+      "horizon": "H2",
+      "id": "release-review",
+      "items": [],
+      "kind": "gate",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P1",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "REVIEW_NOTES"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Independent review of the release candidate.",
+      "tags": [],
+      "title": "Release review",
+      "unlock_score": 1.0,
+      "work_status": "planned"
+    },
+    {
+      "admission_state": "OWNER_DIRECTED_BACKLOG",
+      "authority_required": "none",
+      "bounded_contexts": [
+        "Documentation"
+      ],
+      "canonical_id": null,
+      "canonical_revision": null,
+      "canonical_system": null,
+      "cluster": "07 Documentation",
+      "completion": {
+        "completed_at": null,
+        "coordination_state": null,
+        "dod_evidence": [],
+        "dod_satisfied": false,
+        "evidence_fresh_until": null,
+        "evidence_grade": null,
+        "evidence_grade_original": null,
+        "evidence_grade_reason": null,
+        "evidence_observed_at": null,
+        "materialization_scope": null,
+        "residuals": [],
+        "status": "NOT_DONE",
+        "superseded_by": []
+      },
+      "confidence": {
+        "label": "high",
+        "raw": "high",
+        "score": 0.9
+      },
+      "criticality": "medium",
+      "epistemic_status": "PROPOSED",
+      "evidence_required": [],
+      "exit_criteria": [
+        "Guide covers every user-visible sync state."
+      ],
+      "horizon": "H2",
+      "id": "user-guide",
+      "items": [],
+      "kind": "documentation",
+      "metrics": {},
+      "notes": [],
+      "observed_at": null,
+      "priority": "P2",
+      "projection_run_id": "example-notes-app-2026-08-14",
+      "provenance": [],
+      "readiness": {
+        "max_evidence_age_days": null,
+        "minimum_evidence_grade": null,
+        "operational_identity_required": true,
+        "required_canonical_revision": null,
+        "required_materialization_scopes": []
+      },
+      "source_claim_ids": [],
+      "source_details": [],
+      "source_refs": [
+        "ARCH_DOC"
+      ],
+      "staleness_state": "UNKNOWN",
+      "summary": "Guide that explains sync, offline use and conflicts.",
+      "tags": [],
+      "title": "User guide",
+      "unlock_score": 1.0,
+      "work_status": "planned"
+    }
+  ],
+  "sources": {
+    "ARCH_DOC": {
+      "fact": "Architecture overview of the example notes app",
+      "kind": "git_file",
+      "locator": "docs/ARCHITECTURE.md",
+      "recoverability": "RECOVERABLE_REFERENCE"
+    },
+    "ISSUE_12": {
+      "authority": "issue intake; not canonical",
+      "locator": "https://github.com/example/notes-app/issues/12",
+      "recoverability": "RECOVERABLE_REFERENCE",
+      "title": "Sync API for the notes app",
+      "type": "github_issue"
+    },
+    "OLD_BOARD": {
+      "recoverability": "PARTIAL_REFERENCE",
+      "recoverability_note": "some columns were not exported",
+      "title": "Partial export of the previous task board",
+      "type": "board_export"
+    },
+    "PLANNING_CALL": {
+      "authority": "provenance only; candidates require reconciliation",
+      "recoverability": "UNRESOLVED_REFERENCE",
+      "title": "Planning call summary",
+      "type": "meeting_summary"
+    },
+    "PR_20": {
+      "authority": "merged change evidence",
+      "locator": "https://github.com/example/notes-app/pull/20",
+      "recoverability": "RECOVERABLE_REFERENCE",
+      "title": "Add storage schema v2",
+      "type": "github_pr"
+    },
+    "REVIEW_NOTES": {
+      "authority": "INDEPENDENT_REVIEW_EVIDENCE / NOT_CANONICAL_AUTHORITY",
+      "bytes": 1024,
+      "captured_at": "2026-08-14T12:00:00Z",
+      "locator": "https://example.com/notes-app/review.md",
+      "recoverability": "RECOVERABLE_REFERENCE",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "title": "Release review notes",
+      "type": "review_notes"
+    }
+  }
+}

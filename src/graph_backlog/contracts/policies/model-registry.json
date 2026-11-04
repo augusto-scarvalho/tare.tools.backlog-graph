@@ -1,0 +1,1 @@
+{"schema":"tare.tools/work-graph-simulation-model-registry/1","models":{"completion-overlay-v1":{"description":"Only overlays completion.status for read-only what-if evaluation","allowed_operations":["set_completion_status"]}}}

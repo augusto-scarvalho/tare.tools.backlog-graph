@@ -1,0 +1,110 @@
+flowchart TD
+    subgraph 00_ai_infra_embeddings["00-ai-infra-embeddings"]
+        RAG_01(["RAG-01: Vector Database Deployment & Multi-Tenant Partitioning"])
+        RAG_02(["RAG-02: Embedding Pipeline & Semantic Chunking Strategy"])
+        RAG_03(["RAG-03: Document Parsing Engine (PDF, HTML, Docx & Knowledge Articles)"])
+        RAG_04["RAG-04: Cross-Encoder Semantic Re-ranking Service"]
+    end
+    subgraph 01_crm_connectors["01-crm-connectors"]
+        RAG_10(["RAG-10: Salesforce & HubSpot CRM Connector"])
+        RAG_11["RAG-11: Zendesk & Freshdesk Support Ticket Ingestion"]
+        RAG_12["RAG-12: Incremental CDC Sync & Webhook Event Stream"]
+        RAG_13["RAG-13: PII Masking, DLP & Sanitization Guardrail"]
+    end
+    subgraph 02_rag_core_engine["02-rag-core-engine"]
+        RAG_20["RAG-20: Hybrid Search Engine (Dense Vectors + Sparse BM25 Fusion)"]
+        RAG_21["RAG-21: Contextual Query Rewriter & Multi-Turn Conversation Memory"]
+        RAG_22["RAG-22: Grounding System, Prompt Assembly & Citations Anchor"]
+        RAG_23["RAG-23: Hallucination Detector & Real-Time Fact-Checking Guardrail"]
+        RAG_24["RAG-24: Seamless Human Agent Handoff Protocol"]
+    end
+    subgraph 03_agentic_tooling["03-agentic-tooling"]
+        RAG_30["RAG-30: Autonomous Function Calling Engine for CRM Actions"]
+        RAG_31["RAG-31: Human-in-the-Loop Confirmation Gate for Critical Actions"]
+        RAG_32["RAG-32: Real-Time Sentiment Analysis & High-Value Account Routing"]
+    end
+    subgraph 04_frontend_chat_ui["04-frontend-chat-ui"]
+        RAG_40(["RAG-40: Embeddable Chatbot Widget & SIGNAL Design Tokens"])
+        RAG_41["RAG-41: Streaming Markdown Renderer & Source Citations Drawer"]
+        RAG_42["RAG-42: Copilot Sidebar Extension for Internal Support Agents"]
+        RAG_43["RAG-43: Interactive Feedback Loop (RLHF Thumbs Up/Down & Flagging)"]
+    end
+    subgraph 05_evals_observability["05-evals-observability"]
+        RAG_50(["RAG-50: LLM Tracing, Token Analytics & OpenLLMetry Pipeline"])
+        RAG_51["RAG-51: Automated RAG Triad Evaluation Pipeline (Ragas)"]
+        RAG_52["RAG-52: Token Quota & LLM Cost Allocation Engine"]
+        RAG_53["RAG-53: Red Teaming & Prompt Injection Vulnerability Testing"]
+    end
+    subgraph 06_compliance_deploy["06-compliance-deploy"]
+        RAG_60["RAG-60: Staging Deployment & Multi-Tenant Concurrency Benchmarking"]
+        RAG_61["RAG-61: Zero-Downtime Production Deployment & SLA Monitoring"]
+        RAG_62["RAG-62: GDPR Right-to-be-Forgotten & Vector Purge Engine"]
+    end
+    RAG_01 -->|unlocks| RAG_04
+    RAG_02 -->|unlocks| RAG_04
+    RAG_03 -->|unlocks| RAG_11
+    RAG_10 -->|unlocks| RAG_11
+    RAG_10 -->|unlocks| RAG_12
+    RAG_11 -->|unlocks| RAG_12
+    RAG_10 -->|unlocks| RAG_13
+    RAG_01 -->|unlocks| RAG_20
+    RAG_04 -->|unlocks| RAG_20
+    RAG_20 -->|unlocks| RAG_21
+    RAG_20 -->|unlocks| RAG_22
+    RAG_13 -->|unlocks| RAG_22
+    RAG_22 -->|unlocks| RAG_23
+    RAG_22 -->|unlocks| RAG_24
+    RAG_11 -->|unlocks| RAG_24
+    RAG_22 -->|unlocks| RAG_30
+    RAG_10 -->|unlocks| RAG_30
+    RAG_30 -->|unlocks| RAG_31
+    RAG_21 -->|unlocks| RAG_32
+    RAG_30 -->|unlocks| RAG_32
+    RAG_40 -->|unlocks| RAG_41
+    RAG_22 -->|unlocks| RAG_41
+    RAG_40 -->|unlocks| RAG_42
+    RAG_30 -->|unlocks| RAG_42
+    RAG_41 -->|unlocks| RAG_43
+    RAG_22 -->|unlocks| RAG_51
+    RAG_50 -->|unlocks| RAG_51
+    RAG_50 -->|unlocks| RAG_52
+    RAG_23 -->|unlocks| RAG_53
+    RAG_51 -->|unlocks| RAG_53
+    RAG_20 -->|unlocks| RAG_60
+    RAG_40 -->|unlocks| RAG_60
+    RAG_60 -->|unlocks| RAG_61
+    RAG_23 -->|unlocks| RAG_61
+    RAG_42 -->|unlocks| RAG_61
+    RAG_01 -->|unlocks| RAG_62
+    RAG_12 -->|unlocks| RAG_62
+
+    classDef done fill:#10b98122,stroke:#10b981,stroke-width:2px,color:#d1fae5;
+    classDef ready fill:#06b6d422,stroke:#06b6d4,stroke-width:2px,color:#cffafe;
+    classDef blocked fill:#f43f5e22,stroke:#f43f5e,stroke-width:1px,color:#ffe4e6;
+    class RAG_01 done;
+    class RAG_02 done;
+    class RAG_03 done;
+    class RAG_04 ready;
+    class RAG_10 done;
+    class RAG_11 ready;
+    class RAG_12 blocked;
+    class RAG_13 ready;
+    class RAG_20 blocked;
+    class RAG_21 blocked;
+    class RAG_22 blocked;
+    class RAG_23 blocked;
+    class RAG_24 blocked;
+    class RAG_30 blocked;
+    class RAG_31 blocked;
+    class RAG_32 blocked;
+    class RAG_40 done;
+    class RAG_41 blocked;
+    class RAG_42 blocked;
+    class RAG_43 blocked;
+    class RAG_50 done;
+    class RAG_51 blocked;
+    class RAG_52 ready;
+    class RAG_53 blocked;
+    class RAG_60 blocked;
+    class RAG_61 blocked;
+    class RAG_62 blocked;

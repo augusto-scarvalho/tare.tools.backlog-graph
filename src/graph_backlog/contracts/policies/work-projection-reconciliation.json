@@ -1,0 +1,24 @@
+{
+  "schema": "tare.tools/work-projection-reconciliation/1",
+  "authority": {
+    "canonical_work_writer": "TaskStore",
+    "projection_only": ["relay", "work_graph", "github_issue", "kanban"]
+  },
+  "projection_modes": {
+    "relay": "read_only",
+    "work_graph": "read_only",
+    "github_issue": "read_only",
+    "kanban": "read_only"
+  },
+  "golden_queries": [
+    "canonical_taskstore_identity",
+    "unresolved_canonical_identity",
+    "duplicate_taskstore_identity",
+    "cross_projection_identity_mismatch"
+  ],
+  "invariants": {
+    "single_canonical_writer": "Only TaskStore may write operational work state; relay/work_graph/github_issue/kanban are derived projections keyed by taskstore_id.",
+    "no_reverse_write": "No projection value may be used as a write target; there is no reverse operation from a projection back into canonical work state.",
+    "explicit_uncertainty": "A projection whose taskstore_ref does not resolve to a canonical row is reported as unresolved and is never auto-created."
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "schema": "tare.tools/private-records-reference/1",
+  "repository": "tare.tools.backlog-graph",
+  "commit": "9fa6c33dcd863a2e0ebf817ee9abc3a65c910dfa",
+  "authority": "NONE",
+  "retention": "Private operational and historical records; original bytes remain in the pinned history. Ordinary source validation uses maintained code and bounded fixtures.",
+  "files": {
+    "docs/P1_DELIVERY_EVIDENCE_OBSERVATION_2026-08-26.md": {
+      "bytes": 3746,
+      "sha256": "be367899f8c4dd6de80e8fe03fa4f5e72bb13266d7ac2e7ad8fbc7cff8e98ac1",
+      "git_blob": "8b35a7a4388d91d1237a9d226c0b763de12d9b5c"
+    },
+    "docs/archive/integration-recovery-20260908/README.md": {
+      "bytes": 1045,
+      "sha256": "14a5cbbd39ca6f83a1491d25c6b25e8174f1c452688095ae4c6c7f03bd014aa9",
+      "git_blob": "21c4e3dd7f01550545eb3e2dce5d98555669527d"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/EDITORIAL_DECISION.json": {
+      "bytes": 651,
+      "sha256": "201b412ce642f046086e861ed9f0b8662b6575b2a77e50d969bc6dd73c7e258f",
+      "git_blob": "25b71a67f2f1361576a7a16509eed192c1a7dac5"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/PUBLICATION_RECORD.json": {
+      "bytes": 1725,
+      "sha256": "65a99bb7e420d2c32b95bc3c7de678de512781d05587fd51bcb912723b0b9790",
+      "git_blob": "6a8131c5a40e69112618086724087487df9db2c0"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/PUBLISH_MANIFEST.json": {
+      "bytes": 616,
+      "sha256": "7a5536ee85377da7228601ee5d323758f56eb69cea67c973c002a1cc89bf2c07",
+      "git_blob": "c072bfd788467c3a7715c6159aef69c555e7f24f"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/RECOVERY_RECEIPT.json": {
+      "bytes": 3695,
+      "sha256": "3c8292030d2deeb8fc52d4e84955443bf6ed45f6c29537c7829b484d4d946f02",
+      "git_blob": "3ca6f8e0d8f7ae97f019b69327312822c6473b81"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/TRANSLATION_MANIFEST.en.json": {
+      "bytes": 867,
+      "sha256": "1d939a8067f729bdf7def0f43cf18108083ad82dec07ded445aadfc6b6e26a3f",
+      "git_blob": "b6826307a871001d40187733f2870831acb3848e"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/article.en.html": {
+      "bytes": 5838,
+      "sha256": "5375064504f451760a5304c711ab6370ab371cb1331a03387d424bd87d3bf716",
+      "git_blob": "667ff3b375de3afb9a6d05bebedb0e37c42e02c9"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/article.html": {
+      "bytes": 5898,
+      "sha256": "62661097936ec6d458c9b5878f970d1b7d57949620debcc32bd10ff9ebb53f88",
+      "git_blob": "7fe5319bfc7fb8e28897edaa9975836e9f29508a"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/document-metadata.en.json": {
+      "bytes": 949,
+      "sha256": "7978838e02622646d7df47c594205b457ad0c6f3bd730db8bd048a36381e27ec",
+      "git_blob": "f9d5385783800bd35cf115f0623f58f9697b9d7c"
+    },
+    "docs/archive/integration-recovery-20260908/adr-046_backlog_graph_north_star-2026-08-18/document-metadata.json": {
+      "bytes": 911,
+      "sha256": "56030f0ae40d1e2783c0c8f45f293edd254ebd2db3eb3aca44fe611fd83cb428",
+      "git_blob": "d19917f478a6457cb8edfb2f319b59cceb2fe307"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/EDITORIAL_DECISION.json": {
+      "bytes": 683,
+      "sha256": "ef20deb98f9c46a49ea9dfdfdaee6c4ca34d8829e31d8cc0f354a329c2024068",
+      "git_blob": "3c1f1e7cf31d1311d0c3b97e457a6ec32fde3af9"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/PUBLICATION_RECORD.json": {
+      "bytes": 1781,
+      "sha256": "671ccdcabe2753ec219f008cdb24cfd908aa82f0fea00dada2c37fc36ca3df00",
+      "git_blob": "99e5d1424f38007677499d7f9c9088472d9a7c94"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/PUBLISH_MANIFEST.json": {
+      "bytes": 632,
+      "sha256": "86a64a6c82915b136a1066685d994b6463ad2d7fcfe9f11ef2e3c69b7dbc5fe6",
+      "git_blob": "a483cfff274e4ca139fef7f6bce1f828be02083c"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/RECOVERY_RECEIPT.json": {
+      "bytes": 3903,
+      "sha256": "6a401ebd18c03b194b7f9625dbbc980c5c655f43e64d7655af0b32a9bda080f6",
+      "git_blob": "ee9cb4f1f86519928961daf0be0f870bb1a1c74a"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/TRANSLATION_MANIFEST.en.json": {
+      "bytes": 900,
+      "sha256": "ab0e2f397feaac43142deffacf8918af38b0b3a6b1f848bff9486978772d689d",
+      "git_blob": "97ee35e14fd2203ff01d94afafa7220f5d17f845"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/article.en.html": {
+      "bytes": 11666,
+      "sha256": "13abfb8b021222b81a8d6aa9aa5433df6044691a618fefed3d24c3db3e59295b",
+      "git_blob": "626dc3c48fe4f4d48615f4382e07ec361ba817ea"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/article.html": {
+      "bytes": 11722,
+      "sha256": "fe8f828adfffe2046161de666de419d48780ef9d20e27084dfd00ab178ddc09f",
+      "git_blob": "56c5170df6e2b44bdffcad305179181d4fbb5279"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/document-metadata.en.json": {
+      "bytes": 2381,
+      "sha256": "3cd04b2f89462e315ee9258c6fbd0fedee3b07c1ee03e70cd791e0fae6003909",
+      "git_blob": "4efd92f85f2998006896e30d22a934a6a8d72dd2"
+    },
+    "docs/archive/integration-recovery-20260908/study_backlog_graph_topological_execution_engine-2026-08-18/document-metadata.json": {
+      "bytes": 2327,
+      "sha256": "a61cdf275e11db853a76d2b4c45f7c93da58425decf3c288ac580f5d7ab06772",
+      "git_blob": "317c597053fd45c486930c58ee3cab8f67a564b7"
+    }
+  }
+}

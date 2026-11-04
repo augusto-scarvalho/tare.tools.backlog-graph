@@ -1,0 +1,135 @@
+flowchart TD
+    subgraph 00_foundation["00-foundation"]
+        SAAS_01(["SAAS-01: Monorepo Setup, Toolchain & Shared Configs"])
+        SAAS_02(["SAAS-02: Postgres Database Models & Automated Migrations"])
+        SAAS_03(["SAAS-03: Redis Cache Cluster & Job Queue Client"])
+        SAAS_04(["SAAS-04: Multi-Tenant Context & Row-Level Security Policy"])
+        SAAS_05(["SAAS-05: Structured Logging, Tracing & OpenTelemetry Pipeline"])
+    end
+    subgraph 01_auth_security["01-auth-security"]
+        SAAS_10(["SAAS-10: Authentication Service (JWT, WebAuthn & Refresh Rotations)"])
+        SAAS_11["SAAS-11: Multi-Tenant RBAC & Fine-Grained Permission Engine"]
+        SAAS_12["SAAS-12: Enterprise SSO & SAML 2.0 / Okta Integration"]
+        SAAS_13["SAAS-13: Immutable Audit Log & Security Event Streaming"]
+        SAAS_14["SAAS-14: Scoped API Keys & Developer Service Tokens"]
+    end
+    subgraph 02_core_engine["02-core-engine"]
+        SAAS_20["SAAS-20: Public REST & OpenAPI Gateway"]
+        SAAS_21["SAAS-21: Distributed Background Worker Train & Scheduling Engine"]
+        SAAS_22["SAAS-22: Real-Time WebSocket & Server-Sent Events (SSE) Bus"]
+        SAAS_23["SAAS-23: Outbound Webhooks Delivery Engine with HMAC Signatures"]
+        SAAS_24["SAAS-24: Distributed Rate Limiting & Sliding Window Throttler"]
+    end
+    subgraph 03_billing_subscriptions["03-billing-subscriptions"]
+        SAAS_30["SAAS-30: Stripe Billing Engine, Checkout & Webhook Handlers"]
+        SAAS_31["SAAS-31: Usage-Based Metering & Aggregate Ingestion Pipeline"]
+        SAAS_32["SAAS-32: Subscription Tier Gating & Feature Flag System"]
+    end
+    subgraph 04_frontend_ui["04-frontend-ui"]
+        SAAS_40(["SAAS-40: Frontend App Shell & SIGNAL Design System Theme Tokens"])
+        SAAS_41["SAAS-41: Organization Onboarding & Team Invitation Flow"]
+        SAAS_42["SAAS-42: Real-Time Telemetry Dashboard & Live Metrics UI"]
+        SAAS_43["SAAS-43: API Key & Webhook Management UI Portal"]
+        SAAS_44["SAAS-44: Billing & Usage Management UI Dashboard"]
+    end
+    subgraph 05_devops_infra["05-devops-infra"]
+        SAAS_50(["SAAS-50: Docker Multi-Stage Build & Local Compose Rig"])
+        SAAS_51(["SAAS-51: Terraform Infrastructure as Code (AWS ECS, RDS & ElastiCache)"])
+        SAAS_52(["SAAS-52: GitHub Actions CI/CD Pipeline with Matrix Testing"])
+        SAAS_53["SAAS-53: Staging Environment Deployment & Smoke Test Pipeline"]
+        SAAS_54["SAAS-54: Zero-Downtime Production Rolling Deployment"]
+        SAAS_55["SAAS-55: Disaster Recovery, Automated Backups & Failover Drill"]
+        SAAS_56["SAAS-56: SOC2 Type II Audit Readiness & Continuous Compliance Engine"]
+    end
+    subgraph 06_growth_analytics["06-growth-analytics"]
+        SAAS_60["SAAS-60: Transactional Email Service with React Email Templates"]
+        SAAS_61["SAAS-61: Product Analytics & Event Ingestion Pipeline"]
+        SAAS_62["SAAS-62: In-App Notification Center & Changelog Banner"]
+    end
+    SAAS_01 -->|unlocks| SAAS_02
+    SAAS_01 -->|unlocks| SAAS_03
+    SAAS_02 -->|unlocks| SAAS_04
+    SAAS_01 -->|unlocks| SAAS_05
+    SAAS_02 -->|unlocks| SAAS_10
+    SAAS_04 -->|unlocks| SAAS_10
+    SAAS_10 -->|unlocks| SAAS_11
+    SAAS_11 -->|unlocks| SAAS_12
+    SAAS_11 -->|unlocks| SAAS_13
+    SAAS_11 -->|unlocks| SAAS_14
+    SAAS_04 -->|unlocks| SAAS_20
+    SAAS_10 -->|unlocks| SAAS_20
+    SAAS_03 -->|unlocks| SAAS_21
+    SAAS_05 -->|unlocks| SAAS_21
+    SAAS_20 -->|unlocks| SAAS_22
+    SAAS_21 -->|unlocks| SAAS_22
+    SAAS_21 -->|unlocks| SAAS_23
+    SAAS_20 -->|unlocks| SAAS_24
+    SAAS_03 -->|unlocks| SAAS_24
+    SAAS_04 -->|unlocks| SAAS_30
+    SAAS_30 -->|unlocks| SAAS_31
+    SAAS_21 -->|unlocks| SAAS_31
+    SAAS_30 -->|unlocks| SAAS_32
+    SAAS_11 -->|unlocks| SAAS_32
+    SAAS_01 -->|unlocks| SAAS_40
+    SAAS_40 -->|unlocks| SAAS_41
+    SAAS_10 -->|unlocks| SAAS_41
+    SAAS_40 -->|unlocks| SAAS_42
+    SAAS_22 -->|unlocks| SAAS_42
+    SAAS_40 -->|unlocks| SAAS_43
+    SAAS_14 -->|unlocks| SAAS_43
+    SAAS_23 -->|unlocks| SAAS_43
+    SAAS_40 -->|unlocks| SAAS_44
+    SAAS_32 -->|unlocks| SAAS_44
+    SAAS_01 -->|unlocks| SAAS_50
+    SAAS_50 -->|unlocks| SAAS_51
+    SAAS_50 -->|unlocks| SAAS_52
+    SAAS_51 -->|unlocks| SAAS_53
+    SAAS_52 -->|unlocks| SAAS_53
+    SAAS_53 -->|unlocks| SAAS_54
+    SAAS_20 -->|unlocks| SAAS_54
+    SAAS_42 -->|unlocks| SAAS_54
+    SAAS_54 -->|unlocks| SAAS_55
+    SAAS_13 -->|unlocks| SAAS_56
+    SAAS_55 -->|unlocks| SAAS_56
+    SAAS_21 -->|unlocks| SAAS_60
+    SAAS_21 -->|unlocks| SAAS_61
+    SAAS_40 -->|unlocks| SAAS_61
+    SAAS_40 -->|unlocks| SAAS_62
+    SAAS_60 -.->|enables| SAAS_62
+
+    classDef done fill:#10b98122,stroke:#10b981,stroke-width:2px,color:#d1fae5;
+    classDef ready fill:#06b6d422,stroke:#06b6d4,stroke-width:2px,color:#cffafe;
+    classDef blocked fill:#f43f5e22,stroke:#f43f5e,stroke-width:1px,color:#ffe4e6;
+    class SAAS_01 done;
+    class SAAS_02 done;
+    class SAAS_03 done;
+    class SAAS_04 done;
+    class SAAS_05 done;
+    class SAAS_10 done;
+    class SAAS_11 ready;
+    class SAAS_12 blocked;
+    class SAAS_13 blocked;
+    class SAAS_14 blocked;
+    class SAAS_20 ready;
+    class SAAS_21 ready;
+    class SAAS_22 blocked;
+    class SAAS_23 blocked;
+    class SAAS_24 blocked;
+    class SAAS_30 ready;
+    class SAAS_31 blocked;
+    class SAAS_32 blocked;
+    class SAAS_40 done;
+    class SAAS_41 ready;
+    class SAAS_42 blocked;
+    class SAAS_43 blocked;
+    class SAAS_44 blocked;
+    class SAAS_50 done;
+    class SAAS_51 done;
+    class SAAS_52 done;
+    class SAAS_53 ready;
+    class SAAS_54 blocked;
+    class SAAS_55 blocked;
+    class SAAS_56 blocked;
+    class SAAS_60 blocked;
+    class SAAS_61 blocked;
+    class SAAS_62 blocked;

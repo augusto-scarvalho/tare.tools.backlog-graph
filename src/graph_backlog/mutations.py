@@ -1,0 +1,315 @@
+from __future__ import annotations
+import copy
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable
+
+from .core import WorkGraph, load_default_policy, load_default_taxonomy
+from .jsonutil import (
+    UsageError,
+    RevisionMismatchError,
+    compute_revision_hash,
+    load_json,
+    atomic_write,
+    graph_lock,
+    canonical_json,
+    stable_dict
+)
+from .validation import validate_work_graph, validate_completion_evidence
+from .algorithms import find_cycles_scc
+
+def execute_graph_transaction(
+    graph_path: str | Path,
+    mutation_fn: Callable[[WorkGraph], dict[str, Any]],
+    expected_rev: str | None = None,
+    policy: dict[str, Any] | None = None,
+    taxonomy: dict[str, Any] | None = None,
+    save: bool = True
+) -> dict[str, Any]:
+    """Execute an end-to-end atomic mutation transaction enclosed completely within an exclusive lock."""
+    target = Path(graph_path).resolve(strict=False)
+    pol = policy or load_default_policy()
+    tax = taxonomy or load_default_taxonomy()
+
+    with graph_lock(target):
+        # 1. Reload freshly from disk inside critical section
+        raw = load_json(target)
+        disk_hash = compute_revision_hash(raw)
+
+        # 2. Check CAS revision
+        if expected_rev and expected_rev != disk_hash:
+            raise RevisionMismatchError(
+                f"CAS conflict: expected revision '{expected_rev}', but disk revision is '{disk_hash}'"
+            )
+
+        # 3. Instantiate WorkGraph
+        wg = WorkGraph(raw, policy=pol, taxonomy=tax)
+
+        # Snapshot before invoking callbacks, which may mutate WorkGraph.raw.
+        before = copy.deepcopy(raw)
+
+        # 4. Apply mutation
+        new_graph_dict = mutation_fn(wg)
+        validate_completion_evidence(before, new_graph_dict, pol)
+
+        # 5. Validate new state
+        val = validate_work_graph(new_graph_dict, pol, tax)
+        if val.get("status") != "PASS":
+            raise UsageError(f"Transaction failed validation: {val.get('errors')}")
+
+        # 6. Compute new content-addressed revision hash
+        new_hash = compute_revision_hash(new_graph_dict)
+        new_graph_dict["revision"] = new_hash
+
+        # 7. Write atomically
+        if save:
+            atomic_write(target, canonical_json(new_graph_dict) + "\n", overwrite=True)
+
+        return new_graph_dict
+
+def add_node_to_graph(
+    graph: WorkGraph,
+    node_id: str,
+    title: str,
+    cluster: str = "general",
+    priority: str = "P1",
+    horizon: str = "H1",
+    criticality: str = "MEDIUM",
+    summary: str | None = None,
+    depends_on: list[str] | None = None,
+    tags: list[str] | None = None,
+    exit_criteria: list[str] | None = None,
+    spec_ref: str | None = None
+) -> dict[str, Any]:
+    """Add a new node and optional prerequisite edges to the work graph, validating integrity."""
+    if node_id in graph.by_id:
+        raise UsageError(f"Node '{node_id}' already exists in graph")
+        
+    deps = depends_on or []
+    for dep in deps:
+        if dep not in graph.by_id:
+            raise UsageError(f"Prerequisite node '{dep}' does not exist in graph")
+            
+    now_str = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    
+    new_node: dict[str, Any] = {
+        "id": node_id,
+        "title": title,
+        "kind": "task",
+        "cluster": cluster,
+        "horizon": horizon,
+        "work_status": "PROPOSED",
+        "admission_state": "ADMITTED",
+        "epistemic_status": "CERTAIN",
+        "bounded_contexts": [cluster],
+        "priority": priority,
+        "criticality": criticality,
+        "authority_required": "none",
+        "evidence_required": [],
+        "confidence": {"score": 1.0},
+        "summary": summary or title,
+        "exit_criteria": exit_criteria or [f"Complete {title}"],
+        "source_refs": [f"spec:{spec_ref}"] if spec_ref else [],
+        "source_details": [],
+        "provenance": [],
+        "source_claim_ids": [],
+        "unlock_score": 1,
+        "tags": tags or [],
+        "metrics": {},
+        "notes": [],
+        "items": [],
+        "canonical_system": "local",
+        "canonical_id": node_id,
+        "canonical_revision": "r1",
+        "observed_at": now_str,
+        "projection_run_id": "manual-mutation",
+        "staleness_state": "FRESH",
+        "readiness": {"operational_identity_required": False},
+        "completion": {
+            "status": "NOT_DONE",
+            "dod_satisfied": False,
+            "evidence_grade": None,
+            "materialization_scope": "local"
+        }
+    }
+    if spec_ref:
+        new_node["spec_ref"] = spec_ref
+    
+    new_raw = copy.deepcopy(graph.to_dict())
+    new_raw["nodes"].append(new_node)
+    
+    for dep in deps:
+        new_raw["edges"].append({
+            "from": dep,
+            "to": node_id,
+            "type": "UNLOCKS",
+            "semantic": True,
+            "source_refs": [],
+            "source_details": [],
+            "confidence": {"score": 1.0},
+            "notes": ["Added via add_node"],
+            "requirements": {}
+        })
+        
+    val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
+    if val["status"] != "PASS":
+        raise UsageError(f"Cannot add node: validation failed with errors: {val.get('errors')}")
+        
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    return new_raw
+
+def complete_node_in_graph(
+    graph: WorkGraph,
+    node_id: str,
+    evidence_summary: str | None = None,
+    evidence_grade: str | None = None,
+    evidence_grade_reason: str | None = None,
+    source_refs: list[str] | None = None
+) -> dict[str, Any]:
+    """Mark a node as DONE and record its Definition of Done satisfaction."""
+    if node_id not in graph.by_id:
+        raise UsageError(f"Node '{node_id}' not found in graph")
+        
+    new_raw = copy.deepcopy(graph.to_dict())
+    for n in new_raw["nodes"]:
+        if n["id"] == node_id:
+            if n.get("kind") in graph.actionable_kinds and (
+                not isinstance(evidence_summary, str) or not evidence_summary.strip()
+            ):
+                raise UsageError("COMPLETION_DOD_EVIDENCE_REQUIRED: actionable completion requires non-empty --evidence")
+            declared_refs = source_refs if source_refs is not None else []
+            if not isinstance(declared_refs, list):
+                raise UsageError("COMPLETION_SOURCE_REF_INVALID: source_refs must be a list of registered IDs")
+            for ref in declared_refs:
+                if not isinstance(ref, str) or not ref.strip() or ref not in graph.sources:
+                    raise UsageError(f"COMPLETION_SOURCE_REF_INVALID: unknown registered source {ref!r}")
+            previous = copy.deepcopy(n.get("completion") or {})
+            completion = n.setdefault("completion", {})
+            completion["status"] = "DONE"
+            completion["dod_satisfied"] = True
+            # Never inherit a grade/reason from another conclusion.
+            completion["evidence_grade"] = evidence_grade
+            completion["evidence_grade_reason"] = evidence_grade_reason
+            references = ([evidence_summary] if evidence_summary else []) + declared_refs
+            values = completion.get("dod_evidence") or []
+            for ref in references:
+                if ref not in values:
+                    values.append(ref)
+            if values:
+                completion["dod_evidence"] = values
+            for field, references_to_add in (("provenance", references), ("source_refs", declared_refs)):
+                values = n.get(field) or []
+                for ref in references_to_add:
+                    if ref not in values:
+                        values.append(ref)
+                n[field] = values
+            if completion != previous:
+                completion["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            break
+
+    validate_completion_evidence(graph, new_raw)
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
+    if val["status"] != "PASS":
+        raise UsageError(f"Cannot complete node: validation failed: {val.get('errors')}")
+        
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    return new_raw
+
+def land_train_tasks(
+    graph: WorkGraph,
+    train_id: str,
+    task_ids: list[str],
+    evidence_summary: str | None = None,
+    expected_rev: str | None = None,
+    evidence_grade: str | None = None,
+    evidence_grade_reason: str | None = None,
+    source_refs: list[str] | None = None
+) -> dict[str, Any]:
+    """Atomically mark a batch of tasks as DONE under a train landing, enforcing CAS revision check (BG-05)."""
+    current_dict = graph.to_dict()
+    current_hash = compute_revision_hash(current_dict)
+    
+    if expected_rev and expected_rev != current_hash:
+        raise RevisionMismatchError(
+            f"CAS conflict during landing of train '{train_id}': expected revision '{expected_rev}', but current revision is '{current_hash}'"
+        )
+        
+    new_raw = copy.deepcopy(current_dict)
+    target_set = set(task_ids)
+    missing = target_set - set(graph.by_id)
+    if missing:
+        raise UsageError(f"Cannot land tasks: missing task IDs in graph: {sorted(missing)}")
+        
+    for nid in sorted(target_set):
+        current = WorkGraph(new_raw, graph.policy, graph.taxonomy)
+        new_raw = complete_node_in_graph(
+            current, nid, evidence_summary, evidence_grade, evidence_grade_reason, source_refs
+        )
+        node = next(n for n in new_raw["nodes"] if n["id"] == nid)
+        if node["completion"].get("landed_train") != train_id:
+            node["completion"]["landed_train"] = train_id
+            node["completion"]["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    validate_completion_evidence(graph, new_raw)
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
+    if val["status"] != "PASS":
+        raise UsageError(f"Landing failed validation: {val.get('errors')}")
+        
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    return new_raw
+
+def supersede_node_in_graph(
+    graph: WorkGraph,
+    node_id: str,
+    superseded_by_id: str,
+    reason: str | None = None
+) -> dict[str, Any]:
+    """Formally mark a node as SUPERSEDED by another active node with acyclic Tarjan validation (BG-04)."""
+    if node_id not in graph.by_id:
+        raise UsageError(f"Node '{node_id}' not found in graph")
+    if superseded_by_id not in graph.by_id:
+        raise UsageError(f"Successor node '{superseded_by_id}' not found in graph")
+    if node_id == superseded_by_id:
+        raise UsageError(f"A node cannot supersede itself: '{node_id}'")
+        
+    new_raw = copy.deepcopy(graph.to_dict())
+    now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    
+    # 1. Update node status to SUPERSEDED
+    for n in new_raw.get("nodes", []):
+        if n.get("id") == node_id:
+            if not isinstance(n.get("completion"), dict):
+                n["completion"] = {}
+            n["completion"]["status"] = "SUPERSEDED"
+            n["completion"]["superseded_by"] = superseded_by_id
+            n["completion"]["superseded_at"] = now_iso
+            if reason:
+                n["completion"]["supersession_reason"] = reason
+            break
+            
+    # 2. Add explicit SUPERSEDED_BY edge from node_id to superseded_by_id
+    new_raw.setdefault("edges", []).append({
+        "from": node_id,
+        "to": superseded_by_id,
+        "type": "SUPERSEDED_BY",
+        "semantic": True,
+        "source_refs": [],
+        "source_details": [],
+        "confidence": {"score": 1.0},
+        "requirements": {},
+        "notes": [reason or f"Superseded by {superseded_by_id}"]
+    })
+    
+    # 3. Check for cycles using temporary WorkGraph
+    temp_wg = WorkGraph(new_raw)
+    cycles = find_cycles_scc(temp_wg)
+    if cycles:
+        raise UsageError(f"Supersession would create circular dependency: {cycles}")
+        
+    val = validate_work_graph(new_raw, graph.policy, graph.taxonomy)
+    if val["status"] != "PASS":
+        raise UsageError(f"Supersession failed validation: {val.get('errors')}")
+        
+    new_raw["revision"] = compute_revision_hash(new_raw)
+    return new_raw

@@ -1,0 +1,58 @@
+version: "1.0.0"
+governance: "ADR-001"
+last_updated: "2026-09-03"
+
+concepts:
+  - id: "DeterministicExecutionFrontier"
+    name: "Deterministic Execution Frontier"
+    domain: "Task DAG Planning"
+    governing_adr: "ADR-001"
+    governing_spec: "SPEC-BACKLOG-001"
+    definition: "Derived set of actionable work whose declared prerequisites are satisfied, ordered by an explicit stable ranking policy."
+    invariants:
+      - "Readiness is derived from canonical graph state and relation semantics, never asserted independently."
+      - "Equal inputs and policy produce the same ordered frontier."
+      - "Informational relations cannot silently become blockers."
+    relationships:
+      governs: ["ReadyWorkSelection", "TopologicalPlanning"]
+      requires: ["TypedDependencySemantics"]
+
+  - id: "TypedDependencySemantics"
+    name: "Typed Dependency Semantics"
+    domain: "Task DAG Relations"
+    governing_adr: "ADR-001"
+    governing_spec: "SPEC-BACKLOG-001"
+    definition: "Repository-owned relation taxonomy that states direction, dependency effect, prerequisite role and satisfaction rule for every admitted edge type."
+    invariants:
+      - "Unknown relation types use the explicit non-blocking default or fail under a stricter caller profile."
+      - "Direction and satisfaction semantics come from the versioned taxonomy rather than relation-name guessing."
+    relationships:
+      governs: ["RelationTaxonomy", "PrerequisiteResolution"]
+      enables: ["DeterministicExecutionFrontier", "AtomicReopenCascade"]
+
+  - id: "CasLeasedGraphMutation"
+    name: "CAS-Leased Graph Mutation"
+    domain: "Concurrent Task State"
+    governing_adr: "ADR-001"
+    governing_spec: "SPEC-BACKLOG-001"
+    definition: "Mutation protocol that accepts an expected graph or task revision and rejects a write when the canonical state changed before commit."
+    invariants:
+      - "A stale expected revision cannot overwrite a newer graph state."
+      - "The canonical revision is derived from deterministic graph content."
+      - "Failed mutation leaves the previous canonical graph usable."
+    relationships:
+      governs: ["RevisionFence", "AtomicGraphWrite"]
+      enables: ["AtomicReopenCascade"]
+
+  - id: "AtomicReopenCascade"
+    name: "Atomic Reopen Cascade"
+    domain: "Task Lifecycle Consistency"
+    governing_adr: "ADR-001"
+    governing_spec: "SPEC-BACKLOG-001"
+    definition: "Single graph transaction that reopens a prerequisite and invalidates completed descendants whose completion depended on it."
+    invariants:
+      - "No observer can see the prerequisite reopened while dependent completion remains canonically valid."
+      - "The cascade follows typed blocking relations and terminates over an acyclic dependency graph."
+    relationships:
+      governs: ["ReopenPropagation", "CompletionInvalidation"]
+      requires: ["CasLeasedGraphMutation", "TypedDependencySemantics"]

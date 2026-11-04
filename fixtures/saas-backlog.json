@@ -1,0 +1,2923 @@
+{
+  "meta": {
+    "schema": "work-graph-poc/0.5",
+    "title": "CloudPulse SaaS — Complete Engineering Backlog (Genesis to Production)",
+    "snapshot": "2026-08-15-saas-lifecycle-v1",
+    "generated_at": "2026-08-15T12:00:00Z",
+    "projection_run_id": "proj-saas-cloudpulse-001"
+  },
+  "sources": {
+    "PRD-01": {
+      "kind": "product_requirement",
+      "title": "CloudPulse Multi-tenant SaaS Master PRD",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/specs/prd-cloudpulse-v1.md"
+    },
+    "ARCH-01": {
+      "kind": "architecture_decision",
+      "title": "ADR-001: Isolated Tenant Architecture & Storage Strategy",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/adr/001-tenant-storage-strategy.md"
+    },
+    "SEC-01": {
+      "kind": "security_policy",
+      "title": "CloudPulse Security Baseline & SOC2 Readiness Standard",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/security/baseline-policy.md"
+    }
+  },
+  "nodes": [
+    {
+      "id": "SAAS-01",
+      "title": "Monorepo Setup, Toolchain & Shared Configs",
+      "kind": "task",
+      "cluster": "00-foundation",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devx",
+        "toolchain"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "pnpm-lock.yaml",
+        "ci-build-log"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Initialize workspace with TypeScript, ESLint, Prettier, strict tsconfig, and shared contract packages.",
+      "exit_criteria": [
+        "Turborepo / workspace compiles cleanly",
+        "CI linter and typecheck pass with zero errors"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-devx"
+      ],
+      "unlock_score": 15,
+      "tags": [
+        "infra",
+        "devx",
+        "typescript"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-01",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-10T10:00:00Z",
+        "dod_evidence": [
+          "Commit 477bea0 merged into main with full toolchain tests passing"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-02",
+      "title": "Postgres Database Models & Automated Migrations",
+      "kind": "task",
+      "cluster": "00-foundation",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "storage",
+        "data"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "migration_test_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Implement schema for Tenants, Users, Memberships, Subscriptions, and AuditLogs with automated migration tooling.",
+      "exit_criteria": [
+        "Migrations execute forward and rollback cleanly in CI",
+        "Foreign key cascades and indexes on tenant_id verified"
+      ],
+      "source_refs": [
+        "ARCH-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-db"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "database",
+        "postgres",
+        "migrations"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-02",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-11T14:00:00Z",
+        "dod_evidence": [
+          "PostgreSQL migration suite 001_initial verified against test container"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-03",
+      "title": "Redis Cache Cluster & Job Queue Client",
+      "kind": "task",
+      "cluster": "00-foundation",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "storage",
+        "cache",
+        "queues"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "redis_ping_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Configure distributed Redis connection pool, key-namespace prefixing by tenant, and BullMQ/Celery job queues.",
+      "exit_criteria": [
+        "Redis cluster reconnects automatically on network drops",
+        "Tenant namespace isolation enforced by wrapper client"
+      ],
+      "source_refs": [
+        "ARCH-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-redis"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "redis",
+        "cache",
+        "queues"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-03",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-11T18:00:00Z",
+        "dod_evidence": [
+          "Redis connection and queue failover integration tests passed"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-04",
+      "title": "Multi-Tenant Context & Row-Level Security Policy",
+      "kind": "task",
+      "cluster": "00-foundation",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "security",
+        "tenant"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "rls_isolation_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Enforce request tenant context extraction from subdomains/headers and PostgreSQL Row-Level Security (RLS).",
+      "exit_criteria": [
+        "Cross-tenant data leakage tests pass with 100% rejection",
+        "Async storage context correctly propagates tenant ID"
+      ],
+      "source_refs": [
+        "ARCH-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-rls"
+      ],
+      "unlock_score": 14,
+      "tags": [
+        "security",
+        "multitenancy",
+        "rls"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-04",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-12T09:00:00Z",
+        "dod_evidence": [
+          "RLS automated penetration and isolation matrix tests green"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-05",
+      "title": "Structured Logging, Tracing & OpenTelemetry Pipeline",
+      "kind": "task",
+      "cluster": "00-foundation",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "observability"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "otel_span_export_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Configure JSON structured logger with trace_id correlation, OpenTelemetry collector exporters, and Prometheus metrics.",
+      "exit_criteria": [
+        "Traces include tenant_id and request_id tags",
+        "/metrics endpoint exposes standard HTTP and worker metrics"
+      ],
+      "source_refs": [
+        "ARCH-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-otel"
+      ],
+      "unlock_score": 6,
+      "tags": [
+        "observability",
+        "opentelemetry",
+        "metrics"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-05",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-12T12:00:00Z",
+        "dod_evidence": [
+          "OTel span export and JSON log verification tests passed"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-10",
+      "title": "Authentication Service (JWT, WebAuthn & Refresh Rotations)",
+      "kind": "task",
+      "cluster": "01-auth-security",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "identity",
+        "auth"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "authn_integration_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Implement user signup, login, password hashing (argon2id), WebAuthn passkeys, and secure refresh token rotation.",
+      "exit_criteria": [
+        "Brute force protection and rate limiting verified",
+        "Token revocation and refresh rotation tested against replay attacks"
+      ],
+      "source_refs": [
+        "SEC-01",
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-auth"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "auth",
+        "security",
+        "jwt",
+        "passkeys"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-10",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-13T16:00:00Z",
+        "dod_evidence": [
+          "AuthN suite with 100% test coverage and replay defense verified"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-11",
+      "title": "Multi-Tenant RBAC & Fine-Grained Permission Engine",
+      "kind": "task",
+      "cluster": "01-auth-security",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "identity",
+        "rbac",
+        "authorization"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "rbac_policy_evaluator_tests"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Implement Owner, Admin, Member, and Viewer roles with custom permission matrices evaluated per tenant organization.",
+      "exit_criteria": [
+        "Permission evaluation resolves in < 2ms",
+        "Unauthorized role actions return RFC 7807 403 Forbidden"
+      ],
+      "source_refs": [
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-rbac"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "rbac",
+        "permissions",
+        "authz"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-11",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-12",
+      "title": "Enterprise SSO & SAML 2.0 / Okta Integration",
+      "kind": "task",
+      "cluster": "01-auth-security",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "identity",
+        "enterprise",
+        "sso"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "saml_assertion_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Enable enterprise tenants to configure SAML 2.0 / OIDC Identity Providers with Just-In-Time (JIT) user provisioning.",
+      "exit_criteria": [
+        "Okta and Azure AD metadata auto-discovery verified",
+        "Enforced SSO domain-based login redirects"
+      ],
+      "source_refs": [
+        "PRD-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-sso"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "sso",
+        "saml",
+        "enterprise",
+        "okta"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-12",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-13",
+      "title": "Immutable Audit Log & Security Event Streaming",
+      "kind": "task",
+      "cluster": "01-auth-security",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "security",
+        "audit",
+        "compliance"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "audit_hash_chain_receipt"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Cryptographically chained audit trail for all write operations, security changes, and credential mutations.",
+      "exit_criteria": [
+        "Audit event ledger hashes verify sequentially without tamper",
+        "Export audit logs as SIEM-compatible JSONL"
+      ],
+      "source_refs": [
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-audit"
+      ],
+      "unlock_score": 6,
+      "tags": [
+        "audit",
+        "security",
+        "ledger",
+        "soc2"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-13",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-14",
+      "title": "Scoped API Keys & Developer Service Tokens",
+      "kind": "task",
+      "cluster": "01-auth-security",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "identity",
+        "api",
+        "tokens"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "api_key_hash_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Generate high-entropy API keys (`cp_live_...`) with SHA-256 hash storage, permission scopes, and expiration policies.",
+      "exit_criteria": [
+        "Plaintext key presented only once at creation",
+        "Key usage updates last_used_at timestamp asynchronously"
+      ],
+      "source_refs": [
+        "PRD-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-apikeys"
+      ],
+      "unlock_score": 5,
+      "tags": [
+        "api-keys",
+        "security",
+        "developer-platform"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-14",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-20",
+      "title": "Public REST & OpenAPI Gateway",
+      "kind": "task",
+      "cluster": "02-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "api",
+        "gateway"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "openapi_spec_validation"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Build the core HTTP REST API endpoints with automated OpenAPI 3.1 contract generation and Zod validation.",
+      "exit_criteria": [
+        "All routes documented in generated openapi.json",
+        "Payload validation errors return RFC 7807 problem details"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-api"
+      ],
+      "unlock_score": 14,
+      "tags": [
+        "api",
+        "rest",
+        "openapi",
+        "gateway"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-20",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-21",
+      "title": "Distributed Background Worker Train & Scheduling Engine",
+      "kind": "task",
+      "cluster": "02-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "workers",
+        "async",
+        "jobs"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "worker_concurrency_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Deploy scalable background worker processes for async tasks, cron recurrence, retry backoffs, and dead-letter queues.",
+      "exit_criteria": [
+        "Workers consume tasks idempotently with job locks",
+        "Dead-letter alerts triggered on unrecoverable failures"
+      ],
+      "source_refs": [
+        "ARCH-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-workers"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "workers",
+        "async",
+        "bullmq",
+        "distributed"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-21",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-22",
+      "title": "Real-Time WebSocket & Server-Sent Events (SSE) Bus",
+      "kind": "task",
+      "cluster": "02-core-engine",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "realtime",
+        "websocket",
+        "streaming"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "ws_broadcast_load_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Implement pub/sub event broadcasting over WebSockets and SSE with Redis adapter across clustered nodes.",
+      "exit_criteria": [
+        "10,000 concurrent connections benchmarked under < 50ms latency",
+        "Tenant-scoped room authorization checked on handshake"
+      ],
+      "source_refs": [
+        "PRD-01",
+        "ARCH-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-realtime"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "websocket",
+        "sse",
+        "realtime",
+        "pubsub"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-22",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-23",
+      "title": "Outbound Webhooks Delivery Engine with HMAC Signatures",
+      "kind": "task",
+      "cluster": "02-core-engine",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "webhooks",
+        "integrations"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "webhook_delivery_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Deliver outbound webhook notifications with HMAC-SHA256 signatures, exponential backoff retries, and delivery status logs.",
+      "exit_criteria": [
+        "Signature header `X-CloudPulse-Signature` verified",
+        "Endpoints failing 50 times auto-disabled with owner notification"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-webhooks"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "webhooks",
+        "integrations",
+        "hmac",
+        "reliability"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-23",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-24",
+      "title": "Distributed Rate Limiting & Sliding Window Throttler",
+      "kind": "task",
+      "cluster": "02-core-engine",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "api",
+        "traffic",
+        "security"
+      ],
+      "priority": "P1",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": [
+        "rate_limit_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Implement Redis sliding-window token bucket algorithm to enforce per-IP, per-user, and per-tenant tier rate limits.",
+      "exit_criteria": [
+        "Headers `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` returned",
+        "Excess requests return HTTP 429 Too Many Requests"
+      ],
+      "source_refs": [
+        "ARCH-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-ratelimit"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "rate-limit",
+        "traffic",
+        "redis",
+        "security"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-24",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-30",
+      "title": "Stripe Billing Engine, Checkout & Webhook Handlers",
+      "kind": "task",
+      "cluster": "03-billing-subscriptions",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "billing",
+        "payments",
+        "stripe"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "stripe_webhook_simulation_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Integrate Stripe Checkout, Customer Portal, payment method management, and idempotent subscription webhook handling.",
+      "exit_criteria": [
+        "Handled events: `customer.subscription.created`, `invoice.payment_succeeded`, `invoice.payment_failed`",
+        "Duplicate webhook deliveries processed idempotently"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-billing"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "billing",
+        "stripe",
+        "payments",
+        "subscriptions"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-30",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-31",
+      "title": "Usage-Based Metering & Aggregate Ingestion Pipeline",
+      "kind": "task",
+      "cluster": "03-billing-subscriptions",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "billing",
+        "metering",
+        "analytics"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "metering_aggregation_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Track high-throughput API calls and event volume per tenant, batch aggregating hourly for Stripe metered billing sync.",
+      "exit_criteria": [
+        "Hourly aggregation crons run without missing counts",
+        "Tenant usage overage recorded and submitted to Stripe Metered API"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-metering"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "metering",
+        "usage-billing",
+        "stripe",
+        "aggregation"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-31",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-32",
+      "title": "Subscription Tier Gating & Feature Flag System",
+      "kind": "task",
+      "cluster": "03-billing-subscriptions",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "billing",
+        "features",
+        "entitlements"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "entitlement_eval_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Entitlement check middleware enabling features (Free, Pro, Enterprise) dynamically based on active subscription tier.",
+      "exit_criteria": [
+        "Feature access denied with upgrade prompt when plan insufficient",
+        "Grandfathered features override enabled per tenant"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-flags"
+      ],
+      "unlock_score": 5,
+      "tags": [
+        "feature-flags",
+        "entitlements",
+        "tiers"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-32",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-40",
+      "title": "Frontend App Shell & SIGNAL Design System Theme Tokens",
+      "kind": "task",
+      "cluster": "04-frontend-ui",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "ui",
+        "design-system"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "ui_build_artifact"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Build Next.js / Vite SPA with SIGNAL Design System tokens (`#0A0B08`, `#CBF23F`), responsive layout, and topbar navigation.",
+      "exit_criteria": [
+        "No UI flash during load, full dark mode theme token compliance",
+        "Mobile and desktop responsive breakpoints validated"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-ui"
+      ],
+      "unlock_score": 12,
+      "tags": [
+        "frontend",
+        "ui",
+        "signal-design",
+        "react"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-40",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-14T11:00:00Z",
+        "dod_evidence": [
+          "SIGNAL design system components build green with 100% token conformance"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-41",
+      "title": "Organization Onboarding & Team Invitation Flow",
+      "kind": "task",
+      "cluster": "04-frontend-ui",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "onboarding",
+        "team"
+      ],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "e2e_onboarding_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Implement first-time user organization creation wizard and email invitation flow for team collaborators.",
+      "exit_criteria": [
+        "Invited members join with designated RBAC role",
+        "Onboarding step persistence validated on refresh"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-onboarding"
+      ],
+      "unlock_score": 6,
+      "tags": [
+        "frontend",
+        "onboarding",
+        "invites",
+        "team"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-41",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-42",
+      "title": "Real-Time Telemetry Dashboard & Live Metrics UI",
+      "kind": "task",
+      "cluster": "04-frontend-ui",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "dashboard",
+        "charts"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "dashboard_render_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Interactive analytics charts, live event stream terminal, latency histograms, and status indicators.",
+      "exit_criteria": [
+        "Real-time chart updates without DOM memory leaks",
+        "Empty states and error boundaries rendered gracefully"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-dashboard"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "frontend",
+        "dashboard",
+        "charts",
+        "realtime",
+        "signal"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-42",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-43",
+      "title": "API Key & Webhook Management UI Portal",
+      "kind": "task",
+      "cluster": "04-frontend-ui",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "developer-portal"
+      ],
+      "priority": "P1",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": [
+        "ui_apikeys_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Developer settings screen to generate/revoke API keys, configure webhook endpoints, and inspect delivery logs.",
+      "exit_criteria": [
+        "Masked key reveal with 1-click clipboard copy",
+        "Recent webhook deliveries with HTTP status code badges and retry button"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-devportal"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "frontend",
+        "api-keys",
+        "webhooks",
+        "settings"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-43",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-44",
+      "title": "Billing & Usage Management UI Dashboard",
+      "kind": "task",
+      "cluster": "04-frontend-ui",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "billing"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "ui_billing_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Subscription tier card selector, current billing cycle usage meter, invoice history download, and Stripe portal link.",
+      "exit_criteria": [
+        "Plan upgrade dialog redirects seamlessly to Stripe Checkout",
+        "Quota progress bars show exact percentages and renewal date"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-billing-ui"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "frontend",
+        "billing",
+        "subscriptions",
+        "ui"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-44",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-50",
+      "title": "Docker Multi-Stage Build & Local Compose Rig",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "docker"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "docker_build_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Create hardened multi-stage distroless Docker images for API and Workers with rootless user execution.",
+      "exit_criteria": [
+        "Image size < 120MB with zero critical CVEs in Trivy scan",
+        "`docker compose up` starts full stack locally in < 30s"
+      ],
+      "source_refs": [
+        "ARCH-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-docker"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "docker",
+        "containers",
+        "compose",
+        "devops"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-50",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-13T18:00:00Z",
+        "dod_evidence": [
+          "Docker images built and Trivy vulnerability scan green"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-51",
+      "title": "Terraform Infrastructure as Code (AWS ECS, RDS & ElastiCache)",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "terraform",
+        "cloud"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "terraform_plan_receipt"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Declarative Terraform modules for VPC, Private Subnets, RDS Postgres Multi-AZ, ElastiCache Redis, and ECS Fargate.",
+      "exit_criteria": [
+        "`terraform plan` succeeds with zero drift against state",
+        "No public database access; all ingress routed through ALB with SSL"
+      ],
+      "source_refs": [
+        "ARCH-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "ARCH-01"
+      ],
+      "source_claim_ids": [
+        "ARCH-01:claim-terraform"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "terraform",
+        "aws",
+        "infrastructure",
+        "cloud"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-51",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-14T15:00:00Z",
+        "dod_evidence": [
+          "Terraform plan and security group boundary tests green"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-52",
+      "title": "GitHub Actions CI/CD Pipeline with Matrix Testing",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "ci-cd"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "github_actions_run_log"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Continuous Integration running lint, unit tests, mutation tests, Playwright E2E, and automated Docker registry push.",
+      "exit_criteria": [
+        "All checks pass under 4 minutes with cached node_modules and layers",
+        "Branch protection rules enforce green CI before merge"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-ci"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "ci-cd",
+        "github-actions",
+        "automation"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-52",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "main",
+        "completed_at": "2026-08-14T20:00:00Z",
+        "dod_evidence": [
+          "CI/CD workflow executed and verified on main"
+        ]
+      }
+    },
+    {
+      "id": "SAAS-53",
+      "title": "Staging Environment Deployment & Smoke Test Pipeline",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "staging",
+        "qa"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": [
+        "staging_smoke_test_log"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Automated deployment to isolated Staging environment with automated database seeding and post-deploy smoke checks.",
+      "exit_criteria": [
+        "Automated healthchecks return 200 OK across all microservices",
+        "Synthetic transaction tests pass against staging endpoints"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-staging"
+      ],
+      "unlock_score": 10,
+      "tags": [
+        "staging",
+        "smoke-tests",
+        "deployments",
+        "qa"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-53",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-54",
+      "title": "Zero-Downtime Production Rolling Deployment",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "production",
+        "sre"
+      ],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "Production Launch Permit",
+      "evidence_required": [
+        "production_health_receipt"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Blue/green or rolling zero-downtime deployment mechanism with automated rollback triggers on 5xx error spikes.",
+      "exit_criteria": [
+        "Zero dropped HTTP requests during rolling container upgrade",
+        "Rollback triggered if error rate exceeds 0.5% within 5 minutes"
+      ],
+      "source_refs": [
+        "PRD-01",
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-prod"
+      ],
+      "unlock_score": 8,
+      "tags": [
+        "production",
+        "zero-downtime",
+        "sre",
+        "launch"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-54",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-55",
+      "title": "Disaster Recovery, Automated Backups & Failover Drill",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H3",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "devops",
+        "dr",
+        "backup"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "dr_drill_receipt"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Point-in-time recovery (PITR) for PostgreSQL and automated cross-region snapshot replication with verified restore drill.",
+      "exit_criteria": [
+        "RPO < 5 minutes and RTO < 30 minutes proven in simulated outage",
+        "Encrypted backup integrity validated daily via automated worker"
+      ],
+      "source_refs": [
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-dr"
+      ],
+      "unlock_score": 4,
+      "tags": [
+        "disaster-recovery",
+        "backups",
+        "rds",
+        "soc2"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-55",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-56",
+      "title": "SOC2 Type II Audit Readiness & Continuous Compliance Engine",
+      "kind": "task",
+      "cluster": "05-devops-infra",
+      "horizon": "H3",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "compliance",
+        "security",
+        "soc2"
+      ],
+      "priority": "P2",
+      "criticality": "HIGH",
+      "authority_required": "Auditor Sign-off",
+      "evidence_required": [
+        "soc2_evidence_bundle"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Collect continuous automated evidence for access controls, encryption at rest/in transit, and vulnerability management.",
+      "exit_criteria": [
+        "Automated daily compliance checks green",
+        "Auditor evidence export package generated without manual intervention"
+      ],
+      "source_refs": [
+        "SEC-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "SEC-01"
+      ],
+      "source_claim_ids": [
+        "SEC-01:claim-soc2"
+      ],
+      "unlock_score": 2,
+      "tags": [
+        "soc2",
+        "compliance",
+        "security",
+        "audit"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-56",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-60",
+      "title": "Transactional Email Service with React Email Templates",
+      "kind": "task",
+      "cluster": "06-growth-analytics",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "notifications",
+        "email"
+      ],
+      "priority": "P1",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": [
+        "email_delivery_test"
+      ],
+      "confidence": {
+        "score": 1.0
+      },
+      "summary": "Deliver transactional emails (welcome, invite, password reset, usage alerts) with React Email templates via Postmark / Resend.",
+      "exit_criteria": [
+        "DKIM, SPF and DMARC verification verified green",
+        "Email bounce webhook handler updates user deliverability status"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-email"
+      ],
+      "unlock_score": 5,
+      "tags": [
+        "email",
+        "notifications",
+        "resend",
+        "templates"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-60",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-61",
+      "title": "Product Analytics & Event Ingestion Pipeline",
+      "kind": "task",
+      "cluster": "06-growth-analytics",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "analytics",
+        "product-growth"
+      ],
+      "priority": "P2",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": [
+        "analytics_event_test"
+      ],
+      "confidence": {
+        "score": 0.9
+      },
+      "summary": "Privacy-first event tracking (PostHog / Mixpanel) with anonymized user IDs, funnel tracking, and retention cohorts.",
+      "exit_criteria": [
+        "Cookie consent respected with strict GDPR opt-out mode",
+        "Core activation funnel tracked from signup to first API query"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-analytics"
+      ],
+      "unlock_score": 3,
+      "tags": [
+        "analytics",
+        "growth",
+        "funnels",
+        "gdpr"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-61",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "SAAS-62",
+      "title": "In-App Notification Center & Changelog Banner",
+      "kind": "task",
+      "cluster": "06-growth-analytics",
+      "horizon": "H2",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": [
+        "frontend",
+        "notifications",
+        "changelog"
+      ],
+      "priority": "P2",
+      "criticality": "LOW",
+      "authority_required": "none",
+      "evidence_required": [
+        "ui_notifications_test"
+      ],
+      "confidence": {
+        "score": 0.95
+      },
+      "summary": "Real-time notification bell dropdown for system alerts, invite acceptances, and interactive product update banners.",
+      "exit_criteria": [
+        "Unread badge count updates dynamically over WebSockets",
+        "Mark all as read updates state in DB immediately"
+      ],
+      "source_refs": [
+        "PRD-01"
+      ],
+      "source_details": [],
+      "provenance": [
+        "PRD-01"
+      ],
+      "source_claim_ids": [
+        "PRD-01:claim-inapp-notif"
+      ],
+      "unlock_score": 2,
+      "tags": [
+        "notifications",
+        "ui",
+        "changelog",
+        "engagement"
+      ],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "github",
+      "canonical_id": "SAAS-62",
+      "canonical_revision": "v1.0.0",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-saas-cloudpulse-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "SAAS-01",
+      "to": "SAAS-02",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "DB migrations depend on toolchain"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-01",
+      "to": "SAAS-03",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Redis queues depend on toolchain"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-02",
+      "to": "SAAS-04",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "RLS requires database schema"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-01",
+      "to": "SAAS-05",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Observability depends on base project setup"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-02",
+      "to": "SAAS-10",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "AuthN requires User and Tenant tables"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-04",
+      "to": "SAAS-10",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "AuthN requires tenant context"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-10",
+      "to": "SAAS-11",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "RBAC requires authenticated session"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-11",
+      "to": "SAAS-12",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "SSO requires RBAC roles"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-11",
+      "to": "SAAS-13",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Audit log records role actions"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-11",
+      "to": "SAAS-14",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "API keys require permission scoping"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-04",
+      "to": "SAAS-20",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "API gateway requires tenant isolation"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-10",
+      "to": "SAAS-20",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "API gateway requires authentication"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-03",
+      "to": "SAAS-21",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Worker train requires Redis queues"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-05",
+      "to": "SAAS-21",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Worker train requires telemetry"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-20",
+      "to": "SAAS-22",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "WebSocket bus requires HTTP API gateway"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-21",
+      "to": "SAAS-22",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "WebSocket broadcast requires worker pubsub"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-21",
+      "to": "SAAS-23",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Webhooks require async worker pipeline"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-20",
+      "to": "SAAS-24",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Rate limiting applies to API gateway"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-03",
+      "to": "SAAS-24",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Rate limiting requires Redis"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-04",
+      "to": "SAAS-30",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Billing requires tenant accounts"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-30",
+      "to": "SAAS-31",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Usage metering requires Stripe setup"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-21",
+      "to": "SAAS-31",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Usage metering aggregation runs on worker"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-30",
+      "to": "SAAS-32",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Tier gating requires active subscription state"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-11",
+      "to": "SAAS-32",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Feature flags evaluate with RBAC permissions"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-01",
+      "to": "SAAS-40",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Frontend app shell requires toolchain"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-41",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Onboarding flow requires app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-10",
+      "to": "SAAS-41",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Onboarding requires authentication"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-42",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Dashboard charts require app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-22",
+      "to": "SAAS-42",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Live metrics require WebSocket bus"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-43",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "API key UI requires app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-14",
+      "to": "SAAS-43",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "API key UI requires key service"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-23",
+      "to": "SAAS-43",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Webhook portal requires webhook engine"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-44",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Billing UI requires app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-32",
+      "to": "SAAS-44",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Billing UI requires tier flags"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-01",
+      "to": "SAAS-50",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Docker images build codebase"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-50",
+      "to": "SAAS-51",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Terraform provisions container infrastructure"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-50",
+      "to": "SAAS-52",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "CI/CD builds Docker images"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-51",
+      "to": "SAAS-53",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Staging deploy requires AWS infrastructure"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-52",
+      "to": "SAAS-53",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Staging deploy triggers from CI/CD"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-53",
+      "to": "SAAS-54",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production deployment requires green staging checks"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-20",
+      "to": "SAAS-54",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production launch requires Core API"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-42",
+      "to": "SAAS-54",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Production launch requires Core Dashboard"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-54",
+      "to": "SAAS-55",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "DR drill executes against production topology"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-13",
+      "to": "SAAS-56",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "SOC2 compliance requires audit log trail"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-55",
+      "to": "SAAS-56",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "SOC2 requires verified DR backups"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-21",
+      "to": "SAAS-60",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Email delivery runs on worker train"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-21",
+      "to": "SAAS-61",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Analytics pipeline aggregates on worker train"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-61",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "Analytics client SDK in app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-40",
+      "to": "SAAS-62",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "notes": [
+        "In-app notification bell rendered in app shell"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    },
+    {
+      "from": "SAAS-60",
+      "to": "SAAS-62",
+      "type": "ENABLES",
+      "semantic": true,
+      "notes": [
+        "Transactional email enables cross-channel notifications"
+      ],
+      "source_refs": [],
+      "source_details": [],
+      "confidence": {
+        "score": 1.0
+      },
+      "requirements": {}
+    }
+  ]
+}

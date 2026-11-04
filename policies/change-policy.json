@@ -1,0 +1,31 @@
+{
+  "schema":"tare.tools/work-graph-change-policy/3",
+  "version":3,
+  "ignored_paths":[
+    "/meta/generated_at",
+    "/meta/projection_run_id",
+    "/meta/snapshot",
+    "/nodes/*/projection_run_id"
+  ],
+  "rules":{
+    "node_removal_without_supersession":"BLOCK",
+    "node_addition":"REQUIRES_APPROVAL",
+    "canonical_identity_change":"REQUIRES_APPROVAL",
+    "authority_contract_change":"REQUIRES_APPROVAL",
+    "readiness_contract_change":"REQUIRES_APPROVAL",
+    "completion_contract_change":"REQUIRES_APPROVAL",
+    "provenance_change":"REQUIRES_APPROVAL",
+    "evidence_grade_decrease":"BLOCK",
+    "blocking_relation_removal":"REQUIRES_APPROVAL",
+    "new_blocking_relation":"REQUIRES_APPROVAL",
+    "relation_removal":"REQUIRES_APPROVAL",
+    "relation_addition":"REQUIRES_APPROVAL",
+    "relation_contract_change":"REQUIRES_APPROVAL",
+    "schema_identity_change":"BLOCK",
+    "source_addition":"REQUIRES_APPROVAL",
+    "source_removal":"BLOCK",
+    "source_content_address_change":"BLOCK",
+    "source_metadata_change":"REQUIRES_APPROVAL",
+    "semantic_change":"REQUIRES_APPROVAL"
+  }
+}

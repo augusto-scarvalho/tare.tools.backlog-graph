@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://tare.tools/schemas/work-graph-change-policy-3.json",
+  "type":"object","additionalProperties":false,
+  "required":["schema","version","ignored_paths","rules"],
+  "properties":{
+    "schema":{"const":"tare.tools/work-graph-change-policy/3"},
+    "version":{"const":3},
+    "ignored_paths":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^/"}},
+    "rules":{"type":"object","additionalProperties":false,
+      "required":["node_removal_without_supersession","node_addition","canonical_identity_change","authority_contract_change","readiness_contract_change","completion_contract_change","provenance_change","evidence_grade_decrease","blocking_relation_removal","new_blocking_relation","relation_removal","relation_addition","relation_contract_change","schema_identity_change","source_addition","source_removal","source_content_address_change","source_metadata_change","semantic_change"],
+      "properties":{
+        "node_removal_without_supersession":{"$ref":"#/$defs/severity"},"node_addition":{"$ref":"#/$defs/severity"},
+        "canonical_identity_change":{"$ref":"#/$defs/severity"},"authority_contract_change":{"$ref":"#/$defs/severity"},
+        "readiness_contract_change":{"$ref":"#/$defs/severity"},"completion_contract_change":{"$ref":"#/$defs/severity"},
+        "provenance_change":{"$ref":"#/$defs/severity"},"evidence_grade_decrease":{"$ref":"#/$defs/severity"},
+        "blocking_relation_removal":{"$ref":"#/$defs/severity"},"new_blocking_relation":{"$ref":"#/$defs/severity"},
+        "relation_removal":{"$ref":"#/$defs/severity"},"relation_addition":{"$ref":"#/$defs/severity"},
+        "relation_contract_change":{"$ref":"#/$defs/severity"},"schema_identity_change":{"$ref":"#/$defs/severity"},
+        "source_addition":{"$ref":"#/$defs/severity"},"source_removal":{"$ref":"#/$defs/severity"},
+        "source_content_address_change":{"$ref":"#/$defs/severity"},"source_metadata_change":{"$ref":"#/$defs/severity"},
+        "semantic_change":{"$ref":"#/$defs/severity"}
+      }
+    }
+  },
+  "$defs":{"severity":{"enum":["BLOCK","REQUIRES_APPROVAL","ALLOW"]}}
+}

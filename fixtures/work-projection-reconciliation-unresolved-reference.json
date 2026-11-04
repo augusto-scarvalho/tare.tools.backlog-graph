@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "canonical": [
+    {"taskstore_id": "TS-3001", "snapshot_revision": "d1b2c3d4e5f60718293a4b5c6d7e8f9012345678"}
+  ],
+  "projections": [
+    {"taskstore_ref": "TS-3001", "relay_train_id": "TRAIN-SHARED", "work_graph_task_id": null, "github_issue_id": null, "kanban_lane": "doing"},
+    {"taskstore_ref": "TS-MISSING", "relay_train_id": "TRAIN-SHARED", "work_graph_task_id": null, "github_issue_id": null, "kanban_lane": "backlog"}
+  ]
+}

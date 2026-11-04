@@ -1,0 +1,403 @@
+from __future__ import annotations
+import json
+import os
+import socket
+import time
+import pytest
+from pathlib import Path
+
+from graph_backlog.jsonutil import (
+    graph_lock,
+    LockTimeoutError,
+    RevisionMismatchError,
+    UsageError,
+    canonical_json,
+    sha256_canonical,
+    compute_revision_hash
+)
+from graph_backlog.core import WorkGraph, load_default_policy, load_default_taxonomy
+from graph_backlog.algorithms import (
+    compute_frontier,
+    ranked_next,
+    downstream_critical_depth,
+    frontier_sort_key
+)
+from graph_backlog.mutations import (
+    execute_graph_transaction,
+    land_train_tasks,
+    supersede_node_in_graph,
+    add_node_to_graph,
+    complete_node_in_graph,
+)
+
+ROOT = Path(__file__).resolve().parent.parent
+SAMPLE = ROOT / "fixtures" / "sample-backlog.json"
+
+class TestNorthStarLockAndCanonicalHash:
+    """Verifies BG-01 Lockfile and BG-02 JCS Canonical Digest invariants."""
+
+    def test_graph_lock_acquisition_and_release(self, tmp_path: Path):
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_text("{}", encoding="utf-8")
+        lock_file = tmp_path / ".work-graph.json.lock"
+
+        assert not lock_file.exists()
+        with graph_lock(graph_file, timeout=2.0) as lock_info:
+            assert lock_file.exists()
+            assert lock_info["pid"] == os.getpid()
+            assert "lease_token" in lock_info
+
+        assert not lock_file.exists(), "Lockfile must be unlinked upon context exit"
+
+    def test_graph_lock_contention_raises_timeout(self, tmp_path: Path):
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_text("{}", encoding="utf-8")
+
+        with graph_lock(graph_file, timeout=2.0):
+            # Attempt concurrent acquisition on same file
+            with pytest.raises(LockTimeoutError) as exc:
+                with graph_lock(graph_file, timeout=0.2):
+                    pass
+            assert "Could not acquire exclusive lock" in str(exc.value)
+
+    def test_graph_lock_stale_reclaim(self, tmp_path: Path):
+        from graph_backlog.validation import doctor_recover
+        from graph_backlog.jsonutil import get_machine_id
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_text('{"schema_version": "1.0.0", "nodes": [], "edges": []}', encoding="utf-8")
+        lock_file = tmp_path / ".work-graph.json.lock"
+
+        # Create simulated stale lock from 100 seconds ago on current host with dead PID
+        stale_data = {"pid": 999999, "host": socket.gethostname(), "machine_id": get_machine_id(), "lease_token": "old"}
+        lock_file.write_text(json.dumps(stale_data), encoding="utf-8")
+        past_time = time.time() - 100
+        os.utime(str(lock_file), (past_time, past_time))
+
+        # Automatic acquisition must strictly fail closed (raise LockTimeoutError) to eliminate TOCTOU races
+        with pytest.raises(LockTimeoutError):
+            with graph_lock(graph_file, timeout=0.2):
+                pass
+
+        # Explicit operator recovery with force_unlock safely clears the dead PID lock on local machine
+        rec = doctor_recover(graph_file, force_unlock=True)
+        assert rec["status"] in ("RECOVERED", "STABLE")
+        assert not lock_file.exists()
+
+    def test_revision_hash_omits_revision_field(self):
+        graph_v1 = {
+            "schema_version": "2.0",
+            "revision": "r0_initial_sha",
+            "nodes": [{"id": "T1", "priority": "P0"}]
+        }
+        graph_v2 = {
+            "schema_version": "2.0",
+            "revision": "r1_different_revision_string",
+            "nodes": [{"id": "T1", "priority": "P0"}]
+        }
+
+        # The content-addressed revision hash MUST be identical because the payload minus 'revision' is identical
+        h1 = compute_revision_hash(graph_v1)
+        h2 = compute_revision_hash(graph_v2)
+        assert h1 == h2
+        assert len(h1) == 64
+
+    def test_jcs_canonical_dict_order_invariance(self):
+        d1 = {"b": 2, "a": 1, "nested": {"z": 9, "m": 5}}
+        d2 = {"nested": {"m": 5, "z": 9}, "a": 1, "b": 2}
+
+        # Key ordering must produce byte-for-byte identical JCS JSON
+        assert canonical_json(d1) == canonical_json(d2)
+        assert sha256_canonical(d1) == sha256_canonical(d2)
+
+class TestTotalOrderingFrontier:
+    """Verifies BG-03 Total Ordering (Priority -> Depth -> ID) invariants."""
+
+    def test_frontier_total_order_priority_depth_id(self):
+        sample_graph = {
+            "schema_version": "2.0",
+            "nodes": [
+                {
+                    "id": "TASK-LOW-P2",
+                    "title": "Low priority task",
+                    "priority": "P2",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                },
+                {
+                    "id": "TASK-P0-SHALLOW",
+                    "title": "P0 with no downstream",
+                    "priority": "P0",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                },
+                {
+                    "id": "TASK-P0-DEEP",
+                    "title": "P0 unlocking long downstream chain",
+                    "priority": "P0",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                },
+                {
+                    "id": "TASK-P1-ALPHA",
+                    "title": "P1 task alpha",
+                    "priority": "P1",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                },
+                {
+                    "id": "TASK-DOWNSTREAM-1",
+                    "title": "Downstream 1",
+                    "priority": "P1",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                },
+                {
+                    "id": "TASK-DOWNSTREAM-2",
+                    "title": "Downstream 2",
+                    "priority": "P1",
+                    "kind": "task",
+                    "completion": {"status": "NOT_DONE"}
+                }
+            ],
+            "edges": [
+                {"from": "TASK-P0-DEEP", "to": "TASK-DOWNSTREAM-1", "type": "BLOCKS", "semantic": True},
+                {"from": "TASK-DOWNSTREAM-1", "to": "TASK-DOWNSTREAM-2", "type": "BLOCKS", "semantic": True}
+            ]
+        }
+
+        wg = WorkGraph(sample_graph)
+        frontier = compute_frontier(wg)
+        frontier_ids = [n["id"] for n in frontier]
+
+        # 1. TASK-P0-DEEP (P0 + depth 2) must be #1
+        # 2. TASK-P0-SHALLOW (P0 + depth 0) must be #2
+        # 3. TASK-P1-ALPHA (P1) must be #3
+        # 4. TASK-LOW-P2 (P2) must be #4
+        assert frontier_ids[0] == "TASK-P0-DEEP"
+        assert frontier_ids[1] == "TASK-P0-SHALLOW"
+        assert frontier_ids[2] == "TASK-P1-ALPHA"
+        assert frontier_ids[3] == "TASK-LOW-P2"
+
+class TestCASLandAndSupersede:
+    """Verifies BG-04 Supersede and BG-05 CAS Land invariants."""
+
+    def _base_valid_graph(self) -> WorkGraph:
+        base = {
+            "meta": {"schema": "work-graph-poc/0.5", "generated_at": "2026-08-17T00:00:00Z"},
+            "nodes": [],
+            "edges": []
+        }
+        return WorkGraph(base)
+
+    def test_cas_landing_success_and_revision_update(self):
+        wg = self._base_valid_graph()
+        g1 = add_node_to_graph(wg, "TASK-01", "Task 1", priority="P0")
+        wg1 = WorkGraph(g1)
+        current_rev = compute_revision_hash(wg1.to_dict())
+
+        # Land with exact matching expected revision
+        landed_dict = land_train_tasks(
+            wg1,
+            train_id="TRAIN-01",
+            task_ids=["TASK-01"],
+            evidence_summary="artifact:synthetic-pytest-log",
+            expected_rev=current_rev,
+            evidence_grade="C",
+            evidence_grade_reason="Declared fixture log; no independent attestation."
+        )
+
+        landed_node = next(n for n in landed_dict["nodes"] if n["id"] == "TASK-01")
+        assert landed_node["completion"]["status"] == "DONE"
+        assert landed_node["completion"]["dod_satisfied"] is True
+        assert landed_node["completion"]["landed_train"] == "TRAIN-01"
+        assert "artifact:synthetic-pytest-log" in landed_node["completion"]["dod_evidence"]
+        assert landed_node["completion"]["evidence_grade"] == "C"
+
+        # The new revision must be different from current_rev
+        new_rev = landed_dict["revision"]
+        assert new_rev != current_rev
+        assert new_rev == compute_revision_hash(landed_dict)
+
+    def test_transaction_defaults_to_atomic_persistence_with_matching_cas(
+        self,
+        tmp_path: Path,
+    ):
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_bytes(SAMPLE.read_bytes())
+        raw = json.loads(graph_file.read_text(encoding="utf-8"))
+        expected_rev = compute_revision_hash(raw)
+        policy = load_default_policy()
+        taxonomy = load_default_taxonomy()
+
+        def mutate(graph: WorkGraph) -> dict[str, object]:
+            assert graph.policy is policy
+            assert graph.taxonomy is taxonomy
+            return complete_node_in_graph(graph, "TASK-02", "artifact:transaction-evidence", "C", "Declared fixture reference")
+
+        result = execute_graph_transaction(
+            graph_file,
+            mutate,
+            expected_rev=expected_rev,
+            policy=policy,
+            taxonomy=taxonomy,
+        )
+
+        persisted = json.loads(graph_file.read_text(encoding="utf-8"))
+        assert persisted == result
+        assert persisted["revision"] == compute_revision_hash(persisted)
+        assert graph_file.read_text(encoding="utf-8").endswith("\n")
+
+    def test_transaction_missing_graph_raises_usage_error_and_releases_lock(
+        self,
+        tmp_path: Path,
+    ):
+        graph_file = tmp_path / "missing.json"
+
+        with pytest.raises(UsageError, match="Cannot load JSON"):
+            execute_graph_transaction(graph_file, lambda graph: graph.to_dict())
+
+        assert not (tmp_path / ".missing.json.lock").exists()
+
+    def test_cas_landing_mismatch_raises_revision_mismatch_error(self):
+        wg = self._base_valid_graph()
+        g1 = add_node_to_graph(wg, "TASK-01", "Task 1", priority="P0")
+        wg1 = WorkGraph(g1)
+
+        with pytest.raises(RevisionMismatchError) as exc:
+            land_train_tasks(
+                wg1,
+                train_id="TRAIN-01",
+                task_ids=["TASK-01"],
+                expected_rev="stale_revision_hash_12345"
+            )
+        assert "CAS conflict during landing of train" in str(exc.value)
+
+    def test_supersede_node_creates_acyclic_relation(self):
+        wg = self._base_valid_graph()
+        g1 = add_node_to_graph(wg, "TASK-OLD", "Legacy approach", priority="P1")
+        g2 = add_node_to_graph(WorkGraph(g1), "TASK-NEW", "New approach", priority="P0")
+        wg2 = WorkGraph(g2)
+
+        superseded_dict = supersede_node_in_graph(
+            wg2,
+            node_id="TASK-OLD",
+            superseded_by_id="TASK-NEW",
+            reason="Architecture refactored in ADR-046"
+        )
+
+        old_node = next(n for n in superseded_dict["nodes"] if n["id"] == "TASK-OLD")
+        assert old_node["completion"]["status"] == "SUPERSEDED"
+        assert old_node["completion"]["superseded_by"] == "TASK-NEW"
+        assert old_node["completion"]["supersession_reason"] == "Architecture refactored in ADR-046"
+
+        edge = next(e for e in superseded_dict["edges"] if e["type"] == "SUPERSEDED_BY")
+        assert edge["from"] == "TASK-OLD"
+        assert edge["to"] == "TASK-NEW"
+        assert edge["semantic"] is True
+        assert edge["notes"] == ["Architecture refactored in ADR-046"]
+
+class TestDoctorRecoveryAndSchemaMigration:
+    """Verifies BG-07 Doctor Recovery and BG-09 Schema Migration invariants."""
+
+    def test_migrate_v05_to_v10(self):
+        from graph_backlog.validation import migrate_v05_to_v10
+        legacy = {
+            "meta": {"schema": "work-graph-poc/0.5"},
+            "nodes": [
+                {
+                    "id": "TASK-LEGACY",
+                    "title": "Legacy task",
+                    "completion": {"status": "DONE"}
+                }
+            ],
+            "edges": []
+        }
+        migrated = migrate_v05_to_v10(legacy)
+        assert migrated["schema_version"] == "1.0.0"
+        assert migrated["meta"]["schema"] == "tare.tools/work-graph/1.0"
+        assert migrated["nodes"][0]["completion"]["dod_satisfied"] is True
+        assert "revision" in migrated
+        assert migrated["revision"] == compute_revision_hash(migrated)
+
+    def test_doctor_recovery_cleans_tmp_and_stabilizes_revision(self, tmp_path: Path):
+        from graph_backlog.validation import doctor_recover
+        graph_file = tmp_path / "work-graph.json"
+        base_raw = {
+            "meta": {"schema": "work-graph-poc/0.5"},
+            "nodes": [],
+            "edges": []
+        }
+        graph_file.write_text(canonical_json(base_raw), encoding="utf-8")
+
+        # Simulate orphaned .tmp chunk in isolated atomic scratch dir from crashed write (>60s ago)
+        scratch_dir = tmp_path / ".work-graph.json.atomic_scratch"
+        scratch_dir.mkdir(parents=True, exist_ok=True)
+        stale_tmp = scratch_dir / "atomic_chunk_999.tmp"
+        stale_tmp.write_text("crash artifact", encoding="utf-8")
+        past = time.time() - 100
+        os.utime(str(stale_tmp), (past, past))
+
+        res = doctor_recover(graph_file)
+        assert res["status"] in ("RECOVERED", "STABLE")
+        assert not stale_tmp.exists(), "Doctor recover must remove orphaned tmp artifacts from scratch dir"
+        assert res["revision"] is not None
+
+    def test_doctor_check_detects_invalid_graph(self):
+        from graph_backlog.validation import doctor_check
+        # Missing id and invalid status
+        invalid_raw = {
+            "schema_version": "1.0.0",
+            "nodes": [{"title": "No ID"}],
+            "edges": []
+        }
+        res = doctor_check(invalid_raw)
+        assert res["status"] == "FAIL"
+        assert res["validation"] == "FAIL"
+        assert len(res["validation_errors"]) > 0
+
+    def test_graph_lock_remote_machine_is_never_stolen(self, tmp_path: Path):
+        from graph_backlog.jsonutil import graph_lock, LockTimeoutError
+        graph_file = tmp_path / "work-graph.json"
+        graph_file.write_text("{}", encoding="utf-8")
+        lock_file = tmp_path / ".work-graph.json.lock"
+
+        # Stale lock from remote machine (>100s ago)
+        remote_stale_data = {
+            "pid": 1234,
+            "host": "remote-server",
+            "machine_id": "remote-server_999888777",
+            "lease_token": "remote-lease"
+        }
+        lock_file.write_text(json.dumps(remote_stale_data), encoding="utf-8")
+        past_time = time.time() - 200
+        os.utime(str(lock_file), (past_time, past_time))
+
+        # Must NOT steal or delete remote machine lock
+        with pytest.raises(LockTimeoutError):
+            with graph_lock(graph_file, timeout=0.2):
+                pass
+
+        assert lock_file.exists(), "Remote lock must remain intact and never be deleted automatically"
+
+    def test_structural_errors_non_scalar_source_refs(self):
+        from graph_backlog.validation import structural_errors
+        bad_graph = {
+            "schema_version": "1.0.0",
+            "sources": {"SRC-1": {"kind": "SPEC", "title": "Spec 1", "recoverability": "RECOVERABLE_REFERENCE", "locator": "spec.md"}},
+            "nodes": [
+                {
+                    "id": "T1", "title": "Task 1", "kind": "task", "cluster": "core", "horizon": "now",
+                    "work_status": "planned", "admission_state": "admitted", "epistemic_status": "known",
+                    "bounded_contexts": ["core"], "priority": "P0", "criticality": "high",
+                    "authority_required": False, "evidence_required": False, "confidence": {},
+                    "summary": "Sum", "exit_criteria": [], "source_refs": [{}], "source_details": [],
+                    "provenance": {}, "source_claim_ids": [], "unlock_score": 1.0, "tags": [], "metrics": {},
+                    "notes": [], "items": [], "canonical_system": "sys", "canonical_id": "c1",
+                    "canonical_revision": "r1", "observed_at": "2026-01-01", "projection_run_id": "run1",
+                    "staleness_state": "FRESH", "readiness": {}, "completion": {"status": "NOT_DONE", "dod_satisfied": False}
+                }
+            ],
+            "edges": []
+        }
+        errs = structural_errors(bad_graph)
+        assert any(e["code"] == "SOURCE_REF_TYPE" for e in errs)

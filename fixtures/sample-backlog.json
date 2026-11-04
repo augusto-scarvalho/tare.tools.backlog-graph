@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "schema": "work-graph-poc/0.5",
+    "title": "Sample Project Backlog",
+    "snapshot": "2026-08-15-v1",
+    "generated_at": "2026-08-15T12:00:00Z",
+    "projection_run_id": "proj-sample-001"
+  },
+  "sources": {
+    "SRC-INIT": {
+      "kind": "architecture_decision",
+      "title": "Initial Architecture Spec",
+      "recoverability": "CONTENT_ADDRESSED",
+      "locator": "docs/architecture.md"
+    }
+  },
+  "nodes": [
+    {
+      "id": "TASK-01",
+      "title": "Set up Database & Storage Models",
+      "kind": "task",
+      "cluster": "infrastructure",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": ["storage", "data"],
+      "priority": "P0",
+      "criticality": "CRITICAL",
+      "authority_required": "none",
+      "evidence_required": ["test_logs"],
+      "confidence": {"score": 1.0},
+      "summary": "Implement relational models and automated migrations.",
+      "exit_criteria": ["All schemas validated", "Unit tests passing"],
+      "source_refs": ["SRC-INIT"],
+      "source_details": [],
+      "provenance": ["SRC-INIT"],
+      "source_claim_ids": ["SRC-INIT:claim-1"],
+      "unlock_score": 10,
+      "tags": ["db", "backend"],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "local",
+      "canonical_id": "TASK-01",
+      "canonical_revision": "r1",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-sample-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "DONE",
+        "dod_satisfied": true,
+        "evidence_grade": "A",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "TASK-02",
+      "title": "Build Core Business API",
+      "kind": "task",
+      "cluster": "api",
+      "horizon": "H0",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": ["api", "service"],
+      "priority": "P0",
+      "criticality": "HIGH",
+      "authority_required": "none",
+      "evidence_required": ["api_integration_tests"],
+      "confidence": {"score": 0.95},
+      "summary": "Develop REST/GraphQL endpoints for core business domain.",
+      "exit_criteria": ["Endpoints return 200 OK", "Contract tests pass"],
+      "source_refs": ["SRC-INIT"],
+      "source_details": [],
+      "provenance": ["SRC-INIT"],
+      "source_claim_ids": ["SRC-INIT:claim-2"],
+      "unlock_score": 8,
+      "tags": ["api", "backend"],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "local",
+      "canonical_id": "TASK-02",
+      "canonical_revision": "r1",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-sample-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    },
+    {
+      "id": "TASK-03",
+      "title": "Create User Interface Dashboard",
+      "kind": "task",
+      "cluster": "frontend",
+      "horizon": "H1",
+      "work_status": "PROPOSED",
+      "admission_state": "ADMITTED",
+      "epistemic_status": "CERTAIN",
+      "bounded_contexts": ["frontend", "ui"],
+      "priority": "P1",
+      "criticality": "MEDIUM",
+      "authority_required": "none",
+      "evidence_required": ["ui_tests"],
+      "confidence": {"score": 0.9},
+      "summary": "Develop client dashboard consuming the Core API.",
+      "exit_criteria": ["UI renders correctly", "End-to-end tests pass"],
+      "source_refs": ["SRC-INIT"],
+      "source_details": [],
+      "provenance": ["SRC-INIT"],
+      "source_claim_ids": ["SRC-INIT:claim-3"],
+      "unlock_score": 5,
+      "tags": ["frontend", "ui"],
+      "metrics": {},
+      "notes": [],
+      "items": [],
+      "canonical_system": "local",
+      "canonical_id": "TASK-03",
+      "canonical_revision": "r1",
+      "observed_at": "2026-08-15T12:00:00Z",
+      "projection_run_id": "proj-sample-001",
+      "staleness_state": "FRESH",
+      "readiness": {
+        "operational_identity_required": true
+      },
+      "completion": {
+        "status": "NOT_DONE",
+        "dod_satisfied": false,
+        "evidence_grade": "B",
+        "materialization_scope": "local"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "TASK-01",
+      "to": "TASK-02",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "source_refs": ["SRC-INIT"],
+      "source_details": [],
+      "confidence": {"score": 1.0},
+      "notes": ["API requires Database"],
+      "requirements": {}
+    },
+    {
+      "from": "TASK-02",
+      "to": "TASK-03",
+      "type": "UNLOCKS",
+      "semantic": true,
+      "source_refs": ["SRC-INIT"],
+      "source_details": [],
+      "confidence": {"score": 1.0},
+      "notes": ["Frontend requires API"],
+      "requirements": {}
+    }
+  ]
+}
