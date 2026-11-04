@@ -1,125 +1,48 @@
-<div align="center">
-
 # tare.tools.backlog-graph
 
-**Motor determinístico de backlog em grafo acíclico dirigido (DAG) e framework de execução topológica para equipes de engenharia de software e agentes autônomos de IA.**
+Um backlog mantido como grafo de dependências. Ele diz qual trabalho está pronto agora, o que bloqueia o resto e o
+que a conclusão de um item destravaria, e compila um resumo autossuficiente para quem pega um item, seja uma pessoa
+ou um agente de código. Python 3.10 ou mais novo, só a biblioteca padrão.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://python.org)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Stdlib)-orange.svg)](#instalação-e-início-rápido)
 [![CI](https://github.com/augusto-scarvalho/tare.tools.backlog-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/augusto-scarvalho/tare.tools.backlog-graph/actions/workflows/ci.yml)
 
-<p align="center">
-  <a href="#por-que-backlog-em-grafo-a-mudança-de-paradigma">Por que backlog em grafo</a> •
-  <a href="#pilares-arquiteturais">Recursos</a> •
-  <a href="#ingestão-de-backlogs-de-terceiros">Integrações e adaptadores</a> •
-  <a href="#instalação-e-início-rápido">Início rápido</a> •
-  <a href="#referência-de-comandos-da-cli">Referência da CLI</a> •
-  <a href="#api-da-biblioteca-python">Biblioteca Python</a> •
-  <a href="#mission-control-interativo-e-copilot-bridge">Interface interativa</a> •
-  <a href="CHANGELOG.md">Changelog</a> •
-  <a href="#licença-e-atribuição">Licença</a>
-</p>
-
-<p align="center">
-  🇺🇸 <a href="README.md">Read in English</a>
-</p>
-
-</div>
+🇺🇸 [Read in English](README.md)
 
 ---
 
-## Por que backlog em grafo? (A mudança de paradigma)
+## O que faz
 
-A entrega de software moderna é um **grafo topológico de dependências**, não uma lista plana nem uma coluna de Kanban sem restrições.
+O backlog é um grafo de trabalho em JSON: itens com status, prioridade (`P0`–`P3`), horizonte (`H0`–`H3`),
+criticidade e definição de pronto, ligados por arestas de dependência tipadas. Sobre ele o motor calcula:
 
-Quando agentes autônomos de IA (Copilot, Claude, Devin) e equipes com vários desenvolvedores trabalham em bases de código complexas usando gerenciadores de tarefas tradicionais (Jira, Linear, GitHub Projects), enfrentam três falhas sistêmicas:
-
-1. **Cegueira de bloqueios:** não fica evidente qual tarefa desbloqueia os marcos seguintes nem por que uma tarefa de alta prioridade não pode começar.
-2. **Priorização às cegas:** itens de prioridade crítica (`P0`) ficam parados com frequência porque pré-requisitos de baixa prioridade foram esquecidos ou enterrados no backlog.
-3. **Alucinação da fronteira de execução:** agentes e engenheiros precisam adivinhar o que é de fato viável implementar *agora* sem quebrar dependências contratuais.
-
-```mermaid
-flowchart TD
-    subgraph Traditional ["❌ TRADITIONAL FLAT BACKLOG (Blind Linear Queue)"]
-        direction LR
-        TA["[Task A]"] --> TB["[Task B]"] --> TC["[Task C]"] --> TD["[Task D]"]
-    end
-
-    subgraph DAGBacklog ["✅ DETERMINISTIC DAG GRAPH BACKLOG (Topological Execution)"]
-        Core["[Core Setup]<br/><b>DONE</b>"] --> DB["[DB Schema]<br/><b>DONE</b>"]
-        DB --> Auth["[Auth API]<br/><b>READY / FRONTIER</b>"]
-        Core --> Stripe["[Stripe Vault]<br/><b>IN_PROGRESS</b>"]
-        Stripe --> Webhook["[Checkout Webhook]<br/><b>WAITING</b>"]
-        Auth --> Portal["[User Portal]<br/><b>BLOCKED</b>"]
-        Webhook --> Portal
-        Core -.-> Portal
-    end
-
-    classDef doneStyle fill:#182820,stroke:#a6e3a1,stroke-width:2px,color:#a6e3a1;
-    classDef readyStyle fill:#2d1b4e,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
-    classDef blockedStyle fill:#331c24,stroke:#f38ba8,stroke-width:2px,color:#f38ba8;
-    classDef inprogStyle fill:#2d201b,stroke:#f9e2af,stroke-width:2px,color:#f9e2af;
-
-    class Core,DB doneStyle;
-    class Auth readyStyle;
-    class Stripe inprogStyle;
-    class Portal,Webhook blockedStyle;
-```
-
-### Análise comparativa
-
-| Capacidade | Listas planas e Kanban linear | tare.tools Graph Backlog |
-|---|---|---|
-| **Fronteira de execução (`frontier`)** | Adivinhação manual | **Cálculo matemático determinístico** (todos os pré-requisitos comprovadamente satisfeitos) |
-| **Análise de causa raiz (`why`)** | Leitura manual dos comentários do ticket | **Resolução automática de bloqueios e árvore de dependências** |
-| **Caminho crítico (`critical-path`)** | Não computável | **Identificação exata da cadeia de gargalos mais longa** |
-| **Pacotes de implementação para agentes (`packet`)** | Copiar e colar descrições de issues | **Contexto Markdown compilado com DoD e grounding** |
-| **Cerca de trabalho gerenciado (`ground`)** | O agente confia numa fotografia obsoleta do ticket | **Contexto de execução somente leitura, limitado e cercado por hash** |
-| **Simulação what-if (`simulate`)** | Impossível sem alterar o estado de produção | **Projeção topológica contrafactual sobreposta** |
-| **Auditoria e governança (`ledger`)** | Transições de estado destrutivas | **Trilha de auditoria append-only encadeada por SHA-256** |
-| **Dependências de execução** | Servidor pesado ou SDKs complexos | **Zero dependências externas (Python 3.10+ puro, só stdlib)** |
+- **Trabalho pronto** (`frontier`, `next`): os itens abertos cujos pré-requisitos estão todos concluídos, ordenados
+  por prioridade, horizonte e por quanto trabalho a jusante cada um destrava.
+- **Bloqueios e alcance** (`why`, `blockers`, `deps`, `impact`, `path`, `critical-path`): pré-requisitos diretos e
+  transitivos, dependentes a jusante, o caminho de dependência mais curto entre dois itens e a cadeia mais longa de
+  trabalho aberto.
+- **Pacotes de implementação** (`packet`): um resumo em Markdown de um item, com contexto, pré-requisitos e
+  definição de pronto.
+- **Grounding de trabalho gerenciado** (`ground`): JSON canônico e limitado em bytes, só para trabalho
+  operacionalmente pronto com critérios de saída explícitos. O digest do escopo de execução muda quando mudam o item,
+  as dependências incidentes, os pré-requisitos diretos ou as fontes referenciadas, para que um runtime gerenciado
+  pare quando houver deriva. Ele não concede Authority e nunca escreve o backlog canônico
+  ([`docs/MANAGED_WORK_GUARD.md`](docs/MANAGED_WORK_GUARD.md)).
+- **E se** (`simulate`): quais itens ficariam prontos se itens candidatos fossem concluídos, sem alterar o grafo.
+- **Verificações** (`validate`, `doctor`): validação de esquema e integridade, ciclos (componentes fortemente
+  conexos de Tarjan), referências pendentes, requisitos órfãos e lacunas nas notas de evidência.
+- **Histórico**: as mudanças rodam como transações compare-and-swap com trava sobre o hash de revisão do grafo, e um
+  ledger só de acréscimo encadeia cada evento ao anterior por SHA-256, então editar ou remover um evento antigo
+  quebra a cadeia.
+- **Visualizações** (`export`, `visualize`): um visualizador HTML autônomo e exports em JSON, Markdown, Mermaid, CSV
+  e GraphML.
 
 ---
 
-## Pilares arquiteturais
+## Importar um backlog
 
-### 1. Fronteira pronta determinística
-Calcula o subconjunto exato de nós não concluídos cujas dependências a montante estão 100% satisfeitas (`DONE` com a Definition of Done verificada). Agentes e desenvolvedores sempre puxam trabalho matematicamente válido.
-
-### 2. Motor de priorização multicritério
-Ordena o trabalho elegível da fronteira com uma pontuação determinística que equilibra prioridade de negócio (`P0`–`P3`), horizonte de execução (`H0`–`H4`) e impacto de desbloqueio a jusante (unlock score).
-
-### 3. Rastreamento de bloqueios e de impacto
-- **`why <id>` e `blockers <id>`:** apontam os gargalos de pré-requisito que impedem uma tarefa de avançar.
-- **`impact <id>` e `deps <id>`:** rastreiam todo o alcance topológico a jusante e a montante por todas as relações transitivas.
-- **`path <a> <b>`:** calcula o menor caminho de dependências entre duas tarefas.
-
-### 4. Compilador de pacotes de implementação
-Compila pacotes de implementação em Markdown, autocontidos e densos, prontos para prompts de LLM, agentes auxiliares e pipelines de revisão automática de código.
-
-### Grounding de trabalho gerenciado
-`ground <id>` emite JSON canônico e limitado em bytes somente para trabalho
-operacionalmente pronto e com critérios de saída explícitos. O digest do escopo
-de execução muda quando mudam o item, suas relações incidentes, pré-requisitos
-diretos ou fontes referenciadas, permitindo que um runtime gerenciado pare diante
-de drift. O comando não concede Authority nem escreve no backlog canônico. Veja
-[`docs/MANAGED_WORK_GUARD.md`](docs/MANAGED_WORK_GUARD.md).
-
-### 5. Simulação contrafactual "what-if"
-Simula o impacto a jusante de marcar tarefas candidatas como concluídas *antes de escrever código*, projetando exatamente quais tarefas serão desbloqueadas em seguida.
-
-### 6. Ledger de auditoria à prova de adulteração (cadeia de hashes)
-Mantém um ledger de eventos append-only em que o `event_hash` de cada evento é o SHA-256 do seu corpo em JSON canônico, e esse corpo inclui o hash do evento anterior (`prev_hash`). Editar ou remover um evento anterior quebra a cadeia.
-
-### 7. Doctor do grafo e auditorias de integridade automáticas
-Detecta ciclos topológicos (componentes fortemente conexos de Tarjan), referências de arestas pendentes, requisitos órfãos e lacunas epistêmicas nos graus de evidência.
-
----
-
-## Ingestão de backlogs de terceiros
-
-Importe backlogs reais de ferramentas existentes com pipelines de CLI padrão e **zero dependências externas**:
+Os importadores leem exports de outras ferramentas e não precisam de pacotes extras:
 
 ```bash
 # GitHub Issues (lê pela GitHub CLI ou por um export JSON)
@@ -209,7 +132,7 @@ A lista completa, incluindo os comandos de mutação (`add-node`, `complete-node
 
 ## API da biblioteca Python
 
-Use `graph_backlog` como motor Python embutido em agentes, orquestradores e scripts de CI:
+O mesmo motor como biblioteca Python:
 
 ```python
 from graph_backlog import (
@@ -246,36 +169,32 @@ print(f"Newly unlocked tasks: {sim['newly_unlocked_nodes']}")
 
 ---
 
-## Mission Control interativo e Copilot Bridge
+## O visualizador HTML
 
-O projeto inclui um **visualizador HTML interativo e autônomo, sem framework**. `export --export-format html` e `visualize` o geram para qualquer grafo; [`visualizer/index.html`](visualizer/index.html) é uma cópia pronta que abre no grafo sintético `fixtures/work-graph-v0.5.json` e também traz os backlogs de demonstração:
+`export --export-format html` e `visualize` geram uma página autônoma, sem framework, para qualquer grafo;
+[`visualizer/index.html`](visualizer/index.html) é uma cópia pronta que abre no sintético
+`fixtures/work-graph-v0.5.json` e também traz os backlogs de demonstração. Ela tem três visões (grafo de
+dependências, quadro Kanban, clusters), doze temas de cor (seis escuros, seis claros) e um painel com as ferramentas
+de análise, o sandbox de "e se" e o ledger.
 
-- **3 modos de canvas:** canvas físico dinâmico do DAG, quadro Kanban e clusters de domínio.
-- **12 temas:**
-  - *Escuros:* Signal Mission Control (padrão), Dracula, Tokyo Night, Nord Frost, Monokai Pro, Catppuccin Mocha.
-  - *Claros:* Solar Paper, Solarized Light, GitHub Light, Nord Snow Storm, Catppuccin Latte, Gruvbox Light.
-- **Estação de operações do grafo:** janela modal com ferramentas de análise, sandbox de simulação what-if e o ledger encadeado por hash.
+### Ler o grafo por um script no navegador
 
-### Descoberta por agentes de IA no navegador e Copilot Bridge
-
-O visualizador expõe o grafo a assistentes de IA no navegador e a scripts do DevTools:
-
-1. **API global de runtime (`window.tareGraph`):**
+1. **`window.tareGraph`**, pelo console do DevTools ou por um assistente no navegador:
    ```javascript
-   // Consulte o resumo do grafo e a fronteira pronta direto no console do DevTools ou no runtime do agente:
    window.tareGraph.getSummary();
    window.tareGraph.getFrontier();
    window.tareGraph.getCriticalPath();
    window.tareGraph.simulate(["AUTH-01"], true);
    ```
-2. **Manifesto JSON no DOM:** `<script id="signal-agentic-manifest" type="application/json">`, sincronizado em tempo real, permite que coletores de IA leiam a estrutura topológica sem interpretar elementos SVG.
-3. **Prompts de contexto:** gera prompts de briefing prontos para o Copilot, resumindo os gargalos ativos e as tarefas prontas.
+2. **Um manifesto JSON na página**, `<script id="signal-agentic-manifest" type="application/json">`, mantido em
+   sincronia com o grafo, para que um script leia a estrutura sem interpretar o SVG.
+3. **Um prompt de briefing**: um texto que resume os gargalos atuais e os itens prontos, para colar num assistente.
 
 ---
 
-## CI/CD e orquestração de agentes autônomos
+## Em CI e com agentes de código
 
-### Workflow de auditoria de PR (GitHub Actions)
+### Uma verificação no GitHub Actions
 ```yaml
 name: Work Graph Quality Gate
 on: [pull_request, push]
@@ -294,9 +213,9 @@ jobs:
           python graph_ops.py --graph work-graph.json validate
 ```
 
-### Fornecer contexto a agentes de LLM (Claude / Devin / Copilot)
+### Entregar um item pronto a um agente de código
 ```bash
-# Extrai a tarefa pronta mais bem ranqueada e compila o contexto do prompt:
+# Compila o resumo do primeiro item pronto:
 NEXT_ID=$(python graph_ops.py frontier --format ids | head -n 1)
 python graph_ops.py packet $NEXT_ID --format md > .agent/current-context.md
 ```
