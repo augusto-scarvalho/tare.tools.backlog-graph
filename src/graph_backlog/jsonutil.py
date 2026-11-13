@@ -29,9 +29,10 @@ class RevisionMismatchError(UsageError):
     pass
 
 def assert_no_symlinks_in_path(p: Path | str) -> None:
-    """Validate that no component of the path (target or any ancestor) is a symlink."""
+    """Validate that no component of the path (target or any ancestor) is a symlink. The volume root itself is
+    not asked: it cannot be a link, and a sandbox may deny its metadata while allowing everything below it."""
     curr = Path(p).absolute()
-    for component in [curr] + list(curr.parents):
+    for component in [curr] + list(curr.parents)[:-1]:  # the last parent is the volume root
         if component.is_symlink():
             raise UsageError(f"Security Violation: Refusing symlink in path component: '{component}'")
 

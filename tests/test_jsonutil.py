@@ -218,3 +218,21 @@ def test_graph_lock_fails_closed_when_lock_already_exists(tmp_path: Path) -> Non
             pass
 
     assert lock_file.exists()
+
+
+def test_symlink_guard_never_asks_the_volume_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A sandbox may deny the volume root's metadata while allowing everything below it; the root cannot be a link."""
+    from graph_backlog.jsonutil import assert_no_symlinks_in_path
+    asked = []
+    original = Path.is_symlink
+
+    def is_symlink(self: Path) -> bool:
+        if self == Path(self.anchor):
+            raise PermissionError(5, 'Access is denied', str(self))
+        asked.append(self)
+        return original(self)
+
+    monkeypatch.setattr(Path, 'is_symlink', is_symlink)
+    target = tmp_path / 'graph.json'
+    assert_no_symlinks_in_path(target)
+    assert target in asked and tmp_path in asked and Path(target.anchor) not in asked
