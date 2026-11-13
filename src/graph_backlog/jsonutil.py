@@ -32,8 +32,8 @@ def assert_no_symlinks_in_path(p: Path | str) -> None:
     """Validate that no component of the path (target or any ancestor) is a symlink. The volume root itself is
     not asked: it cannot be a link, and a sandbox may deny its metadata while allowing everything below it."""
     curr = Path(p).absolute()
-    for component in [curr] + list(curr.parents):
-        if component != Path(component.anchor) and component.is_symlink():
+    for component in [curr] + list(curr.parents)[:-1]:  # the last parent is the volume root
+        if component.is_symlink():
             raise UsageError(f"Security Violation: Refusing symlink in path component: '{component}'")
 
 def stable_dict(v: Any, exclude_keys: tuple[str, ...] = ()) -> Any:
